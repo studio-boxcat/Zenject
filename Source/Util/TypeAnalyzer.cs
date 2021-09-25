@@ -140,14 +140,13 @@ namespace Zenject
 
                 if (baseType != null)
                 {
-                    if (_typeInfo.TryGetValue(baseType, out info))
+                    if (_typeInfo.TryGetValue(baseType, out var baseTypeInfo))
                     {
-                        info.BaseTypeInfo = info;
+                        info.BaseTypeInfo = baseTypeInfo;
                     }
                     else if (!ShouldSkipTypeAnalysis(baseType))
                     {
-                        info = GetInfoInternal(baseType);
-                        info.BaseTypeInfo = info;
+                        info.BaseTypeInfo = TryGetInfo(baseType);
                     }
                 }
             }
