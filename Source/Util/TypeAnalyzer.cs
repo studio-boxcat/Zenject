@@ -146,7 +146,8 @@ namespace Zenject
                     }
                     else if (!ShouldSkipTypeAnalysis(baseType))
                     {
-                        info.BaseTypeInfo = GetInfoInternal(baseType);
+                        info = GetInfoInternal(baseType);
+                        info.BaseTypeInfo = info;
                     }
                 }
             }
