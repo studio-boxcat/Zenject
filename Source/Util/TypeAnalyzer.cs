@@ -238,6 +238,8 @@ namespace Zenject
                 || @namespace.StartsWith("Coffee", StringComparison.Ordinal)
                 || @namespace.StartsWith("DG.", StringComparison.Ordinal)
                 || @namespace.StartsWith("E7.", StringComparison.Ordinal)
+                || @namespace.StartsWith("RedBlueGames", StringComparison.Ordinal)
+                || @namespace.StartsWith("SuperScrollView", StringComparison.Ordinal)
                 ))
             {
                 return true;
