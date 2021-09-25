@@ -138,9 +138,16 @@ namespace Zenject
 
                 var baseType = type.BaseType();
 
-                if (baseType != null && !ShouldSkipTypeAnalysis(baseType))
+                if (baseType != null)
                 {
-                    info.BaseTypeInfo = TryGetInfo(baseType);
+                    if (_typeInfo.TryGetValue(baseType, out info))
+                    {
+                        info.BaseTypeInfo = info;
+                    }
+                    else if (!ShouldSkipTypeAnalysis(baseType))
+                    {
+                        info.BaseTypeInfo = GetInfoInternal(baseType);
+                    }
                 }
             }
 
@@ -216,10 +223,27 @@ namespace Zenject
 
         public static bool ShouldSkipTypeAnalysis(Type type)
         {
-            return type == null || type.IsEnum() || type.IsArray || type.IsInterface()
+            if (type == null || type.IsEnum() || type.IsArray || type.IsInterface()
                 || type.ContainsGenericParameters() || IsStaticType(type)
-                || type == typeof(object)
-                || type.GetCustomAttribute(typeof(PreventTypeAnalysisAttribute)) != null;
+                || type == typeof(object))
+            {
+                return true;
+            }
+
+            var @namespace = type.Namespace;
+            if (@namespace != null && (
+                @namespace.StartsWith("System", StringComparison.Ordinal)
+                || @namespace.StartsWith("Unity", StringComparison.Ordinal)
+                || @namespace.StartsWith("TouchScript", StringComparison.Ordinal)
+                || @namespace.StartsWith("Coffee", StringComparison.Ordinal)
+                || @namespace.StartsWith("DG.", StringComparison.Ordinal)
+                || @namespace.StartsWith("E7.", StringComparison.Ordinal)
+                ))
+            {
+                return true;
+            }
+
+            return type.GetCustomAttribute(typeof(PreventTypeAnalysisAttribute), false) != null;
         }
 
         static bool IsStaticType(Type type)
