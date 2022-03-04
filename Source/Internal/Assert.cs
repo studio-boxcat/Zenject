@@ -8,9 +8,7 @@ namespace ModestTree
 {
     public static class Assert
     {
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void That(bool condition)
         {
             if (!condition)
@@ -19,9 +17,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNotEmpty(string str)
         {
             if (String.IsNullOrEmpty(str))
@@ -30,9 +26,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         // This is better because IsEmpty with IEnumerable causes a memory alloc
         public static void IsEmpty<T>(IList<T> list)
         {
@@ -43,9 +37,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsEmpty<T>(IEnumerable<T> sequence)
         {
             if (!sequence.IsEmpty())
@@ -55,17 +47,13 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsType<T>(object obj)
         {
             IsType<T>(obj, "");
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsType<T>(object obj, string message)
         {
             if (!(obj is T))
@@ -74,9 +62,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void DerivesFrom<T>(Type type)
         {
             if (!type.DerivesFrom<T>())
@@ -85,9 +71,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void DerivesFromOrEqual<T>(Type type)
         {
             if (!type.DerivesFromOrEqual<T>())
@@ -96,9 +80,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void DerivesFrom(Type childType, Type parentType)
         {
             if (!childType.DerivesFrom(parentType))
@@ -107,9 +89,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void DerivesFromOrEqual(Type childType, Type parentType)
         {
             if (!childType.DerivesFromOrEqual(parentType))
@@ -119,18 +99,14 @@ namespace ModestTree
         }
 
         // Use AssertEquals to get better error output (with values)
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsEqual(object left, object right)
         {
             IsEqual(left, right, "");
         }
 
         // Use AssertEquals to get better error output (with values)
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsEqual(object left, object right, Func<string> messageGenerator)
         {
             if (!object.Equals(left, right))
@@ -141,9 +117,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsApproximately(float left, float right, float epsilon = 0.00001f)
         {
             bool isEqual = Math.Abs(left - right) < epsilon;
@@ -155,9 +129,7 @@ namespace ModestTree
         }
 
         // Use AssertEquals to get better error output (with values)
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsEqual(object left, object right, string message)
         {
             if (!object.Equals(left, right))
@@ -169,18 +141,14 @@ namespace ModestTree
         }
 
         // Use Assert.IsNotEqual to get better error output (with values)
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNotEqual(object left, object right)
         {
             IsNotEqual(left, right, "");
         }
 
         // Use Assert.IsNotEqual to get better error output (with values)
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNotEqual(object left, object right, Func<string> messageGenerator)
         {
             if(object.Equals(left, right))
@@ -191,9 +159,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNull(object val)
         {
             if (val != null)
@@ -203,9 +169,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNull(object val, string message)
         {
             if (val != null)
@@ -216,9 +180,7 @@ namespace ModestTree
         }
 
         // We don't use params here to avoid the memory alloc
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNull(object val, string message, object p1)
         {
             if (val != null)
@@ -228,9 +190,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNotNull(object val)
         {
             if (val == null)
@@ -239,9 +199,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNotNull(object val, string message)
         {
             if (val == null)
@@ -251,9 +209,7 @@ namespace ModestTree
         }
 
         // We don't use params here to avoid the memory alloc
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNotNull(object val, string message, object p1)
         {
             if (val == null)
@@ -263,9 +219,7 @@ namespace ModestTree
         }
 
         // We don't use params here to avoid the memory alloc
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNotNull(object val, string message, object p1, object p2)
         {
             if (val == null)
@@ -274,9 +228,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNotEmpty<T>(IEnumerable<T> val, string message = "")
         {
             if (!val.Any())
@@ -286,9 +238,7 @@ namespace ModestTree
         }
 
         // Use Assert.IsNotEqual to get better error output (with values)
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void IsNotEqual(object left, object right, string message)
         {
             if (object.Equals(left, right))
@@ -299,9 +249,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void Warn(bool condition)
         {
             if (!condition)
@@ -310,9 +258,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void Warn(bool condition, Func<string> messageGenerator)
         {
             if (!condition)
@@ -321,9 +267,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void That(
             bool condition, string message)
         {
@@ -334,9 +278,7 @@ namespace ModestTree
         }
 
         // We don't use params here to avoid the memory alloc
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void That(
             bool condition, string message, object p1)
         {
@@ -347,9 +289,7 @@ namespace ModestTree
         }
 
         // We don't use params here to avoid the memory alloc
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void That(
             bool condition, string message, object p1, object p2)
         {
@@ -360,9 +300,7 @@ namespace ModestTree
         }
 
         // We don't use params here to avoid the memory alloc
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void That(
             bool condition, string message, object p1, object p2, object p3)
         {
@@ -372,9 +310,7 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void Warn(bool condition, string message)
         {
             if (!condition)
@@ -383,17 +319,13 @@ namespace ModestTree
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void Throws(Action action)
         {
             Throws<Exception>(action);
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void Throws<TException>(Action action)
             where TException : Exception
         {

@@ -21,9 +21,7 @@ namespace Zenject
     {
 #if !NOT_UNITY3D
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsValidPrefab(UnityEngine.Object prefab)
         {
             Assert.That(!ZenUtilInternal.IsNull(prefab), "Received null prefab during bind command");
@@ -36,9 +34,7 @@ namespace Zenject
 #endif
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsValidGameObject(GameObject gameObject)
         {
             Assert.That(!ZenUtilInternal.IsNull(gameObject), "Received null game object during bind command");
@@ -51,9 +47,7 @@ namespace Zenject
 #endif
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsNotComponent(IEnumerable<Type> types)
         {
             foreach (var type in types)
@@ -62,26 +56,20 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsNotComponent<T>()
         {
             AssertIsNotComponent(typeof(T));
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsNotComponent(Type type)
         {
             Assert.That(!type.DerivesFrom(typeof(Component)),
                 "Invalid type given during bind command.  Expected type '{0}' to NOT derive from UnityEngine.Component", type);
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertDerivesFromUnityObject(IEnumerable<Type> types)
         {
             foreach (var type in types)
@@ -90,26 +78,20 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertDerivesFromUnityObject<T>()
         {
             AssertDerivesFromUnityObject(typeof(T));
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertDerivesFromUnityObject(Type type)
         {
             Assert.That(type.DerivesFrom<UnityEngine.Object>(),
                 "Invalid type given during bind command.  Expected type '{0}' to derive from UnityEngine.Object", type);
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertTypesAreNotComponents(IEnumerable<Type> types)
         {
             foreach (var type in types)
@@ -118,9 +100,7 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsValidResourcePath(string resourcePath)
         {
             Assert.That(!string.IsNullOrEmpty(resourcePath), "Null or empty resource path provided");
@@ -129,9 +109,7 @@ namespace Zenject
             // a way to do this besides loading it
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsInterfaceOrScriptableObject(IEnumerable<Type> types)
         {
             foreach (var type in types)
@@ -140,26 +118,20 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsInterfaceOrScriptableObject<T>()
         {
             AssertIsInterfaceOrScriptableObject(typeof(T));
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsInterfaceOrScriptableObject(Type type)
         {
             Assert.That(type.DerivesFrom(typeof(ScriptableObject)) || type.IsInterface(),
                 "Invalid type given during bind command.  Expected type '{0}' to either derive from UnityEngine.ScriptableObject or be an interface", type);
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsInterfaceOrComponent(IEnumerable<Type> types)
         {
             foreach (var type in types)
@@ -168,26 +140,20 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsInterfaceOrComponent<T>()
         {
             AssertIsInterfaceOrComponent(typeof(T));
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsInterfaceOrComponent(Type type)
         {
             Assert.That(type.DerivesFrom(typeof(Component)) || type.IsInterface(),
                 "Invalid type given during bind command.  Expected type '{0}' to either derive from UnityEngine.Component or be an interface", type);
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsComponent(IEnumerable<Type> types)
         {
             foreach (var type in types)
@@ -196,17 +162,13 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsComponent<T>()
         {
             AssertIsComponent(typeof(T));
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsComponent(Type type)
         {
             Assert.That(type.DerivesFrom(typeof(Component)),
@@ -230,9 +192,7 @@ namespace Zenject
         }
 #endif
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertTypesAreNotAbstract(IEnumerable<Type> types)
         {
             foreach (var type in types)
@@ -241,9 +201,7 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsNotAbstract(IEnumerable<Type> types)
         {
             foreach (var type in types)
@@ -252,26 +210,20 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsNotAbstract<T>()
         {
             AssertIsNotAbstract(typeof(T));
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsNotAbstract(Type type)
         {
             Assert.That(!type.IsAbstract(),
                 "Invalid type given during bind command.  Expected type '{0}' to not be abstract.", type);
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsDerivedFromType(Type concreteType, Type parentType)
         {
 #if !(UNITY_WSA && ENABLE_DOTNET)
@@ -294,18 +246,14 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertConcreteTypeListIsNotEmpty(IEnumerable<Type> concreteTypes)
         {
             Assert.That(concreteTypes.Count() >= 1,
                 "Must supply at least one concrete type to the current binding");
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsDerivedFromTypes(
             IEnumerable<Type> concreteTypes, IEnumerable<Type> parentTypes, InvalidBindResponses invalidBindResponse)
         {
@@ -319,9 +267,7 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsDerivedFromTypes(IEnumerable<Type> concreteTypes, IEnumerable<Type> parentTypes)
         {
             foreach (var concreteType in concreteTypes)
@@ -330,9 +276,7 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertIsDerivedFromTypes(Type concreteType, IEnumerable<Type> parentTypes)
         {
             foreach (var parentType in parentTypes)
@@ -341,9 +285,7 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertInstanceDerivesFromOrEqual(object instance, IEnumerable<Type> parentTypes)
         {
             if (!ZenUtilInternal.IsNull(instance))
@@ -355,9 +297,7 @@ namespace Zenject
             }
         }
 
-#if ZEN_STRIP_ASSERTS_IN_BUILDS
-        [Conditional("UNITY_EDITOR")]
-#endif
+        [Conditional("DEBUG")]
         public static void AssertInstanceDerivesFromOrEqual(object instance, Type baseType)
         {
             if (!ZenUtilInternal.IsNull(instance))
