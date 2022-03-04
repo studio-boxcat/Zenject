@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ModestTree;
 using ModestTree.Util;
+using UnityEditor;
 
 namespace Zenject
 {
@@ -21,18 +22,38 @@ namespace Zenject
             [Inject(Optional = true, Source = InjectSources.Local)]
             List<ValuePair<Type, int>> priorities)
         {
-            _initializables = new List<InitializableInfo>();
+            _initializables = new List<InitializableInfo>(initializables.Count);
 
-            for (int i = 0; i < initializables.Count; i++)
+            if (initializables.Count == 0)
             {
-                var initializable = initializables[i];
+                // Do nothing.
+            }
+            else if (initializables.Count == 1)
+            {
+                var initializable = initializables[0];
+                var type = initializable.GetType();
 
-                // Note that we use zero for unspecified priority
-                // This is nice because you can use negative or positive for before/after unspecified
-                var matches = priorities.Where(x => initializable.GetType().DerivesFromOrEqual(x.First)).Select(x => x.Second).ToList();
-                int priority = matches.IsEmpty() ? 0 : matches.Distinct().Single();
+                foreach (var valuePair in priorities)
+                {
+                    if (type.DerivesFromOrEqual(valuePair.First)) continue;
+                    _initializables.Add(new InitializableInfo(initializable, valuePair.Second));
+                    break;
+                }
 
-                _initializables.Add(new InitializableInfo(initializable, priority));
+                if (_initializables.Count == 0)
+                    _initializables.Add(new InitializableInfo(initializable, 0));
+            }
+            else
+            {
+                foreach (var initializable in initializables)
+                {
+                    // Note that we use zero for unspecified priority
+                    // This is nice because you can use negative or positive for before/after unspecified
+                    var matches = priorities.Where(x => initializable.GetType().DerivesFromOrEqual(x.First)).Select(x => x.Second).ToList();
+                    int priority = matches.IsEmpty() ? 0 : matches.Distinct().Single();
+
+                    _initializables.Add(new InitializableInfo(initializable, priority));
+                }
             }
         }
 
