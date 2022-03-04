@@ -211,8 +211,7 @@ namespace Zenject
             // Reset immediately to ensure it doesn't get used in another run
             ValidateOnNextRun = false;
 
-            _container = new DiContainer(
-                new[] { StaticContext.Container }, isValidating);
+            _container = new DiContainer(isValidating);
 
             // Do this after creating DiContainer in case it's needed by the pre install logic
             if (PreInstall != null)

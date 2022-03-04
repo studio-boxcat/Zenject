@@ -60,7 +60,7 @@ namespace Zenject
         {
             Assert.IsNull(_container);
 
-            _container = new DiContainer(new[] { StaticContext.Container });
+            _container = new DiContainer();
 
             // Make sure we don't create any game objects since editor windows don't have a scene
             _container.AssertOnNewGameObjects = true;
