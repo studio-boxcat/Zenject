@@ -3443,11 +3443,6 @@ namespace Zenject
             {
                 BindLateTickableExecutionOrder(type, order);
             }
-
-            if (type.DerivesFrom<IPoolable>())
-            {
-                BindPoolableExecutionOrder(type, order);
-            }
         }
 
         public CopyNonLazyBinder BindTickableExecutionOrder<T>(int order)
@@ -3538,21 +3533,6 @@ namespace Zenject
 
             return Bind<ValuePair<Type, int>>().WithId("Late")
                 .FromInstance(ValuePair.New(type, order)).WhenInjectedInto<TickableManager>();
-        }
-
-        public CopyNonLazyBinder BindPoolableExecutionOrder<T>(int order)
-            where T : IPoolable
-        {
-            return BindPoolableExecutionOrder(typeof(T), order);
-        }
-
-        public CopyNonLazyBinder BindPoolableExecutionOrder(Type type, int order)
-        {
-            Assert.That(type.DerivesFrom<IPoolable>(),
-                "Expected type '{0}' to derive from IPoolable", type);
-
-            return Bind<ValuePair<Type, int>>()
-                .FromInstance(ValuePair.New(type, order)).WhenInjectedInto<PoolableManager>();
         }
 
         class ProviderInfo
