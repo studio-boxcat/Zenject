@@ -29,11 +29,18 @@ namespace Zenject
         {
             if (BindInfo.Scope == ScopeTypes.Unset)
             {
+                // XXX: 너무 많은 힙할당이 발생해서 Assert.That 에서 예외를 직접 던지는 식으로 변경.
+#if DEBUG
                 // If condition is set then it's probably fine to allow the default of transient
-                Assert.That(!BindInfo.RequireExplicitScope || BindInfo.Condition != null,
-                    "Scope must be set for the previous binding!  Please either specify AsTransient, AsCached, or AsSingle. Last binding: Contract: {0}, Identifier: {1} {2}",
-                    BindInfo.ContractTypes.Select(x => x.PrettyName()).Join(", "), BindInfo.Identifier,
-                    BindInfo.ContextInfo != null ? "Context: '{0}'".Fmt(BindInfo.ContextInfo) : "");
+                if (BindInfo.RequireExplicitScope && BindInfo.Condition == null)
+                {
+                    throw Assert.CreateException(
+                        "Scope must be set for the previous binding!  Please either specify AsTransient, AsCached, or AsSingle. Last binding: Contract: {0}, Identifier: {1} {2}",
+                        BindInfo.ContractTypes.Select(x => x.PrettyName()).Join(", "), BindInfo.Identifier,
+                        BindInfo.ContextInfo != null ? "Context: '{0}'".Fmt(BindInfo.ContextInfo) : "");
+                }
+#endif
+
                 return ScopeTypes.Transient;
             }
 
