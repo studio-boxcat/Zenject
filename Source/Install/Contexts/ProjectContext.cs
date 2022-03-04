@@ -27,12 +27,6 @@ namespace Zenject
         bool _parentNewObjectsUnderContext = true;
 
         [SerializeField]
-        ReflectionBakingCoverageModes _editorReflectionBakingCoverageMode = ReflectionBakingCoverageModes.FallbackToDirectReflection;
-
-        [SerializeField]
-        ReflectionBakingCoverageModes _buildsReflectionBakingCoverageMode = ReflectionBakingCoverageModes.FallbackToDirectReflection;
-
-        [SerializeField]
         ZenjectSettings _settings = null;
 
         DiContainer _container;
@@ -196,15 +190,6 @@ namespace Zenject
         void Initialize()
         {
             Assert.IsNull(_container);
-
-            if (Application.isEditor)
-            {
-                TypeAnalyzer.ReflectionBakingCoverageMode = _editorReflectionBakingCoverageMode;
-            }
-            else
-            {
-                TypeAnalyzer.ReflectionBakingCoverageMode = _buildsReflectionBakingCoverageMode;
-            }
 
             var isValidating = ValidateOnNextRun;
 

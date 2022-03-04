@@ -2,42 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using ModestTree;
 using Zenject.Internal;
 
 namespace Zenject
 {
-    public delegate InjectTypeInfo ZenTypeInfoGetter();
-
-    public enum ReflectionBakingCoverageModes
-    {
-        FallbackToDirectReflection,
-        NoCheckAssumeFullCoverage,
-        FallbackToDirectReflectionWithWarning
-    }
-
     public static class TypeAnalyzer
     {
-        static Dictionary<Type, InjectTypeInfo> _typeInfo = new Dictionary<Type, InjectTypeInfo>();
+        static Dictionary<Type, InjectTypeInfo> _typeInfo = new();
 
         // We store this separately from InjectTypeInfo because this flag is needed for contract
         // types whereas InjectTypeInfo is only needed for types that are instantiated, and
         // we want to minimize the types that generate InjectTypeInfo for
-        static Dictionary<Type, bool> _allowDuringValidation = new Dictionary<Type, bool>();
-
-        // Use double underscores for generated methods since this is also what the C# compiler does
-        // for things like anonymous methods
-        public const string ReflectionBakingGetInjectInfoMethodName = "__zenCreateInjectTypeInfo";
-        public const string ReflectionBakingFactoryMethodName = "__zenCreate";
-        public const string ReflectionBakingInjectMethodPrefix = "__zenInjectMethod";
-        public const string ReflectionBakingFieldSetterPrefix = "__zenFieldSetter";
-        public const string ReflectionBakingPropertySetterPrefix = "__zenPropertySetter";
-
-        public static ReflectionBakingCoverageModes ReflectionBakingCoverageMode
-        {
-            get; set;
-        }
+        static Dictionary<Type, bool> _allowDuringValidation = new();
 
         public static bool ShouldAllowDuringValidation<T>()
         {
@@ -64,23 +41,12 @@ namespace Zenject
             // You would typically use ZenjectAllowDuringValidation attribute for data that you
             // inject into factories
 
-            if (type.DerivesFrom<IInstaller>() || type.DerivesFrom<IValidatable>())
+            if (type.DerivesFrom<IInstaller>() || type.DerivesFrom<IValidatable>() || type.DerivesFrom<Context>())
             {
                 return true;
             }
 
-#if !NOT_UNITY3D
-            if (type.DerivesFrom<Context>())
-            {
-                return true;
-            }
-#endif
-
-#if UNITY_WSA && ENABLE_DOTNET && !UNITY_EDITOR
-            return type.GetTypeInfo().GetCustomAttribute<ZenjectAllowDuringValidationAttribute>() != null;
-#else
             return type.IsDefined(typeof(ZenjectAllowDuringValidationAttribute));
-#endif
         }
 
         public static bool HasInfo<T>()
@@ -114,9 +80,6 @@ namespace Zenject
         {
             InjectTypeInfo info;
 
-#if ZEN_MULTITHREADING
-            lock (_typeInfo)
-#endif
             {
                 if (_typeInfo.TryGetValue(type, out info))
                 {
@@ -124,9 +87,7 @@ namespace Zenject
                 }
             }
 
-#if UNITY_EDITOR
             using (ProfileBlock.Start("Zenject Reflection"))
-#endif
             {
                 info = GetInfoInternal(type);
             }
@@ -151,9 +112,6 @@ namespace Zenject
                 }
             }
 
-#if ZEN_MULTITHREADING
-            lock (_typeInfo)
-#endif
             {
                 _typeInfo[type] = info;
             }
@@ -168,54 +126,6 @@ namespace Zenject
                 return null;
             }
 
-#if ZEN_INTERNAL_PROFILING
-            // Make sure that the static constructor logic doesn't inflate our profile measurements
-            using (ProfileTimers.CreateTimedBlock("User Code"))
-            {
-                RuntimeHelpers.RunClassConstructor(type.TypeHandle);
-            }
-#endif
-
-#if ZEN_INTERNAL_PROFILING
-            using (ProfileTimers.CreateTimedBlock("Type Analysis - Calling Baked Reflection Getter"))
-#endif
-            {
-                var getInfoMethod = type.GetMethod(
-                    ReflectionBakingGetInjectInfoMethodName,
-                    BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-
-                if (getInfoMethod != null)
-                {
-#if UNITY_WSA && ENABLE_DOTNET && !UNITY_EDITOR
-                    var infoGetter = (ZenTypeInfoGetter)getInfoMethod.CreateDelegate(
-                        typeof(ZenTypeInfoGetter), null);
-#else
-                    var infoGetter = ((ZenTypeInfoGetter)Delegate.CreateDelegate(
-                        typeof(ZenTypeInfoGetter), getInfoMethod));
-#endif
-
-                    return infoGetter();
-                }
-            }
-
-            if (ReflectionBakingCoverageMode == ReflectionBakingCoverageModes.NoCheckAssumeFullCoverage)
-            {
-                // If we are confident that the reflection baking supplies all the injection information,
-                // then we can avoid the costs of doing reflection on types that were not covered
-                // by the baking
-                return null;
-            }
-
-#if !(UNITY_WSA && ENABLE_DOTNET) || UNITY_EDITOR
-            if (ReflectionBakingCoverageMode == ReflectionBakingCoverageModes.FallbackToDirectReflectionWithWarning)
-            {
-                Log.Warn("No reflection baking information found for type '{0}' - using more costly direct reflection instead", type);
-            }
-#endif
-
-#if ZEN_INTERNAL_PROFILING
-            using (ProfileTimers.CreateTimedBlock("Type Analysis - Direct Reflection"))
-#endif
             {
                 return CreateTypeInfoFromReflection(type);
             }
