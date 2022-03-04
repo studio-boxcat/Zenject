@@ -2,6 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using JetBrains.Annotations;
+using ModestTree.Util;
+using Zenject;
 
 namespace ModestTree
 {
@@ -29,6 +32,10 @@ namespace ModestTree
 
         public static IList CreateGenericList(Type elementType, List<object> instances)
         {
+            var listForWellKnownTypes = CreateGenericListForWellKnownTypes(elementType, instances);
+            if (listForWellKnownTypes != null)
+                return listForWellKnownTypes;
+
             var genericType = typeof(List<>).MakeGenericType(elementType);
 
             var list = (IList)Activator.CreateInstance(genericType);
@@ -46,6 +53,35 @@ namespace ModestTree
                 list.Add(instance);
             }
 
+            return list;
+        }
+
+        // XXX: Activator 를 통해서 리스트를 생성하는 것이 매우 느리기 때문에 몇몇 알려진 타입은 수동으로 객체를 생성함.
+        [CanBeNull]
+        static IList CreateGenericListForWellKnownTypes(Type elementType, List<object> instances)
+        {
+            var count = instances.Count;
+
+            IList list = null;
+            if (elementType == typeof(IDisposable))
+                list = new List<IDisposable>(count);
+            else if (elementType == typeof(IFixedTickable))
+                list = new List<IFixedTickable>(count);
+            else if (elementType == typeof(IInitializable))
+                list = new List<IInitializable>(count);
+            else if (elementType == typeof(ILateDisposable))
+                list = new List<ILateDisposable>(count);
+            else if (elementType == typeof(ILateTickable))
+                list = new List<ILateTickable>(count);
+            else if (elementType == typeof(ITickable))
+                list = new List<ITickable>(count);
+            else if (elementType == typeof(ValuePair<Type, int>))
+                list = new List<ValuePair<Type, int>>(count);
+            else
+                return null;
+
+            foreach (var instance in instances)
+                list.Add(instance);
             return list;
         }
 
