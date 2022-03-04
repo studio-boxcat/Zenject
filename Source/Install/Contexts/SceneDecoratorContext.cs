@@ -108,7 +108,6 @@ namespace Zenject
         {
             var scene = gameObject.scene;
 
-            ZenUtilInternal.AddStateMachineBehaviourAutoInjectersInScene(scene);
             ZenUtilInternal.GetInjectableMonoBehavioursInScene(scene, monoBehaviours);
         }
 

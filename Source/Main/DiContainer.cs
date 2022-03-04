@@ -2285,8 +2285,6 @@ namespace Zenject
         {
             FlushBindings();
 
-            ZenUtilInternal.AddStateMachineBehaviourAutoInjectersUnderGameObject(gameObject);
-
             var monoBehaviours = ZenPools.SpawnList<MonoBehaviour>();
             try
             {
@@ -2346,8 +2344,6 @@ namespace Zenject
                 throw Assert.CreateException(
                     "Cannot inject into non-monobehaviours!  Argument list must be zero length");
             }
-
-            ZenUtilInternal.AddStateMachineBehaviourAutoInjectersUnderGameObject(gameObject);
 
             var injectableMonoBehaviours = ZenPools.SpawnList<MonoBehaviour>();
             try

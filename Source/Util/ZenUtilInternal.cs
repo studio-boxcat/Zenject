@@ -90,40 +90,6 @@ namespace Zenject.Internal
             }
         }
 
-        public static void AddStateMachineBehaviourAutoInjectersInScene(Scene scene)
-        {
-            foreach (var rootObj in GetRootGameObjects(scene))
-            {
-                if (rootObj != null)
-                {
-                    AddStateMachineBehaviourAutoInjectersUnderGameObject(rootObj);
-                }
-            }
-        }
-
-        // Call this before calling GetInjectableMonoBehavioursUnderGameObject to ensure that the StateMachineBehaviour's
-        // also get injected properly
-        // The StateMachineBehaviour's cannot be retrieved until after the Start() method so we
-        // need to use ZenjectStateMachineBehaviourAutoInjecter to do the injection at that
-        // time for us
-        public static void AddStateMachineBehaviourAutoInjectersUnderGameObject(GameObject root)
-        {
-#if ZEN_INTERNAL_PROFILING
-            using (ProfileTimers.CreateTimedBlock("Searching Hierarchy"))
-#endif
-            {
-                var animators = root.GetComponentsInChildren<Animator>(true);
-
-                foreach (var animator in animators)
-                {
-                    if (animator.gameObject.GetComponent<ZenjectStateMachineBehaviourAutoInjecter>() == null)
-                    {
-                        animator.gameObject.AddComponent<ZenjectStateMachineBehaviourAutoInjecter>();
-                    }
-                }
-            }
-        }
-
         public static void GetInjectableMonoBehavioursInScene(
             Scene scene, List<MonoBehaviour> monoBehaviours)
         {
