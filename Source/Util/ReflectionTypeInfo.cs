@@ -4,8 +4,7 @@ using System.Reflection;
 
 namespace Zenject.Internal
 {
-    [NoReflectionBaking]
-    public class ReflectionTypeInfo
+    public struct ReflectionTypeInfo
     {
         public readonly Type Type;
         public readonly Type BaseType;
@@ -30,8 +29,7 @@ namespace Zenject.Internal
             InjectProperties = injectProperties;
         }
 
-        [NoReflectionBaking]
-        public class InjectFieldInfo
+        public struct InjectFieldInfo
         {
             public readonly FieldInfo FieldInfo;
             public readonly InjectableInfo InjectableInfo;
@@ -45,8 +43,7 @@ namespace Zenject.Internal
             }
         }
 
-        [NoReflectionBaking]
-        public class InjectParameterInfo
+        public struct InjectParameterInfo
         {
             public readonly ParameterInfo ParameterInfo;
             public readonly InjectableInfo InjectableInfo;
@@ -60,8 +57,7 @@ namespace Zenject.Internal
             }
         }
 
-        [NoReflectionBaking]
-        public class InjectPropertyInfo
+        public struct InjectPropertyInfo
         {
             public readonly PropertyInfo PropertyInfo;
             public readonly InjectableInfo InjectableInfo;
@@ -75,33 +71,47 @@ namespace Zenject.Internal
             }
         }
 
-        [NoReflectionBaking]
-        public class InjectMethodInfo
+        public struct InjectMethodInfo
         {
-            public readonly MethodInfo MethodInfo;
-            public readonly List<InjectParameterInfo> Parameters;
+            public readonly MethodBase MethodInfo;
+            public readonly InjectParameterInfo[] Parameters;
 
             public InjectMethodInfo(
-                MethodInfo methodInfo,
-                List<InjectParameterInfo> parameters)
+                MethodBase methodInfo,
+                InjectParameterInfo[] parameters)
             {
                 MethodInfo = methodInfo;
                 Parameters = parameters;
             }
+
+            public InjectableInfo[] BakeParameterInjectableInfoArray()
+            {
+                var arr = new InjectableInfo[Parameters.Length];
+                for (var i = 0; i < arr.Length; i++)
+                    arr[i] = Parameters[i].InjectableInfo;
+                return arr;
+            }
         }
 
-        [NoReflectionBaking]
-        public class InjectConstructorInfo
+        public struct InjectConstructorInfo
         {
             public readonly ConstructorInfo ConstructorInfo;
-            public readonly List<InjectParameterInfo> Parameters;
+            public readonly InjectParameterInfo[] Parameters;
 
             public InjectConstructorInfo(
                 ConstructorInfo constructorInfo,
-                List<InjectParameterInfo> parameters)
+                InjectParameterInfo[] parameters)
             {
                 ConstructorInfo = constructorInfo;
                 Parameters = parameters;
+            }
+
+            public InjectableInfo[] BakeParameterInjectableInfoArray()
+            {
+                var arr = new InjectableInfo[Parameters.Length];
+                for (var i = 0; i < arr.Length; i++)
+                    arr[i] = Parameters[i].InjectableInfo;
+                return arr;
             }
         }
     }

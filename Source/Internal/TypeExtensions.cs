@@ -1,14 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace ModestTree
 {
     public static class TypeExtensions
     {
-        static readonly Dictionary<Type, bool> _isClosedGenericType = new Dictionary<Type, bool>();
         static readonly Dictionary<Type, bool> _isOpenGenericType = new Dictionary<Type, bool>();
         static readonly Dictionary<Type, bool> _isValueType = new Dictionary<Type, bool>();
         static readonly Dictionary<Type, Type[]> _interfaces = new Dictionary<Type, Type[]>();
@@ -265,32 +262,6 @@ namespace ModestTree
             return null;
         }
 
-        public static bool IsClosedGenericType(this Type type)
-        {
-            bool result;
-            if (!_isClosedGenericType.TryGetValue(type, out result))
-            {
-                result = type.IsGenericType() && type != type.GetGenericTypeDefinition();
-                _isClosedGenericType[type] = result;
-            }
-            return result;
-        }
-
-        public static IEnumerable<Type> GetParentTypes(this Type type)
-        {
-            if (type == null || type.BaseType() == null || type == typeof(object) || type.BaseType() == typeof(object))
-            {
-                yield break;
-            }
-
-            yield return type.BaseType();
-
-            foreach (var ancestor in type.BaseType().GetParentTypes())
-            {
-                yield return ancestor;
-            }
-        }
-
         public static bool IsOpenGenericType(this Type type)
         {
             bool result;
@@ -300,92 +271,6 @@ namespace ModestTree
                 _isOpenGenericType[type] = result;
             }
             return result;
-        }
-
-        public static T GetAttribute<T>(this MemberInfo provider)
-            where T : Attribute
-        {
-            return provider.AllAttributes<T>().Single();
-        }
-
-        public static T TryGetAttribute<T>(this MemberInfo provider)
-            where T : Attribute
-        {
-            return provider.AllAttributes<T>().OnlyOrDefault();
-        }
-
-        public static bool HasAttribute(
-            this MemberInfo provider, params Type[] attributeTypes)
-        {
-            return provider.AllAttributes(attributeTypes).Any();
-        }
-
-        public static bool HasAttribute<T>(this MemberInfo provider)
-            where T : Attribute
-        {
-            return provider.AllAttributes(typeof(T)).Any();
-        }
-
-        public static IEnumerable<T> AllAttributes<T>(
-            this MemberInfo provider)
-            where T : Attribute
-        {
-            return provider.AllAttributes(typeof(T)).Cast<T>();
-        }
-
-        public static IEnumerable<Attribute> AllAttributes(
-            this MemberInfo provider, params Type[] attributeTypes)
-        {
-            Attribute[] allAttributes;
-#if NETFX_CORE
-            allAttributes = provider.GetCustomAttributes<Attribute>(true).ToArray();
-#else
-            allAttributes = System.Attribute.GetCustomAttributes(provider, typeof(Attribute), true);
-#endif
-            if (attributeTypes.Length == 0)
-            {
-                return allAttributes;
-            }
-
-            return allAttributes.Where(a => attributeTypes.Any(x => a.GetType().DerivesFromOrEqual(x)));
-        }
-
-        // We could avoid this duplication here by using ICustomAttributeProvider but this class
-        // does not exist on the WP8 platform
-        public static bool HasAttribute(
-            this ParameterInfo provider, params Type[] attributeTypes)
-        {
-            return provider.AllAttributes(attributeTypes).Any();
-        }
-
-        public static bool HasAttribute<T>(this ParameterInfo provider)
-            where T : Attribute
-        {
-            return provider.AllAttributes(typeof(T)).Any();
-        }
-
-        public static IEnumerable<T> AllAttributes<T>(
-            this ParameterInfo provider)
-            where T : Attribute
-        {
-            return provider.AllAttributes(typeof(T)).Cast<T>();
-        }
-
-        public static IEnumerable<Attribute> AllAttributes(
-            this ParameterInfo provider, params Type[] attributeTypes)
-        {
-            Attribute[] allAttributes;
-#if NETFX_CORE
-            allAttributes = provider.GetCustomAttributes<Attribute>(true).ToArray();
-#else
-            allAttributes = System.Attribute.GetCustomAttributes(provider, typeof(Attribute), true);
-#endif
-            if (attributeTypes.Length == 0)
-            {
-                return allAttributes;
-            }
-
-            return allAttributes.Where(a => attributeTypes.Any(x => a.GetType().DerivesFromOrEqual(x)));
         }
     }
 }

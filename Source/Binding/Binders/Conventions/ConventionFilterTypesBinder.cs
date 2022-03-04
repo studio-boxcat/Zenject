@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using ModestTree;
 
@@ -47,7 +48,7 @@ namespace Zenject
         public ConventionFilterTypesBinder WithAttribute(Type attribute)
         {
             Assert.That(attribute.DerivesFrom<Attribute>());
-            BindInfo.AddTypeFilter(t => t.HasAttribute(attribute));
+            BindInfo.AddTypeFilter(t => t.IsDefined(attribute));
             return this;
         }
 
@@ -60,14 +61,14 @@ namespace Zenject
         public ConventionFilterTypesBinder WithoutAttribute(Type attribute)
         {
             Assert.That(attribute.DerivesFrom<Attribute>());
-            BindInfo.AddTypeFilter(t => !t.HasAttribute(attribute));
+            BindInfo.AddTypeFilter(t => !t.IsDefined(attribute));
             return this;
         }
 
         public ConventionFilterTypesBinder WithAttributeWhere<T>(Func<T, bool> predicate)
             where T : Attribute
         {
-            BindInfo.AddTypeFilter(t => t.HasAttribute<T>() && t.AllAttributes<T>().All(predicate));
+            BindInfo.AddTypeFilter(t => t.IsDefined(typeof(T)) && t.GetCustomAttributes<T>().All(predicate));
             return this;
         }
 

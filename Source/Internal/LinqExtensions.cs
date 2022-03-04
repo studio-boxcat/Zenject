@@ -1,8 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
-using ModestTree.Util;
 
 namespace ModestTree
 {
@@ -26,31 +24,14 @@ namespace ModestTree
             return source.FirstOrDefault();
         }
 
-        // These are more efficient than Count() in cases where the size of the collection is not known
-        public static bool HasAtLeast<T>(this IEnumerable<T> enumerable, int amount)
-        {
-            return enumerable.Take(amount).Count() == amount;
-        }
-
-        public static bool HasMoreThan<T>(this IEnumerable<T> enumerable, int amount)
-        {
-            return enumerable.HasAtLeast(amount+1);
-        }
-
-        public static bool HasLessThan<T>(this IEnumerable<T> enumerable, int amount)
-        {
-            return enumerable.HasAtMost(amount-1);
-        }
-
-        public static bool HasAtMost<T>(this IEnumerable<T> enumerable, int amount)
-        {
-            return enumerable.Take(amount + 1).Count() <= amount;
-        }
-
-        public static bool IsEmpty<T>(this IEnumerable<T> enumerable)
-        {
-            return !enumerable.Any();
-        }
+        public static bool IsEmpty(this string str) => str.Length == 0;
+        public static bool IsEmpty(this ICollection collection) => collection.Count == 0;
+        public static bool IsEmpty<T>(this IReadOnlyCollection<T> collection) => collection.Count == 0;
+        public static bool IsEmpty<T>(this IEnumerable<T> enumerable) => !enumerable.Any();
+        public static bool IsEmpty<T>(this T[] arr) => arr.Length == 0;
+        public static bool IsEmpty<T>(this List<T> list) => list.Count == 0;
+        public static bool IsEmpty<K, V>(this Dictionary<K, V> dictionary) => dictionary.Count == 0;
+        public static bool IsEmpty<T>(this Stack<T> stack) => stack.Count == 0;
 
         public static IEnumerable<T> GetDuplicates<T>(this IEnumerable<T> list)
         {

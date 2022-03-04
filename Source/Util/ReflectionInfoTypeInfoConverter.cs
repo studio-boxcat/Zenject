@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using ModestTree;
 #if !NOT_UNITY3D
@@ -18,16 +17,11 @@ namespace Zenject.Internal
             ReflectionTypeInfo.InjectMethodInfo injectMethod)
         {
             var methodInfo = injectMethod.MethodInfo;
-            var action = TryCreateActionForMethod(methodInfo);
-
-            if (action == null)
-            {
-                action = (obj, args) => methodInfo.Invoke(obj, args);
-            }
+            ZenInjectMethod action = (obj, args) => methodInfo.Invoke(obj, args);
 
             return new InjectTypeInfo.InjectMethodInfo(
                 action,
-                injectMethod.Parameters.Select(x => x.InjectableInfo).ToArray(),
+                injectMethod.BakeParameterInjectableInfoArray(),
                 methodInfo.Name);
         }
 
@@ -36,7 +30,7 @@ namespace Zenject.Internal
         {
             return new InjectTypeInfo.InjectConstructorInfo(
                 TryCreateFactoryMethod(type, injectConstructor),
-                injectConstructor.Parameters.Select(x => x.InjectableInfo).ToArray());
+                injectConstructor.BakeParameterInjectableInfoArray());
         }
 
         public static InjectTypeInfo.InjectMemberInfo ConvertField(
@@ -71,103 +65,27 @@ namespace Zenject.Internal
 
             var constructor = reflectionInfo.ConstructorInfo;
 
-            var factoryMethod = TryCreateFactoryMethodCompiledLambdaExpression(type, constructor);
-
-            if (factoryMethod == null)
-            {
-                if (constructor == null)
-                {
-                    // No choice in this case except to use the slow Activator.CreateInstance
-                    // as far as I know
-                    // This should be rare though and only seems to occur when instantiating
-                    // structs on platforms that don't support lambda expressions
-                    // Non-structs should always have a default constructor
-                    factoryMethod = args =>
-                    {
-                        Assert.That(args.Length == 0);
-                        return Activator.CreateInstance(type, new object[0]);
-                    };
-                }
-                else
-                {
-                    factoryMethod = constructor.Invoke;
-                }
-            }
-
-            return factoryMethod;
-        }
-
-        static ZenFactoryMethod TryCreateFactoryMethodCompiledLambdaExpression(
-            Type type, ConstructorInfo constructor)
-        {
-#if NET_4_6 && !ENABLE_IL2CPP && !ZEN_DO_NOT_USE_COMPILED_EXPRESSIONS
-
-            if (type.ContainsGenericParameters)
-            {
-                return null;
-            }
-
-            ParameterExpression param = Expression.Parameter(typeof(object[]));
+            ZenFactoryMethod factoryMethod = null;
 
             if (constructor == null)
             {
-                return Expression.Lambda<ZenFactoryMethod>(
-                    Expression.Convert(
-                        Expression.New(type), typeof(object)), param).Compile();
+                // No choice in this case except to use the slow Activator.CreateInstance
+                // as far as I know
+                // This should be rare though and only seems to occur when instantiating
+                // structs on platforms that don't support lambda expressions
+                // Non-structs should always have a default constructor
+                factoryMethod = args =>
+                {
+                    Assert.That(args.Length == 0);
+                    return Activator.CreateInstance(type, Array.Empty<object>());
+                };
             }
-
-            ParameterInfo[] par = constructor.GetParameters();
-            Expression[] args = new Expression[par.Length];
-
-            for (int i = 0; i != par.Length; ++i)
+            else
             {
-                args[i] = Expression.Convert(
-                    Expression.ArrayIndex(
-                        param, Expression.Constant(i)), par[i].ParameterType);
+                factoryMethod = constructor.Invoke;
             }
 
-            return Expression.Lambda<ZenFactoryMethod>(
-                Expression.Convert(
-                    Expression.New(constructor, args), typeof(object)), param).Compile();
-#else
-            return null;
-#endif
-        }
-
-        static ZenInjectMethod TryCreateActionForMethod(MethodInfo methodInfo)
-        {
-#if NET_4_6 && !ENABLE_IL2CPP && !ZEN_DO_NOT_USE_COMPILED_EXPRESSIONS
-
-            if (methodInfo.DeclaringType.ContainsGenericParameters)
-            {
-                return null;
-            }
-
-            ParameterInfo[] par = methodInfo.GetParameters();
-
-            if (par.Any(x => x.ParameterType.ContainsGenericParameters))
-            {
-                return null;
-            }
-
-            Expression[] args = new Expression[par.Length];
-            ParameterExpression argsParam = Expression.Parameter(typeof(object[]));
-            ParameterExpression instanceParam = Expression.Parameter(typeof(object));
-
-            for (int i = 0; i != par.Length; ++i)
-            {
-                args[i] = Expression.Convert(
-                    Expression.ArrayIndex(
-                        argsParam, Expression.Constant(i)), par[i].ParameterType);
-            }
-
-            return Expression.Lambda<ZenInjectMethod>(
-                Expression.Call(
-                    Expression.Convert(instanceParam, methodInfo.DeclaringType), methodInfo, args),
-                instanceParam, argsParam).Compile();
-#else
-            return null;
-#endif
+            return factoryMethod;
         }
 
 #if !(UNITY_WSA && ENABLE_DOTNET) || UNITY_EDITOR
@@ -206,13 +124,6 @@ namespace Zenject.Internal
 
         static ZenMemberSetterMethod GetSetter(Type parentType, MemberInfo memInfo)
         {
-            var setterMethod = TryGetSetterAsCompiledExpression(parentType, memInfo);
-
-            if (setterMethod != null)
-            {
-                return setterMethod;
-            }
-
             var fieldInfo = memInfo as FieldInfo;
             var propInfo = memInfo as PropertyInfo;
 
@@ -233,40 +144,6 @@ namespace Zenject.Internal
 
             return GetOnlyPropertySetter(parentType, propInfo.Name);
 #endif
-        }
-
-        static ZenMemberSetterMethod TryGetSetterAsCompiledExpression(Type parentType, MemberInfo memInfo)
-        {
-#if NET_4_6 && !ENABLE_IL2CPP && !ZEN_DO_NOT_USE_COMPILED_EXPRESSIONS
-
-            if (parentType.ContainsGenericParameters)
-            {
-                return null;
-            }
-
-            var fieldInfo = memInfo as FieldInfo;
-            var propInfo = memInfo as PropertyInfo;
-
-            // It seems that for readonly fields, we have to use the slower approach below
-            // As discussed here: https://www.productiverage.com/trying-to-set-a-readonly-autoproperty-value-externally-plus-a-little-benchmarkdotnet
-            // We have to skip value types because those can only be set by reference using an lambda expression
-            if (!parentType.IsValueType() && (fieldInfo == null || !fieldInfo.IsInitOnly) && (propInfo == null || propInfo.CanWrite))
-            {
-                Type memberType = fieldInfo != null
-                    ? fieldInfo.FieldType : propInfo.PropertyType;
-
-                var typeParam = Expression.Parameter(typeof(object));
-                var valueParam = Expression.Parameter(typeof(object));
-
-                return Expression.Lambda<ZenMemberSetterMethod>(
-                    Expression.Assign(
-                        Expression.MakeMemberAccess(Expression.Convert(typeParam, parentType), memInfo),
-                        Expression.Convert(valueParam, memberType)),
-                        typeParam, valueParam).Compile();
-            }
-#endif
-
-            return null;
         }
     }
 }

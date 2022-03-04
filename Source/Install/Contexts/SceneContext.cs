@@ -83,7 +83,7 @@ namespace Zenject
             }
         }
 
-        public IEnumerable<string> ParentContractNames
+        public IReadOnlyList<string> ParentContractNames
         {
             get
             {

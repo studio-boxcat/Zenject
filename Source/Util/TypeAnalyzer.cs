@@ -79,7 +79,7 @@ namespace Zenject
 #if UNITY_WSA && ENABLE_DOTNET && !UNITY_EDITOR
             return type.GetTypeInfo().GetCustomAttribute<ZenjectAllowDuringValidationAttribute>() != null;
 #else
-            return type.HasAttribute<ZenjectAllowDuringValidationAttribute>();
+            return type.IsDefined(typeof(ZenjectAllowDuringValidationAttribute));
 #endif
         }
 
