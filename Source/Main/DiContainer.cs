@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -1311,11 +1312,11 @@ namespace Zenject
             else
 #endif
             {
-                Assert.IsNotNull(typeInfo.InjectConstructor.Factory,
+                Assert.IsNotNull(typeInfo.InjectConstructor.ConstructorInfo,
                     "More than one (or zero) constructors found for type '{0}' when creating dependencies.  Use one [Inject] attribute to specify which to use.", concreteType);
 
                 // Make a copy since we remove from it below
-                var paramValues = ZenPools.SpawnArray<object>(typeInfo.InjectConstructor.Parameters.Length);
+                var paramValues = ParamArrayPool.Rent(typeInfo.InjectConstructor.Parameters.Length);
 
                 try
                 {
@@ -1357,7 +1358,7 @@ namespace Zenject
                             using (ProfileBlock.Start("{0}.{1}()", concreteType, concreteType.Name))
 #endif
                             {
-                                newObj = typeInfo.InjectConstructor.Factory(paramValues);
+                                newObj = typeInfo.InjectConstructor.ConstructorInfo.Invoke(paramValues);
                             }
                         }
                         catch (Exception e)
@@ -1373,7 +1374,7 @@ namespace Zenject
                 }
                 finally
                 {
-                    ZenPools.DespawnArray(paramValues);
+                    ParamArrayPool.Release(paramValues);
                 }
             }
 
@@ -1483,7 +1484,7 @@ namespace Zenject
             for (int i = 0; i < typeInfo.InjectMethods.Length; i++)
             {
                 var method = typeInfo.InjectMethods[i];
-                var paramValues = ZenPools.SpawnArray<object>(method.Parameters.Length);
+                var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
 
                 try
                 {
@@ -1520,16 +1521,16 @@ namespace Zenject
                         using (ProfileTimers.CreateTimedBlock("User Code"))
 #endif
 #if UNITY_EDITOR
-                        using (ProfileBlock.Start("{0}.{1}()", typeInfo.Type, method.Name))
+                        using (ProfileBlock.Start("{0}.{1}()", typeInfo.Type, method.MethodInfo.Name))
 #endif
                         {
-                            method.Action(injectable, paramValues);
+                            method.MethodInfo.Invoke(injectable, paramValues);
                         }
                     }
                 }
                 finally
                 {
-                    ZenPools.DespawnArray(paramValues);
+                    ParamArrayPool.Release(paramValues);
                 }
             }
         }
@@ -1546,14 +1547,44 @@ namespace Zenject
                     context, concreteIdentifier, isDryRun);
             }
 
-            for (int i = 0; i < typeInfo.InjectMembers.Length; i++)
+            foreach (var injectField in typeInfo.InjectFields)
+                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs, context, concreteIdentifier, isDryRun);
+            foreach (var injectProperty in typeInfo.InjectProperties)
+                InjectMember(injectProperty.Info, injectProperty, injectable, injectableType, extraArgs, context, concreteIdentifier, isDryRun);
+        }
+
+        void InjectMember<T>(InjectableInfo injectInfo, T setter,  object injectable, Type injectableType, List<TypeValuePair> extraArgs, InjectContext context, object concreteIdentifier, bool isDryRun)
+            where T : InjectTypeInfo.IInjectMemberSetter
+        {
+            object value;
+
+            if (InjectUtil.PopValueWithType(extraArgs, injectInfo.MemberType, out value))
             {
-                var injectInfo = typeInfo.InjectMembers[i].Info;
-                var setterMethod = typeInfo.InjectMembers[i].Setter;
+                if (!isDryRun)
+                {
+                    if (value is ValidationMarker)
+                    {
+                        Assert.That(IsValidating);
+                    }
+                    else
+                    {
+                        setter.Invoke(injectable, value);
+                    }
+                }
+            }
+            else
+            {
+                using (var subContext = ZenPools.SpawnInjectContext(
+                           this, injectInfo, context, injectable, injectableType, concreteIdentifier))
+                {
+                    value = Resolve(subContext);
+                }
 
-                object value;
-
-                if (InjectUtil.PopValueWithType(extraArgs, injectInfo.MemberType, out value))
+                if (injectInfo.Optional && value == null)
+                {
+                    // Do not override in this case so it retains the hard-coded value
+                }
+                else
                 {
                     if (!isDryRun)
                     {
@@ -1563,34 +1594,7 @@ namespace Zenject
                         }
                         else
                         {
-                            setterMethod(injectable, value);
-                        }
-                    }
-                }
-                else
-                {
-                    using (var subContext = ZenPools.SpawnInjectContext(
-                        this, injectInfo, context, injectable, injectableType, concreteIdentifier))
-                    {
-                        value = Resolve(subContext);
-                    }
-
-                    if (injectInfo.Optional && value == null)
-                    {
-                        // Do not override in this case so it retains the hard-coded value
-                    }
-                    else
-                    {
-                        if (!isDryRun)
-                        {
-                            if (value is ValidationMarker)
-                            {
-                                Assert.That(IsValidating);
-                            }
-                            else
-                            {
-                                setterMethod(injectable, value);
-                            }
+                            setter.Invoke(injectable, value);
                         }
                     }
                 }
@@ -2923,63 +2927,6 @@ namespace Zenject
             return BindFactoryInternal<TContract, TFactoryContract, TFactoryConcrete>();
         }
 
-        public MemoryPoolIdInitialSizeMaxSizeBinder<TItemContract> BindMemoryPool<TItemContract>()
-        {
-            return BindMemoryPool<TItemContract, MemoryPool<TItemContract>>();
-        }
-
-        public MemoryPoolIdInitialSizeMaxSizeBinder<TItemContract> BindMemoryPool<TItemContract, TPool>()
-            where TPool : IMemoryPool
-        {
-            return BindMemoryPoolCustomInterface<TItemContract, TPool, TPool>();
-        }
-
-        public MemoryPoolIdInitialSizeMaxSizeBinder<TItemContract> BindMemoryPoolCustomInterface<TItemContract, TPoolConcrete, TPoolContract>(bool includeConcreteType = false)
-            where TPoolConcrete : TPoolContract, IMemoryPool
-            where TPoolContract : IMemoryPool
-        {
-            return BindMemoryPoolCustomInterfaceInternal<TItemContract, TPoolConcrete, TPoolContract>(includeConcreteType, StartBinding());
-        }
-
-        internal MemoryPoolIdInitialSizeMaxSizeBinder<TItemContract> BindMemoryPoolCustomInterfaceNoFlush<TItemContract, TPoolConcrete, TPoolContract>(bool includeConcreteType = false)
-            where TPoolConcrete : TPoolContract, IMemoryPool
-            where TPoolContract : IMemoryPool
-        {
-            return BindMemoryPoolCustomInterfaceInternal<TItemContract, TPoolConcrete, TPoolContract>(includeConcreteType, StartBinding(false));
-        }
-
-        MemoryPoolIdInitialSizeMaxSizeBinder<TItemContract> BindMemoryPoolCustomInterfaceInternal<TItemContract, TPoolConcrete, TPoolContract>(
-            bool includeConcreteType, BindStatement statement)
-            where TPoolConcrete : TPoolContract, IMemoryPool
-            where TPoolContract : IMemoryPool
-        {
-            var contractTypes = new List<Type> { typeof(IDisposable), typeof(TPoolContract) };
-
-            if (includeConcreteType)
-            {
-                contractTypes.Add(typeof(TPoolConcrete));
-            }
-
-            var bindInfo = statement.SpawnBindInfo();
-
-            bindInfo.ContractTypes.AllocFreeAddRange(contractTypes);
-
-            // This interface is used in the optional class PoolCleanupChecker
-            // And also allow people to manually call DespawnAll() for all IMemoryPool
-            // if they want
-            bindInfo.ContractTypes.Add(typeof(IMemoryPool));
-
-            var factoryBindInfo = new FactoryBindInfo(typeof(TPoolConcrete));
-            var poolBindInfo = new MemoryPoolBindInfo();
-
-            statement.SetFinalizer(
-                new MemoryPoolBindingFinalizer<TItemContract>(
-                    bindInfo, factoryBindInfo, poolBindInfo));
-
-            return new MemoryPoolIdInitialSizeMaxSizeBinder<TItemContract>(
-                this, bindInfo, factoryBindInfo, poolBindInfo);
-        }
-
         FactoryToChoiceIdBinder<TParam1, TContract> BindFactoryInternal<TParam1, TContract, TFactoryContract, TFactoryConcrete>()
             where TFactoryConcrete : TFactoryContract, IFactory
             where TFactoryContract : IFactory
@@ -3411,7 +3358,7 @@ namespace Zenject
 
         public void BindExecutionOrder(Type type, int order)
         {
-            Assert.That(type.DerivesFrom<ITickable>() || type.DerivesFrom<IInitializable>() || type.DerivesFrom<IDisposable>() || type.DerivesFrom<ILateDisposable>() || type.DerivesFrom<IFixedTickable>() || type.DerivesFrom<ILateTickable>() || type.DerivesFrom<IPoolable>(),
+            Assert.That(type.DerivesFrom<ITickable>() || type.DerivesFrom<IInitializable>() || type.DerivesFrom<IDisposable>() || type.DerivesFrom<ILateDisposable>() || type.DerivesFrom<IFixedTickable>() || type.DerivesFrom<ILateTickable>(),
                 "Expected type '{0}' to derive from one or more of the following interfaces: ITickable, IInitializable, ILateTickable, IFixedTickable, IDisposable, ILateDisposable", type);
 
             if (type.DerivesFrom<ITickable>())

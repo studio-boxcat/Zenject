@@ -1,96 +1,24 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.Pool;
 
 namespace Zenject.Internal
 {
     public static class ZenPools
     {
-#if ZEN_INTERNAL_NO_POOLS
-        public static InjectContext SpawnInjectContext(DiContainer container, Type memberType)
-        {
-            return new InjectContext(container, memberType);
-        }
-
-        public static void DespawnInjectContext(InjectContext context)
-        {
-        }
-
-        public static List<T> SpawnList<T>()
-        {
-            return new List<T>();
-        }
-
-        public static void DespawnList<T>(List<T> list)
-        {
-        }
-
-        public static void DespawnArray<T>(T[] arr)
-        {
-        }
-
-        public static T[] SpawnArray<T>(int length)
-        {
-            return new T[length];
-        }
+        static readonly StaticMemoryPool<InjectContext> _contextPool = new();
+        static readonly StaticMemoryPool<LookupId> _lookupIdPool = new();
+        static readonly StaticMemoryPool<BindInfo> _bindInfoPool = new();
+        static readonly StaticMemoryPool<BindStatement> _bindStatementPool = new();
 
         public static HashSet<T> SpawnHashSet<T>()
         {
-            return new HashSet<T>();
+            return HashSetPool<T>.Get();
         }
 
         public static Dictionary<TKey, TValue> SpawnDictionary<TKey, TValue>()
         {
-            return new Dictionary<TKey, TValue>();
-        }
-
-        public static void DespawnDictionary<TKey, TValue>(Dictionary<TKey, TValue> dictionary)
-        {
-        }
-
-        public static void DespawnHashSet<T>(HashSet<T> set)
-        {
-        }
-
-        public static LookupId SpawnLookupId(IProvider provider, BindingId bindingId)
-        {
-            return new LookupId(provider, bindingId);
-        }
-
-        public static void DespawnLookupId(LookupId lookupId)
-        {
-        }
-
-        public static BindInfo SpawnBindInfo()
-        {
-            return new BindInfo();
-        }
-
-        public static void DespawnBindInfo(BindInfo bindInfo)
-        {
-        }
-
-        public static BindStatement SpawnStatement()
-        {
-            return new BindStatement();
-        }
-
-        public static void DespawnStatement(BindStatement statement)
-        {
-        }
-#else
-        static readonly StaticMemoryPool<InjectContext> _contextPool = new StaticMemoryPool<InjectContext>();
-        static readonly StaticMemoryPool<LookupId> _lookupIdPool = new StaticMemoryPool<LookupId>();
-        static readonly StaticMemoryPool<BindInfo> _bindInfoPool = new StaticMemoryPool<BindInfo>();
-        static readonly StaticMemoryPool<BindStatement> _bindStatementPool = new StaticMemoryPool<BindStatement>();
-
-        public static HashSet<T> SpawnHashSet<T>()
-        {
-            return HashSetPool<T>.Instance.Spawn();
-        }
-
-        public static Dictionary<TKey, TValue> SpawnDictionary<TKey, TValue>()
-        {
-            return DictionaryPool<TKey, TValue>.Instance.Spawn();
+            return DictionaryPool<TKey, TValue>.Get();
         }
 
         public static BindStatement SpawnStatement()
@@ -117,12 +45,12 @@ namespace Zenject.Internal
 
         public static void DespawnDictionary<TKey, TValue>(Dictionary<TKey, TValue> dictionary)
         {
-            DictionaryPool<TKey, TValue>.Instance.Despawn(dictionary);
+            DictionaryPool<TKey, TValue>.Release(dictionary);
         }
 
         public static void DespawnHashSet<T>(HashSet<T> set)
         {
-            HashSetPool<T>.Instance.Despawn(set);
+            HashSetPool<T>.Release(set);
         }
 
         public static LookupId SpawnLookupId(IProvider provider, BindingId bindingId)
@@ -143,22 +71,12 @@ namespace Zenject.Internal
 
         public static List<T> SpawnList<T>()
         {
-            return ListPool<T>.Instance.Spawn();
+            return ListPool<T>.Get();
         }
 
         public static void DespawnList<T>(List<T> list)
         {
-            ListPool<T>.Instance.Despawn(list);
-        }
-
-        public static void DespawnArray<T>(T[] arr)
-        {
-            ArrayPool<T>.GetPool(arr.Length).Despawn(arr);
-        }
-
-        public static T[] SpawnArray<T>(int length)
-        {
-            return ArrayPool<T>.GetPool(length).Spawn();
+            ListPool<T>.Release(list);
         }
 
         public static InjectContext SpawnInjectContext(DiContainer container, Type memberType)
@@ -176,7 +94,6 @@ namespace Zenject.Internal
             context.Reset();
             _contextPool.Despawn(context);
         }
-#endif
 
         public static InjectContext SpawnInjectContext(
             DiContainer container, InjectableInfo injectableInfo, InjectContext currentContext,

@@ -60,7 +60,7 @@ namespace Zenject
                     .Where(x => argPair.Type.DerivesFromOrEqual(x.MemberType))
                     .OrderBy(x => ZenUtilInternal.GetInheritanceDelta(argPair.Type, x.MemberType)).FirstOrDefault();
 
-                Assert.That(match != null,
+                Assert.That(match.MemberType != null,
                     "Could not find match for argument type '{0}' when injecting into sub container installer '{1}'",
                     argPair.Type, _installerType);
 

@@ -5,7 +5,7 @@ using ModestTree;
 namespace Zenject
 {
     [NoReflectionBaking]
-    public abstract class StaticMemoryPoolBaseBase<TValue> : IDespawnableMemoryPool<TValue>, IDisposable
+    public abstract class StaticMemoryPoolBaseBase<TValue> : IDespawnableMemoryPool<TValue>
         where TValue : class
     {
         // I also tried using ConcurrentBag instead of Stack + lock here but that performed much much worse
@@ -21,10 +21,6 @@ namespace Zenject
         public StaticMemoryPoolBaseBase(Action<TValue> onDespawnedMethod)
         {
             _onDespawnedMethod = onDespawnedMethod;
-
-#if UNITY_EDITOR
-            StaticMemoryPoolRegistry.Add(this);
-#endif
         }
 
         public Action<TValue> OnDespawnedMethod
@@ -94,13 +90,6 @@ namespace Zenject
             }
 
             Assert.IsEqual(_stack.Count, desiredPoolSize);
-        }
-
-        public void Dispose()
-        {
-#if UNITY_EDITOR
-            StaticMemoryPoolRegistry.Remove(this);
-#endif
         }
 
         public void ClearActiveCount()

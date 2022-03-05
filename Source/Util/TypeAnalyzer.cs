@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using ModestTree;
 using Zenject.Internal;
@@ -127,7 +126,7 @@ namespace Zenject
             }
 
             {
-                return CreateTypeInfoFromReflection(type);
+                return ReflectionTypeAnalyzer.GetReflectionInfo(type);
             }
         }
 
@@ -162,25 +161,6 @@ namespace Zenject
         {
             // Apparently this is unique to static classes
             return type.IsAbstract() && type.IsSealed();
-        }
-
-        static InjectTypeInfo CreateTypeInfoFromReflection(Type type)
-        {
-            var reflectionInfo = ReflectionTypeAnalyzer.GetReflectionInfo(type);
-
-            var injectConstructor = ReflectionInfoTypeInfoConverter.ConvertConstructor(
-                reflectionInfo.InjectConstructor, type);
-
-            var injectMethods = reflectionInfo.InjectMethods.Select(
-                ReflectionInfoTypeInfoConverter.ConvertMethod).ToArray();
-
-            var memberInfos = reflectionInfo.InjectFields.Select(
-                x => ReflectionInfoTypeInfoConverter.ConvertField(type, x)).Concat(
-                    reflectionInfo.InjectProperties.Select(
-                        x => ReflectionInfoTypeInfoConverter.ConvertProperty(type, x))).ToArray();
-
-            return new InjectTypeInfo(
-                type, injectConstructor, injectMethods, memberInfos);
         }
     }
 }

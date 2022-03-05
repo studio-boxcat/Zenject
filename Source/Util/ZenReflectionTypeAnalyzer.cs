@@ -1,62 +1,64 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using ModestTree;
-#if !NOT_UNITY3D
 using UnityEngine;
-#endif
+using UnityEngine.Pool;
 
 namespace Zenject.Internal
 {
     public static class ReflectionTypeAnalyzer
     {
-        public static ReflectionTypeInfo GetReflectionInfo(Type type)
+        public static InjectTypeInfo GetReflectionInfo(Type type)
         {
             Assert.That(!type.IsEnum(), "Tried to analyze enum type '{0}'.  This is not supported", type);
             Assert.That(!type.IsArray, "Tried to analyze array type '{0}'.  This is not supported", type);
 
-            var baseType = type.BaseType();
-
-            if (baseType == typeof(object))
-            {
-                baseType = null;
-            }
-
-            return new ReflectionTypeInfo(
-                type, baseType, GetConstructorInfo(type), GetMethodInfos(type),
-                GetFieldInfos(type), GetPropertyInfos(type));
+            return new InjectTypeInfo(
+                type,
+                GetConstructorInfo(type),
+                GetMethodInfos(type),
+                GetFieldInfos(type),
+                GetPropertyInfos(type));
         }
 
-        static List<ReflectionTypeInfo.InjectPropertyInfo> GetPropertyInfos(Type type)
+        static InjectTypeInfo.InjectPropertyInfo[] GetPropertyInfos(Type type)
         {
-            var list = new List<ReflectionTypeInfo.InjectPropertyInfo>();
+            var list = ListPool<InjectTypeInfo.InjectPropertyInfo>.Get();
+
             foreach (var property in type.DeclaredInstanceProperties())
             {
                 var injectAttr = property.GetCustomAttribute<InjectAttributeBase>();
                 if (injectAttr == null) continue;
-                var propertyInfo = new ReflectionTypeInfo.InjectPropertyInfo(property, GetInjectableInfoForMember(property, injectAttr));
+                var propertyInfo = new InjectTypeInfo.InjectPropertyInfo(property, GetInjectableInfoForMember(property, injectAttr));
                 list.Add(propertyInfo);
             }
-            return list;
+
+            var arr = list.ToArray();
+            ListPool<InjectTypeInfo.InjectPropertyInfo>.Release(list);
+            return arr;
         }
 
-        static List<ReflectionTypeInfo.InjectFieldInfo> GetFieldInfos(Type type)
+        static InjectTypeInfo.InjectFieldInfo[] GetFieldInfos(Type type)
         {
-            var list = new List<ReflectionTypeInfo.InjectFieldInfo>();
+            var list = ListPool<InjectTypeInfo.InjectFieldInfo>.Get();
+
             foreach (var field in type.DeclaredInstanceFields())
             {
                 var injectAttr = field.GetCustomAttribute<InjectAttributeBase>();
                 if (injectAttr == null) continue;
-                var propertyInfo = new ReflectionTypeInfo.InjectFieldInfo(field, GetInjectableInfoForMember(field, injectAttr));
+                var propertyInfo = new InjectTypeInfo.InjectFieldInfo(field, GetInjectableInfoForMember(field, injectAttr));
                 list.Add(propertyInfo);
             }
-            return list;
+
+            var arr = list.ToArray();
+            ListPool<InjectTypeInfo.InjectFieldInfo>.Release(list);
+            return arr;
         }
 
-        static List<ReflectionTypeInfo.InjectMethodInfo> GetMethodInfos(Type type)
+        static InjectTypeInfo.InjectMethodInfo[] GetMethodInfos(Type type)
         {
-            var injectMethodInfos = new List<ReflectionTypeInfo.InjectMethodInfo>();
+            var list = ListPool<InjectTypeInfo.InjectMethodInfo>.Get();
 
             // Note that unlike with fields and properties we use GetCustomAttributes
             // This is so that we can ignore inherited attributes, which is necessary
@@ -65,31 +67,33 @@ namespace Zenject.Internal
             foreach (var methodInfo in type.DeclaredInstanceMethods())
             {
                 if (methodInfo.IsDefined(typeof(InjectAttributeBase)) == false) continue;
-                var injectMethodInfo = new ReflectionTypeInfo.InjectMethodInfo(methodInfo, BakeInjectParameterInfos(type, methodInfo));
-                injectMethodInfos.Add(injectMethodInfo);
+                var injectMethodInfo = new InjectTypeInfo.InjectMethodInfo(methodInfo, BakeInjectParameterInfos(type, methodInfo));
+                list.Add(injectMethodInfo);
             }
 
-            return injectMethodInfos;
+            var arr = list.ToArray();
+            ListPool<InjectTypeInfo.InjectMethodInfo>.Release(list);
+            return arr;
         }
 
-        static ReflectionTypeInfo.InjectConstructorInfo GetConstructorInfo(Type type)
+        static InjectTypeInfo.InjectConstructorInfo GetConstructorInfo(Type type)
         {
             var constructor = TryGetInjectConstructor(type);
             return constructor != null
-                ? new ReflectionTypeInfo.InjectConstructorInfo(constructor, BakeInjectParameterInfos(type, constructor))
-                : new ReflectionTypeInfo.InjectConstructorInfo(null, Array.Empty<ReflectionTypeInfo.InjectParameterInfo>());
+                ? new InjectTypeInfo.InjectConstructorInfo(constructor, BakeInjectParameterInfos(type, constructor))
+                : new InjectTypeInfo.InjectConstructorInfo(null, Array.Empty<InjectableInfo>());
         }
 
-        static ReflectionTypeInfo.InjectParameterInfo[] BakeInjectParameterInfos(Type type, MethodBase methodInfo)
+        static InjectableInfo[] BakeInjectParameterInfos(Type type, MethodBase methodInfo)
         {
             var paramInfos =  methodInfo.GetParameters();
-            var injectParamInfos = new ReflectionTypeInfo.InjectParameterInfo[paramInfos .Length];
+            var injectParamInfos = new InjectableInfo[paramInfos.Length];
             for (var i = 0; i < paramInfos.Length; i++)
                 injectParamInfos[i] = CreateInjectableInfoForParam(type, paramInfos[i]);
             return injectParamInfos;
         }
 
-        static ReflectionTypeInfo.InjectParameterInfo CreateInjectableInfoForParam(
+        static InjectableInfo CreateInjectableInfoForParam(
             Type parentType, ParameterInfo paramInfo)
         {
             var injectAttributes = paramInfo.GetCustomAttributes<InjectAttributeBase>().ToList();
@@ -112,15 +116,13 @@ namespace Zenject.Internal
 
             bool isOptionalWithADefaultValue = (paramInfo.Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault;
 
-            return new ReflectionTypeInfo.InjectParameterInfo(
-                paramInfo,
-                new InjectableInfo(
-                    isOptionalWithADefaultValue || isOptional,
-                    identifier,
-                    paramInfo.Name,
-                    paramInfo.ParameterType,
-                    isOptionalWithADefaultValue ? paramInfo.DefaultValue : null,
-                    sourceType));
+            return new InjectableInfo(
+                isOptionalWithADefaultValue || isOptional,
+                identifier,
+                paramInfo.Name,
+                paramInfo.ParameterType,
+                isOptionalWithADefaultValue ? paramInfo.DefaultValue : null,
+                sourceType);
         }
 
         static InjectableInfo GetInjectableInfoForMember(MemberInfo memInfo, InjectAttributeBase injectAttr)
@@ -150,14 +152,7 @@ namespace Zenject.Internal
 
         static ConstructorInfo TryGetInjectConstructor(Type type)
         {
-#if !NOT_UNITY3D
-            if (type.DerivesFromOrEqual<Component>())
-            {
-                return null;
-            }
-#endif
-
-            if (type.IsAbstract())
+            if (type.DerivesFromOrEqual<Component>() || type.IsAbstract())
             {
                 return null;
             }
@@ -178,28 +173,5 @@ namespace Zenject.Internal
 
             throw new Exception("이용가능한 생성자가 2개 이상입니다.");
         }
-
-#if UNITY_WSA && ENABLE_DOTNET && !UNITY_EDITOR
-        static bool IsWp8GeneratedConstructor(ConstructorInfo c)
-        {
-            ParameterInfo[] args = c.GetParameters();
-
-            if (args.Length == 1)
-            {
-                return args[0].ParameterType == typeof(UIntPtr)
-                    && (string.IsNullOrEmpty(args[0].Name) || args[0].Name == "dummy");
-            }
-
-            if (args.Length == 2)
-            {
-                return args[0].ParameterType == typeof(UIntPtr)
-                    && args[1].ParameterType == typeof(Int64*)
-                    && (string.IsNullOrEmpty(args[0].Name) || args[0].Name == "dummy")
-                    && (string.IsNullOrEmpty(args[1].Name) || args[1].Name == "dummy");
-            }
-
-            return false;
-        }
-#endif
     }
 }
