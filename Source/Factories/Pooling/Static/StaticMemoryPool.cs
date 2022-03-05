@@ -14,10 +14,6 @@ namespace Zenject
         Action<TValue> _onDespawnedMethod;
         int _activeCount;
 
-#if ZEN_MULTITHREADING
-        protected readonly object _locker = new object();
-#endif
-
         public StaticMemoryPoolBaseBase(Action<TValue> onDespawnedMethod)
         {
             _onDespawnedMethod = onDespawnedMethod;
@@ -28,50 +24,14 @@ namespace Zenject
             set { _onDespawnedMethod = value; }
         }
 
-        public int NumTotal
-        {
-            get { return NumInactive + NumActive; }
-        }
-
-        public int NumActive
-        {
-            get
-            {
-#if ZEN_MULTITHREADING
-                lock (_locker)
-#endif
-                {
-                    return _activeCount;
-                }
-            }
-        }
-
-        public int NumInactive
-        {
-            get
-            {
-#if ZEN_MULTITHREADING
-                lock (_locker)
-#endif
-                {
-                    return _stack.Count;
-                }
-            }
-        }
-
-        public Type ItemType
-        {
-            get { return typeof(TValue); }
-        }
+        public int NumTotal => NumInactive + NumActive;
+        public int NumActive => _activeCount;
+        public int NumInactive => _stack.Count;
+        public Type ItemType => typeof(TValue);
 
         public void Resize(int desiredPoolSize)
         {
-#if ZEN_MULTITHREADING
-            lock (_locker)
-#endif
-            {
-                ResizeInternal(desiredPoolSize);
-            }
+            ResizeInternal(desiredPoolSize);
         }
 
         // We assume here that we're in a lock
@@ -94,12 +54,7 @@ namespace Zenject
 
         public void ClearActiveCount()
         {
-#if ZEN_MULTITHREADING
-            lock (_locker)
-#endif
-            {
-                _activeCount = 0;
-            }
+            _activeCount = 0;
         }
 
         public void Clear()
@@ -109,22 +64,12 @@ namespace Zenject
 
         public void ShrinkBy(int numToRemove)
         {
-#if ZEN_MULTITHREADING
-            lock (_locker)
-#endif
-            {
-                ResizeInternal(_stack.Count - numToRemove);
-            }
+            ResizeInternal(_stack.Count - numToRemove);
         }
 
         public void ExpandBy(int numToAdd)
         {
-#if ZEN_MULTITHREADING
-            lock (_locker)
-#endif
-            {
-                ResizeInternal(_stack.Count + numToAdd);
-            }
+            ResizeInternal(_stack.Count + numToAdd);
         }
 
         // We assume here that we're in a lock
@@ -157,15 +102,10 @@ namespace Zenject
                 _onDespawnedMethod(element);
             }
 
-#if ZEN_MULTITHREADING
-            lock (_locker)
-#endif
-            {
-                Assert.That(!_stack.Contains(element), "Attempted to despawn element twice!");
+            Assert.That(!_stack.Contains(element), "Attempted to despawn element twice!");
 
-                _activeCount--;
-                _stack.Push(element);
-            }
+            _activeCount--;
+            _stack.Push(element);
         }
 
         protected abstract TValue Alloc();
@@ -208,19 +148,14 @@ namespace Zenject
 
         public TValue Spawn()
         {
-#if ZEN_MULTITHREADING
-            lock (_locker)
-#endif
+            var item = SpawnInternal();
+
+            if (_onSpawnMethod != null)
             {
-                var item = SpawnInternal();
-
-                if (_onSpawnMethod != null)
-                {
-                    _onSpawnMethod(item);
-                }
-
-                return item;
+                _onSpawnMethod(item);
             }
+
+            return item;
         }
     }
 }

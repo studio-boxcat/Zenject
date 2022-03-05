@@ -8,12 +8,7 @@ namespace Zenject
     public class SubContainerCreatorCached : ISubContainerCreator
     {
         readonly ISubContainerCreator _subCreator;
-
-#if ZEN_MULTITHREADING
-        readonly object _locker = new object();
-#else
         bool _isLookingUp;
-#endif
         DiContainer _subContainer;
 
         public SubContainerCreatorCached(ISubContainerCreator subCreator)
@@ -27,34 +22,25 @@ namespace Zenject
             // the arguments might change when called after the first time
             Assert.IsEmpty(args);
 
-#if ZEN_MULTITHREADING
-            lock (_locker)
-#endif
+            if (_subContainer == null)
             {
-                if (_subContainer == null)
-                {
-#if !ZEN_MULTITHREADING
-                    Assert.That(!_isLookingUp,
-                        "Found unresolvable circular dependency when looking up sub container!  Object graph:\n {0}", context.GetObjectGraphString());
-                    _isLookingUp = true;
-#endif
+                Assert.That(!_isLookingUp,
+                    "Found unresolvable circular dependency when looking up sub container!  Object graph:\n {0}", context.GetObjectGraphString());
+                _isLookingUp = true;
 
-                    _subContainer = _subCreator.CreateSubContainer(
-                            new List<TypeValuePair>(), context, out injectAction);
+                _subContainer = _subCreator.CreateSubContainer(
+                        new List<TypeValuePair>(), context, out injectAction);
 
-#if !ZEN_MULTITHREADING
-                    _isLookingUp = false;
-#endif
+                _isLookingUp = false;
 
-                    Assert.IsNotNull(_subContainer);
-                }
-                else 
-                {
-                    injectAction = null;
-                }
-
-                return _subContainer;
+                Assert.IsNotNull(_subContainer);
             }
+            else
+            {
+                injectAction = null;
+            }
+
+            return _subContainer;
         }
     }
 }
