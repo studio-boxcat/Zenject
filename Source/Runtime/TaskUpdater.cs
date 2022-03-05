@@ -7,7 +7,7 @@ namespace Zenject
 {
     // Update tasks once per frame based on a priority
     [DebuggerStepThrough]
-    public abstract class TaskUpdater<TTask>
+    public abstract class TaskUpdater<TTask> where TTask : class
     {
         readonly LinkedList<TaskInfo> _tasks = new LinkedList<TaskInfo>();
         readonly List<TaskInfo> _queuedTasks = new List<TaskInfo>();
@@ -40,7 +40,7 @@ namespace Zenject
 
         public void RemoveTask(TTask task)
         {
-            var info = AllTasks.Where(x => ReferenceEquals(x.Task, task)).SingleOrDefault();
+            var info = AllTasks.SingleOrDefault(x => ReferenceEquals(x.Task, task));
 
             Assert.IsNotNull(info, "Tried to remove a task not added to DependencyRoot, task = " + task.GetType().Name);
 

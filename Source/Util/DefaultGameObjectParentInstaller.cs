@@ -26,13 +26,10 @@ namespace Zenject
 
             Container.Bind<IDisposable>()
                 .To<DefaultParentObjectDestroyer>().AsCached().WithArguments(defaultParent);
-
-            // Always destroy the default parent last so that the non-monobehaviours get a chance
-            // to clean it up if they want to first
-            Container.BindDisposableExecutionOrder<DefaultParentObjectDestroyer>(int.MinValue);
 #endif
         }
 
+        [ExecutionPriority(int.MinValue)]
         class DefaultParentObjectDestroyer : IDisposable
         {
             readonly GameObject _gameObject;

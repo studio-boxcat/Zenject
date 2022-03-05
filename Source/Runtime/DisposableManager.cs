@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using ModestTree;
-using ModestTree.Util;
 
 namespace Zenject
 {
     public class DisposableManager : IDisposable
     {
-        readonly List<DisposableInfo> _disposables = new List<DisposableInfo>();
-        readonly List<LateDisposableInfo> _lateDisposables = new List<LateDisposableInfo>();
+        readonly List<DisposableInfo> _disposables;
+        readonly List<LateDisposableInfo> _lateDisposables;
         bool _disposed;
         bool _lateDisposed;
 
@@ -18,27 +18,22 @@ namespace Zenject
             [Inject(Optional = true, Source = InjectSources.Local)]
             List<IDisposable> disposables,
             [Inject(Optional = true, Source = InjectSources.Local)]
-            List<ValuePair<Type, int>> priorities,
-            [Inject(Optional = true, Source = InjectSources.Local)]
-            List<ILateDisposable> lateDisposables,
-            [Inject(Id = "Late", Optional = true, Source = InjectSources.Local)]
-            List<ValuePair<Type, int>> latePriorities)
+            List<ILateDisposable> lateDisposables)
         {
+            _disposables = new List<DisposableInfo>(disposables.Count);
+            _lateDisposables = new List<LateDisposableInfo>(lateDisposables.Count);
+
             foreach (var disposable in disposables)
             {
                 // Note that we use zero for unspecified priority
                 // This is nice because you can use negative or positive for before/after unspecified
-                var match = priorities.Where(x => disposable.GetType().DerivesFromOrEqual(x.First)).Select(x => (int?)x.Second).SingleOrDefault();
-                int priority = match.HasValue ? match.Value : 0;
-
+                var priority = disposable.GetType().GetCustomAttribute<ExecutionPriorityAttribute>()?.Priority ?? 0;
                 _disposables.Add(new DisposableInfo(disposable, priority));
             }
 
             foreach (var lateDisposable in lateDisposables)
             {
-                var match = latePriorities.Where(x => lateDisposable.GetType().DerivesFromOrEqual(x.First)).Select(x => (int?)x.Second).SingleOrDefault();
-                int priority = match.HasValue ? match.Value : 0;
-
+                var priority = lateDisposable.GetType().GetCustomAttribute<ExecutionPriorityAttribute>()?.Priority ?? 0;
                 _lateDisposables.Add(new LateDisposableInfo(lateDisposable, priority));
             }
         }
@@ -68,7 +63,7 @@ namespace Zenject
         public void Remove(IDisposable disposable)
         {
             _disposables.RemoveWithConfirm(
-                _disposables.Where(x => ReferenceEquals(x.Disposable, disposable)).Single());
+                _disposables.Single(x => ReferenceEquals(x.Disposable, disposable)));
         }
 
         public void LateDispose()
@@ -77,16 +72,16 @@ namespace Zenject
             _lateDisposed = true;
 
             // Dispose in the reverse order that they are initialized in
-            var disposablesOrdered = _lateDisposables.OrderBy(x => x.Priority).Reverse().ToList();
+            _lateDisposables.Sort((a, b) => b.Priority.CompareTo(a.Priority));
 
 #if UNITY_EDITOR
-            foreach (var disposable in disposablesOrdered.Select(x => x.LateDisposable).GetDuplicates())
+            foreach (var disposable in _lateDisposables.Select(x => x.LateDisposable).GetDuplicates())
             {
                 Assert.That(false, "Found duplicate ILateDisposable with type '{0}'".Fmt(disposable.GetType()));
             }
 #endif
 
-            foreach (var disposable in disposablesOrdered)
+            foreach (var disposable in _lateDisposables)
             {
                 try
                 {
@@ -106,16 +101,16 @@ namespace Zenject
             _disposed = true;
 
             // Dispose in the reverse order that they are initialized in
-            var disposablesOrdered = _disposables.OrderBy(x => x.Priority).Reverse().ToList();
+            _disposables.Sort((a, b) => b.Priority.CompareTo(a.Priority));
 
 #if UNITY_EDITOR
-            foreach (var disposable in disposablesOrdered.Select(x => x.Disposable).GetDuplicates())
+            foreach (var disposable in _disposables.Select(x => x.Disposable).GetDuplicates())
             {
                 Assert.That(false, "Found duplicate IDisposable with type '{0}'".Fmt(disposable.GetType()));
             }
 #endif
 
-            foreach (var disposable in disposablesOrdered)
+            foreach (var disposable in _disposables)
             {
                 try
                 {
@@ -131,8 +126,8 @@ namespace Zenject
 
         struct DisposableInfo
         {
-            public IDisposable Disposable;
-            public int Priority;
+            public readonly IDisposable Disposable;
+            public readonly int Priority;
 
             public DisposableInfo(IDisposable disposable, int priority)
             {
@@ -141,10 +136,10 @@ namespace Zenject
             }
         }
 
-        class LateDisposableInfo
+        struct LateDisposableInfo
         {
-            public ILateDisposable LateDisposable;
-            public int Priority;
+            public readonly ILateDisposable LateDisposable;
+            public readonly int Priority;
 
             public LateDisposableInfo(ILateDisposable lateDisposable, int priority)
             {

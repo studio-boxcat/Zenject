@@ -2,6 +2,7 @@ using System;
 
 namespace Zenject
 {
+    [ExecutionPriority(-1)]
     public class SceneContextRegistryAdderAndRemover : IInitializable, IDisposable
     {
         readonly SceneContextRegistry _registry;

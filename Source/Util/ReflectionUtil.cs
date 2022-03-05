@@ -75,8 +75,6 @@ namespace ModestTree
                 list = new List<ILateTickable>(count);
             else if (elementType == typeof(ITickable))
                 list = new List<ITickable>(count);
-            else if (elementType == typeof(ValuePair<Type, int>))
-                list = new List<ValuePair<Type, int>>(count);
             else
                 return null;
 

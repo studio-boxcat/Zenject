@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using ModestTree;
-using ModestTree.Util;
 
 namespace Zenject
 {
@@ -10,49 +10,23 @@ namespace Zenject
     // - Run Initialize() on all Iinitializable's, in the order specified by InitPriority
     public class InitializableManager
     {
-        List<InitializableInfo> _initializables;
+        readonly List<InitializableInfo> _initializables;
 
         bool _hasInitialized;
 
         [Inject]
         public InitializableManager(
             [Inject(Optional = true, Source = InjectSources.Local)]
-            List<IInitializable> initializables,
-            [Inject(Optional = true, Source = InjectSources.Local)]
-            List<ValuePair<Type, int>> priorities)
+            List<IInitializable> initializables)
         {
             _initializables = new List<InitializableInfo>(initializables.Count);
 
-            if (initializables.Count == 0)
+            foreach (var initializable in initializables)
             {
-                // Do nothing.
-            }
-            else if (initializables.Count == 1)
-            {
-                var initializable = initializables[0];
-                var type = initializable.GetType();
-
-                foreach (var valuePair in priorities)
-                {
-                    if (type.DerivesFromOrEqual(valuePair.First)) continue;
-                    _initializables.Add(new InitializableInfo(initializable, valuePair.Second));
-                    break;
-                }
-
-                if (_initializables.Count == 0)
-                    _initializables.Add(new InitializableInfo(initializable, 0));
-            }
-            else
-            {
-                foreach (var initializable in initializables)
-                {
-                    // Note that we use zero for unspecified priority
-                    // This is nice because you can use negative or positive for before/after unspecified
-                    var matches = priorities.Where(x => initializable.GetType().DerivesFromOrEqual(x.First)).Select(x => x.Second).ToList();
-                    int priority = matches.IsEmpty() ? 0 : matches.Distinct().Single();
-
-                    _initializables.Add(new InitializableInfo(initializable, priority));
-                }
+                // Note that we use zero for unspecified priority
+                // This is nice because you can use negative or positive for before/after unspecified
+                var priority = initializable.GetType().GetCustomAttribute<ExecutionPriorityAttribute>()?.Priority ?? 0;
+                _initializables.Add(new InitializableInfo(initializable, priority));
             }
         }
 
@@ -64,8 +38,7 @@ namespace Zenject
         public void Add(IInitializable initializable, int priority)
         {
             Assert.That(!_hasInitialized);
-            _initializables.Add(
-                new InitializableInfo(initializable, priority));
+            _initializables.Add(new InitializableInfo(initializable, priority));
         }
 
         public void Initialize()
@@ -73,7 +46,7 @@ namespace Zenject
             Assert.That(!_hasInitialized);
             _hasInitialized = true;
 
-            _initializables = _initializables.OrderBy(x => x.Priority).ToList();
+            _initializables.Sort((a, b)=> a.Priority.CompareTo(b.Priority));
 
 #if UNITY_EDITOR
             foreach (var initializable in _initializables.Select(x => x.Initializable).GetDuplicates())
@@ -104,10 +77,10 @@ namespace Zenject
             }
         }
 
-        class InitializableInfo
+        struct InitializableInfo
         {
-            public IInitializable Initializable;
-            public int Priority;
+            public readonly IInitializable Initializable;
+            public readonly int Priority;
 
             public InitializableInfo(IInitializable initializable, int priority)
             {
