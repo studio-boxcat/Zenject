@@ -143,35 +143,6 @@ namespace Zenject
                 BindInfo, BindStatement, subIdentifier, resolveAll);
         }
 
-        protected ScopeConcreteIdArgConditionCopyNonLazyBinder FromIFactoryBase<TContract>(
-            Action<ConcreteBinderGeneric<IFactory<TContract>>> factoryBindGenerator)
-        {
-            // Use a random ID so that our provider is the only one that can find it and so it doesn't
-            // conflict with anything else
-            var factoryId = Guid.NewGuid();
-
-            // Important to use NoFlush here otherwise the main binding will finalize early
-            var subBinder = BindContainer.BindNoFlush<IFactory<TContract>>()
-                .WithId(factoryId);
-
-            factoryBindGenerator(subBinder);
-
-            // This is kind of like a look up method like FromMethod so don't enforce specifying scope
-            // The internal binding will require an explicit scope so should be obvious enough
-            BindInfo.RequireExplicitScope = false;
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, type) => new IFactoryProvider<TContract>(container, factoryId));
-
-            var binder = new ScopeConcreteIdArgConditionCopyNonLazyBinder(BindInfo);
-            // Needed for example if the user uses MoveIntoDirectSubContainers
-            binder.AddSecondaryCopyBindInfo(subBinder.BindInfo);
-            return binder;
-        }
-
 #if !NOT_UNITY3D
 
         public ScopeConcreteIdArgConditionCopyNonLazyBinder FromComponentsOn(GameObject gameObject)

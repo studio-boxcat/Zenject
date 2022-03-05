@@ -17,19 +17,6 @@ namespace Zenject
         {
         }
 
-        // Shortcut for FromIFactory and also for backwards compatibility
-        public ScopeConcreteIdArgConditionCopyNonLazyBinder FromFactory<TConcrete, TFactory>()
-            where TFactory : IFactory<TConcrete>
-        {
-            return FromIFactory<TConcrete>(x => x.To<TFactory>().AsCached());
-        }
-
-        public ScopeConcreteIdArgConditionCopyNonLazyBinder FromIFactory<TContract>(
-            Action<ConcreteBinderGeneric<IFactory<TContract>>> factoryBindGenerator)
-        {
-            return FromIFactoryBase<TContract>(factoryBindGenerator);
-        }
-
         public ScopeConcreteIdArgConditionCopyNonLazyBinder FromMethod<TConcrete>(Func<InjectContext, TConcrete> method)
         {
             return FromMethodBase<TConcrete>(method);

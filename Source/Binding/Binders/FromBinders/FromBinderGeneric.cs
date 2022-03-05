@@ -21,19 +21,6 @@ namespace Zenject
             BindingUtil.AssertIsDerivedFromTypes(typeof(TContract), BindInfo.ContractTypes);
         }
 
-        // Shortcut for FromIFactory and also for backwards compatibility
-        public ScopeConcreteIdArgConditionCopyNonLazyBinder FromFactory<TFactory>()
-            where TFactory : IFactory<TContract>
-        {
-            return FromIFactory(x => x.To<TFactory>().AsCached());
-        }
-
-        public ScopeConcreteIdArgConditionCopyNonLazyBinder FromIFactory(
-            Action<ConcreteBinderGeneric<IFactory<TContract>>> factoryBindGenerator)
-        {
-            return FromIFactoryBase<TContract>(factoryBindGenerator);
-        }
-
         public ScopeConcreteIdArgConditionCopyNonLazyBinder FromMethod(Func<TContract> method)
         {
             return FromMethodBase<TContract>(ctx => method());
