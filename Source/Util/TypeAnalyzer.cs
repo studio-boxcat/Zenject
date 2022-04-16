@@ -48,10 +48,7 @@ namespace Zenject
                 }
             }
 
-            using (ProfileBlock.Start("Zenject Reflection"))
-            {
-                info = GetInfoInternal(type);
-            }
+            info = GetInfoInternal(type);
 
             if (info != null)
             {

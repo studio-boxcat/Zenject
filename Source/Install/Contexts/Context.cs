@@ -132,12 +132,7 @@ namespace Zenject
 
                 GameObject installerGameObject;
 
-#if ZEN_INTERNAL_PROFILING
-                using (ProfileTimers.CreateTimedBlock("GameObject.Instantiate"))
-#endif
-                {
-                    installerGameObject = GameObject.Instantiate(installerPrefab.gameObject);
-                }
+                installerGameObject = GameObject.Instantiate(installerPrefab.gameObject);
 
                 installerGameObject.transform.SetParent(transform, false);
                 var installer = installerGameObject.GetComponent<MonoInstaller>();
@@ -154,12 +149,7 @@ namespace Zenject
 
                 Container.Inject(installer);
 
-#if ZEN_INTERNAL_PROFILING
-                using (ProfileTimers.CreateTimedBlock("User Code"))
-#endif
-                {
-                    installer.InstallBindings();
-                }
+                installer.InstallBindings();
             }
         }
 

@@ -90,12 +90,7 @@ namespace Zenject
 
                 if (shouldMakeActive)
                 {
-#if ZEN_INTERNAL_PROFILING
-                    using (ProfileTimers.CreateTimedBlock("User Code"))
-#endif
-                    {
-                        gameObject.SetActive(true);
-                    }
+                    gameObject.SetActive(true);
                 }
             };
 

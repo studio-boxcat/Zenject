@@ -49,13 +49,7 @@ namespace Zenject
 
         public void Awake()
         {
-#if ZEN_INTERNAL_PROFILING
-            ProfileTimers.ResetAll();
-            using (ProfileTimers.CreateTimedBlock("Other"))
-#endif
-            {
-                Initialize();
-            }
+            Initialize();
         }
 
         protected override void RunInternal()
@@ -63,19 +57,9 @@ namespace Zenject
             // We always want to initialize ProjectContext as early as possible
             ProjectContext.Instance.EnsureIsInitialized();
 
-#if UNITY_EDITOR
-            using (ProfileBlock.Start("Zenject.SceneContext.Install"))
-#endif
-            {
-                Install();
-            }
+            Install();
 
-#if UNITY_EDITOR
-            using (ProfileBlock.Start("Zenject.SceneContext.Resolve"))
-#endif
-            {
-                Resolve();
-            }
+            Resolve();
         }
 
         public override IEnumerable<GameObject> GetRootGameObjects()
