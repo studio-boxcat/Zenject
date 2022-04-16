@@ -16,7 +16,7 @@ namespace Zenject
     // - Look up bound values via Resolve() method
     // - Instantiate new values via InstantiateX() methods
     [NoReflectionBaking]
-    public class DiContainer : IInstantiator
+    public class DiContainer
     {
         readonly Dictionary<BindingId, List<ProviderInfo>> _providers = new Dictionary<BindingId, List<ProviderInfo>>();
 
@@ -106,7 +106,7 @@ namespace Zenject
 
         void InstallDefaultBindings()
         {
-            Bind(typeof(DiContainer), typeof(IInstantiator)).FromInstance(this);
+            Bind(typeof(DiContainer)).FromInstance(this);
             Bind(typeof(LazyInject<>)).FromMethodUntyped(CreateLazyBinding).Lazy();
         }
 
