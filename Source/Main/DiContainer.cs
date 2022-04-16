@@ -445,20 +445,6 @@ namespace Zenject
             }
         }
 
-        public void Install<TInstaller>()
-            where TInstaller : Installer
-        {
-            Instantiate<TInstaller>().InstallBindings();
-        }
-
-        // Note: You might want to use Installer<> as your base class instead to allow
-        // for strongly typed parameters
-        public void Install<TInstaller>(object[] extraArgs)
-            where TInstaller : Installer
-        {
-            Instantiate<TInstaller>(extraArgs).InstallBindings();
-        }
-
         public IList ResolveAll(InjectContext context)
         {
             var buffer = ZenPools.SpawnList<object>();

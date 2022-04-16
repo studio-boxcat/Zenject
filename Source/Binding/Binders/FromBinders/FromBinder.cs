@@ -110,39 +110,6 @@ namespace Zenject
             return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
         }
 
-        public SubContainerBinder FromSubContainerResolveAll()
-        {
-            return FromSubContainerResolveAll(null);
-        }
-
-        public SubContainerBinder FromSubContainerResolveAll(object subIdentifier)
-        {
-            return FromSubContainerResolveInternal(subIdentifier, true);
-        }
-
-        public SubContainerBinder FromSubContainerResolve()
-        {
-            return FromSubContainerResolve(null);
-        }
-
-        public SubContainerBinder FromSubContainerResolve(object subIdentifier)
-        {
-            return FromSubContainerResolveInternal(subIdentifier, false);
-        }
-
-        SubContainerBinder FromSubContainerResolveInternal(
-            object subIdentifier, bool resolveAll)
-        {
-            // It's unlikely they will want to create the whole subcontainer with each binding
-            // (aka transient) which is the default so require that they specify it
-            BindInfo.RequireExplicitScope = true;
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-
-            return new SubContainerBinder(
-                BindInfo, BindStatement, subIdentifier, resolveAll);
-        }
-
 #if !NOT_UNITY3D
 
         public ScopeConcreteIdArgNonLazyBinder FromComponentsOn(GameObject gameObject)
