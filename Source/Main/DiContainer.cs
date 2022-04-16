@@ -1246,7 +1246,7 @@ namespace Zenject
         // Any constructor parameters will be filled in with values from the container
         public T Instantiate<T>()
         {
-            return Instantiate<T>(new object[0]);
+            return Instantiate<T>(Array.Empty<object>());
         }
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
@@ -1260,7 +1260,7 @@ namespace Zenject
 
         public object Instantiate(Type concreteType)
         {
-            return Instantiate(concreteType, new object[0]);
+            return Instantiate(concreteType, Array.Empty<object>());
         }
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
@@ -1282,7 +1282,7 @@ namespace Zenject
         public TContract InstantiateComponent<TContract>(GameObject gameObject)
             where TContract : Component
         {
-            return InstantiateComponent<TContract>(gameObject, new object[0]);
+            return InstantiateComponent<TContract>(gameObject, Array.Empty<object>());
         }
 
         // Add new component to existing game object and fill in its dependencies
@@ -1303,7 +1303,7 @@ namespace Zenject
         public Component InstantiateComponent(
             Type componentType, GameObject gameObject)
         {
-            return InstantiateComponent(componentType, gameObject, new object[0]);
+            return InstantiateComponent(componentType, gameObject, Array.Empty<object>());
         }
 
         // Add new component to existing game object and fill in its dependencies
@@ -1406,7 +1406,7 @@ namespace Zenject
         public T InstantiatePrefabForComponent<T>(UnityEngine.Object prefab)
         {
             return (T)InstantiatePrefabForComponent(
-                typeof(T), prefab, null, new object[0]);
+                typeof(T), prefab, null, Array.Empty<object>());
         }
 
         // Same as InstantiatePrefab but returns a component after it's initialized
@@ -1424,7 +1424,7 @@ namespace Zenject
             UnityEngine.Object prefab, Transform parentTransform)
         {
             return (T)InstantiatePrefabForComponent(
-                typeof(T), prefab, parentTransform, new object[0]);
+                typeof(T), prefab, parentTransform, Array.Empty<object>());
         }
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
@@ -1440,7 +1440,7 @@ namespace Zenject
             UnityEngine.Object prefab, Vector3 position, Quaternion rotation, Transform parentTransform)
         {
             return (T)InstantiatePrefabForComponent(
-                typeof(T), prefab, new object[0], new GameObjectCreationParameters
+                typeof(T), prefab, Array.Empty<object>(), new GameObjectCreationParameters
                 {
                     ParentTransform = parentTransform,
                     Position = position,
@@ -1489,7 +1489,7 @@ namespace Zenject
         public T InstantiatePrefabResourceForComponent<T>(string resourcePath)
         {
             return (T)InstantiatePrefabResourceForComponent(
-                typeof(T), resourcePath, null, new object[0]);
+                typeof(T), resourcePath, null, Array.Empty<object>());
         }
 
         // Same as InstantiatePrefabResource but returns a component after it's initialized
@@ -1507,7 +1507,7 @@ namespace Zenject
             string resourcePath, Transform parentTransform)
         {
             return (T)InstantiatePrefabResourceForComponent(
-                typeof(T), resourcePath, parentTransform, new object[0]);
+                typeof(T), resourcePath, parentTransform, Array.Empty<object>());
         }
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
@@ -1522,7 +1522,7 @@ namespace Zenject
         public T InstantiatePrefabResourceForComponent<T>(
             string resourcePath, Vector3 position, Quaternion rotation, Transform parentTransform)
         {
-            return InstantiatePrefabResourceForComponent<T>(resourcePath, position, rotation, parentTransform, new object[0]);
+            return InstantiatePrefabResourceForComponent<T>(resourcePath, position, rotation, parentTransform, Array.Empty<object>());
         }
 
         public T InstantiatePrefabResourceForComponent<T>(
@@ -1559,7 +1559,7 @@ namespace Zenject
         public T InstantiateScriptableObjectResource<T>(string resourcePath)
             where T : ScriptableObject
         {
-            return InstantiateScriptableObjectResource<T>(resourcePath, new object[0]);
+            return InstantiateScriptableObjectResource<T>(resourcePath, Array.Empty<object>());
         }
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
@@ -1576,7 +1576,7 @@ namespace Zenject
             Type scriptableObjectType, string resourcePath)
         {
             return InstantiateScriptableObjectResource(
-                scriptableObjectType, resourcePath, new object[0]);
+                scriptableObjectType, resourcePath, Array.Empty<object>());
         }
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
@@ -1616,7 +1616,7 @@ namespace Zenject
         public T InjectGameObjectForComponent<T>(GameObject gameObject)
             where T : Component
         {
-            return InjectGameObjectForComponent<T>(gameObject, new object[0]);
+            return InjectGameObjectForComponent<T>(gameObject, Array.Empty<object>());
         }
 
         // Same as InjectGameObject except it will also search the game object for the
@@ -1696,7 +1696,7 @@ namespace Zenject
         //    Any constructor parameters will be filled in with values from the container
         public void Inject(object injectable)
         {
-            Inject(injectable, new object[0]);
+            Inject(injectable, Array.Empty<object>());
         }
 
         // Same as Inject(injectable) except allows adding extra values to be injected
