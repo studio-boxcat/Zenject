@@ -32,7 +32,7 @@ namespace Zenject
 
             injectAction = null;
 
-            var gameObj = _container.CreateEmptyGameObject(_gameObjectBindInfo, context);
+            var gameObj = _container.CreateEmptyGameObject(_gameObjectBindInfo);
             buffer.Add(gameObj);
         }
     }

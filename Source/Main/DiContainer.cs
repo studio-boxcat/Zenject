@@ -1298,11 +1298,10 @@ namespace Zenject
 
         public GameObject CreateEmptyGameObject(string name)
         {
-            return CreateEmptyGameObject(new GameObjectCreationParameters { Name = name }, null);
+            return CreateEmptyGameObject(new GameObjectCreationParameters { Name = name });
         }
 
-        public GameObject CreateEmptyGameObject(
-            GameObjectCreationParameters gameObjectBindInfo, InjectContext context)
+        public GameObject CreateEmptyGameObject(GameObjectCreationParameters gameObjectBindInfo)
         {
             FlushBindings();
 

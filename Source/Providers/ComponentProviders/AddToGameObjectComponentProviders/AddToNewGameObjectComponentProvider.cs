@@ -31,7 +31,7 @@ namespace Zenject
                 _gameObjectBindInfo.Name = ComponentType.Name;
             }
 
-            return Container.CreateEmptyGameObject(_gameObjectBindInfo, context);
+            return Container.CreateEmptyGameObject(_gameObjectBindInfo);
         }
     }
 }
