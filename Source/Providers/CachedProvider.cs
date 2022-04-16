@@ -30,8 +30,7 @@ namespace Zenject
             return _creator.GetInstanceType(context);
         }
 
-        public void GetAllInstancesWithInjectSplit(
-            InjectContext context, List<TypeValuePair> args, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
@@ -55,7 +54,7 @@ namespace Zenject
             _isCreatingInstance = true;
 
             var instances = new List<object>();
-            _creator.GetAllInstancesWithInjectSplit(context, args, out injectAction, instances);
+            _creator.GetAllInstancesWithInjectSplit(context, out injectAction, instances);
             Assert.IsNotNull(instances);
 
             _instances = instances;

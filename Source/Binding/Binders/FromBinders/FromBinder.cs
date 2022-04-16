@@ -7,8 +7,6 @@ using System.Linq;
 using UnityEngine;
 #endif
 
-using Zenject.Internal;
-
 namespace Zenject
 {
     public abstract class FromBinder : ScopeConcreteIdArgNonLazyBinder
@@ -235,229 +233,6 @@ namespace Zenject
             return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromComponentInChildren(
-            bool includeInactive = true)
-        {
-            BindingUtil.AssertIsInterfaceOrComponent(AllParentTypes);
-
-            BindInfo.RequireExplicitScope = false;
-
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, concreteType) => new MethodMultipleProviderUntyped(ctx =>
-                    {
-                        Assert.That(ctx.ObjectType.DerivesFromOrEqual<MonoBehaviour>(),
-                            "Cannot use FromComponentInChildren to inject data into non monobehaviours!");
-
-                        Assert.IsNotNull(ctx.ObjectInstance);
-
-                        var monoBehaviour = (MonoBehaviour)ctx.ObjectInstance;
-
-                        var match = monoBehaviour.GetComponentInChildren(concreteType, includeInactive);
-
-                        if (match == null)
-                        {
-                            Assert.That(ctx.Optional,
-                                "Could not find any component with type '{0}' through FromComponentInChildren binding", concreteType);
-                            return Enumerable.Empty<object>();
-                        }
-
-                        return new object[] { match };
-                    },
-                    container));
-
-            return this;
-        }
-
-        protected ScopeConcreteIdArgNonLazyBinder FromComponentsInChildrenBase(
-            bool excludeSelf, Func<Component, bool> predicate, bool includeInactive)
-        {
-            BindingUtil.AssertIsInterfaceOrComponent(AllParentTypes);
-
-            BindInfo.RequireExplicitScope = false;
-
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, concreteType) => new MethodMultipleProviderUntyped(ctx =>
-                    {
-                        Assert.That(ctx.ObjectType.DerivesFromOrEqual<MonoBehaviour>(),
-                            "Cannot use FromComponentsInChildren to inject data into non monobehaviours!");
-
-                        Assert.IsNotNull(ctx.ObjectInstance);
-
-                        var monoBehaviour = (MonoBehaviour)ctx.ObjectInstance;
-
-                        var res = monoBehaviour.GetComponentsInChildren(concreteType, includeInactive)
-                            .Where(x => !ReferenceEquals(x, ctx.ObjectInstance));
-
-                        if (excludeSelf)
-                        {
-                            res = res.Where(x => x.gameObject != monoBehaviour.gameObject);
-                        }
-
-                        if (predicate != null)
-                        {
-                            res = res.Where(predicate);
-                        }
-
-                        return res.Cast<object>();
-                    },
-                    container));
-
-            return this;
-        }
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentInParents(
-            bool excludeSelf = false, bool includeInactive = true)
-        {
-            BindingUtil.AssertIsInterfaceOrComponent(AllParentTypes);
-
-            BindInfo.RequireExplicitScope = false;
-
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, concreteType) => new MethodMultipleProviderUntyped(ctx =>
-                    {
-                        Assert.That(ctx.ObjectType.DerivesFromOrEqual<MonoBehaviour>(),
-                            "Cannot use FromComponentSibling to inject data into non monobehaviours!");
-
-                        Assert.IsNotNull(ctx.ObjectInstance);
-
-                        var monoBehaviour = (MonoBehaviour)ctx.ObjectInstance;
-
-                        var matches = monoBehaviour.GetComponentsInParent(concreteType, includeInactive)
-                            .Where(x => !ReferenceEquals(x, ctx.ObjectInstance));
-
-                        if (excludeSelf)
-                        {
-                            matches = matches.Where(x => x.gameObject != monoBehaviour.gameObject);
-                        }
-
-                        var match = matches.FirstOrDefault();
-
-                        if (match == null)
-                        {
-                            Assert.That(ctx.Optional,
-                                "Could not find any component with type '{0}' through FromComponentInParents binding", concreteType);
-
-                            return Enumerable.Empty<object>();
-                        }
-
-                        return new object[] { match };
-                    },
-                    container));
-
-            return this;
-        }
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsInParents(
-            bool excludeSelf = false, bool includeInactive = true)
-        {
-            BindingUtil.AssertIsInterfaceOrComponent(AllParentTypes);
-
-            BindInfo.RequireExplicitScope = false;
-
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, concreteType) => new MethodMultipleProviderUntyped(ctx =>
-                    {
-                        Assert.That(ctx.ObjectType.DerivesFromOrEqual<MonoBehaviour>(),
-                            "Cannot use FromComponentSibling to inject data into non monobehaviours!");
-
-                        Assert.IsNotNull(ctx.ObjectInstance);
-
-                        var monoBehaviour = (MonoBehaviour)ctx.ObjectInstance;
-
-                        var res = monoBehaviour.GetComponentsInParent(concreteType, includeInactive)
-                            .Where(x => !ReferenceEquals(x, ctx.ObjectInstance));
-
-                        if (excludeSelf)
-                        {
-                            res = res.Where(x => x.gameObject != monoBehaviour.gameObject);
-                        }
-
-                        return res.Cast<object>();
-                    },
-                    container));
-
-            return this;
-        }
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentSibling()
-        {
-            BindingUtil.AssertIsInterfaceOrComponent(AllParentTypes);
-
-            BindInfo.RequireExplicitScope = false;
-
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, concreteType) => new MethodMultipleProviderUntyped(ctx =>
-                    {
-                        Assert.That(ctx.ObjectType.DerivesFromOrEqual<MonoBehaviour>(),
-                            "Cannot use FromComponentSibling to inject data into non monobehaviours!");
-
-                        Assert.IsNotNull(ctx.ObjectInstance);
-
-                        var monoBehaviour = (MonoBehaviour)ctx.ObjectInstance;
-
-                        var match = monoBehaviour.GetComponent(concreteType);
-
-                        if (match == null)
-                        {
-                            Assert.That(ctx.Optional,
-                                "Could not find any component with type '{0}' through FromComponentSibling binding", concreteType);
-                            return Enumerable.Empty<object>();
-                        }
-
-                        return new object[] { match };
-                    },
-                    container));
-
-            return this;
-        }
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsSibling()
-        {
-            BindingUtil.AssertIsInterfaceOrComponent(AllParentTypes);
-
-            BindInfo.RequireExplicitScope = false;
-
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, concreteType) => new MethodMultipleProviderUntyped(ctx =>
-                    {
-                        Assert.That(ctx.ObjectType.DerivesFromOrEqual<MonoBehaviour>(),
-                            "Cannot use FromComponentSibling to inject data into non monobehaviours!");
-
-                        Assert.IsNotNull(ctx.ObjectInstance);
-
-                        var monoBehaviour = (MonoBehaviour)ctx.ObjectInstance;
-
-                        return monoBehaviour.GetComponents(concreteType)
-                            .Where(x => !ReferenceEquals(x, monoBehaviour)).Cast<object>();
-                    },
-                    container));
-
-            return this;
-        }
 #endif
 
         public ScopeConcreteIdArgNonLazyBinder FromMethodUntyped(Func<InjectContext, object> method)
@@ -472,18 +247,6 @@ namespace Zenject
             return this;
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromMethodMultipleUntyped(Func<InjectContext, IEnumerable<object>> method)
-        {
-            BindInfo.RequireExplicitScope = false;
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, type) => new MethodMultipleProviderUntyped(method, container));
-
-            return this;
-        }
-
         protected ScopeConcreteIdArgNonLazyBinder FromMethodBase<TConcrete>(Func<InjectContext, TConcrete> method)
         {
             BindingUtil.AssertIsDerivedFromTypes(typeof(TConcrete), AllParentTypes);
@@ -494,18 +257,6 @@ namespace Zenject
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
                 (container, type) => new MethodProvider<TConcrete>(method, container));
-
-            return this;
-        }
-
-        protected ScopeConcreteIdArgNonLazyBinder FromMethodMultipleBase<TConcrete>(Func<InjectContext, IEnumerable<TConcrete>> method)
-        {
-            BindInfo.RequireExplicitScope = false;
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, type) => new MethodProviderMultiple<TConcrete>(method, container));
 
             return this;
         }

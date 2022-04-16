@@ -22,10 +22,9 @@ namespace Zenject
             return typeof(GameObject);
         }
 
-        public void GetAllInstancesWithInjectSplit(
-            InjectContext context, List<TypeValuePair> args, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
         {
-            var instance = _prefabCreator.Instantiate(context, args, out injectAction);
+            var instance = _prefabCreator.Instantiate(context, out injectAction);
 
             buffer.Add(instance);
         }

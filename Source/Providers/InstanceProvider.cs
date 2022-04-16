@@ -24,10 +24,8 @@ namespace Zenject
             return _instanceType;
         }
 
-        public void GetAllInstancesWithInjectSplit(
-            InjectContext context, List<TypeValuePair> args, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
         {
-            Assert.That(args.Count == 0);
             Assert.IsNotNull(context);
 
             Assert.That(_instanceType.DerivesFromOrEqual(context.MemberType));

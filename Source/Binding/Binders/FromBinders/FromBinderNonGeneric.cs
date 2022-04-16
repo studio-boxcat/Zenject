@@ -1,9 +1,4 @@
 using System;
-using System.Collections.Generic;
-
-#if !NOT_UNITY3D
-using UnityEngine;
-#endif
 
 namespace Zenject
 {
@@ -20,12 +15,6 @@ namespace Zenject
         public ScopeConcreteIdArgNonLazyBinder FromMethod<TConcrete>(Func<InjectContext, TConcrete> method)
         {
             return FromMethodBase<TConcrete>(method);
-        }
-
-        public ScopeConcreteIdArgNonLazyBinder FromMethodMultiple<TConcrete>(Func<InjectContext, IEnumerable<TConcrete>> method)
-        {
-            BindingUtil.AssertIsDerivedFromTypes(typeof(TConcrete), AllParentTypes);
-            return FromMethodMultipleBase<TConcrete>(method);
         }
 
         public ScopeConcreteIdArgNonLazyBinder FromResolveGetter<TObj, TContract>(Func<TObj, TContract> method)
@@ -62,20 +51,5 @@ namespace Zenject
         {
             return FromInstanceBase(instance);
         }
-
-#if !NOT_UNITY3D
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsInChildren(
-            Func<Component, bool> predicate, bool includeInactive = true)
-        {
-            return FromComponentsInChildren(false, predicate, includeInactive);
-        }
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsInChildren(
-            bool excludeSelf = false, Func<Component, bool> predicate = null, bool includeInactive = true)
-        {
-            return FromComponentsInChildrenBase(excludeSelf, predicate, includeInactive);
-        }
-#endif
     }
 }

@@ -26,12 +26,11 @@ namespace Zenject
             return _componentType;
         }
 
-        public void GetAllInstancesWithInjectSplit(
-            InjectContext context, List<TypeValuePair> args, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
-            var gameObject = _prefabInstantiator.Instantiate(context, args, out injectAction);
+            var gameObject = _prefabInstantiator.Instantiate(context, out injectAction);
 
             var component = gameObject.AddComponent(_componentType);
 

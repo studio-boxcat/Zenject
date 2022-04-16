@@ -7,28 +7,13 @@ namespace Zenject
 {
     public static class IProviderExtensions
     {
-        static readonly List<TypeValuePair> EmptyArgList = new List<TypeValuePair>();
-
-        public static void GetAllInstancesWithInjectSplit(
-            this IProvider creator, InjectContext context, out Action injectAction, List<object> buffer)
-        {
-            creator.GetAllInstancesWithInjectSplit(
-                context, EmptyArgList, out injectAction, buffer);
-        }
-
         public static void GetAllInstances(
             this IProvider creator, InjectContext context, List<object> buffer)
-        {
-            creator.GetAllInstances(context, EmptyArgList, buffer);
-        }
-
-        public static void GetAllInstances(
-            this IProvider creator, InjectContext context, List<TypeValuePair> args, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
             Action injectAction;
-            creator.GetAllInstancesWithInjectSplit(context, args, out injectAction, buffer);
+            creator.GetAllInstancesWithInjectSplit(context, out injectAction, buffer);
 
             if (injectAction != null)
             {
@@ -39,17 +24,11 @@ namespace Zenject
         public static object TryGetInstance(
             this IProvider creator, InjectContext context)
         {
-            return creator.TryGetInstance(context, EmptyArgList);
-        }
-
-        public static object TryGetInstance(
-            this IProvider creator, InjectContext context, List<TypeValuePair> args)
-        {
             var allInstances = ZenPools.SpawnList<object>();
 
             try
             {
-                creator.GetAllInstances(context, args, allInstances);
+                creator.GetAllInstances(context, allInstances);
 
                 if (allInstances.Count == 0)
                 {
@@ -70,17 +49,11 @@ namespace Zenject
         public static object GetInstance(
             this IProvider creator, InjectContext context)
         {
-            return creator.GetInstance(context, EmptyArgList);
-        }
-
-        public static object GetInstance(
-            this IProvider creator, InjectContext context, List<TypeValuePair> args)
-        {
             var allInstances = ZenPools.SpawnList<object>();
 
             try
             {
-                creator.GetAllInstances(context, args, allInstances);
+                creator.GetAllInstances(context, allInstances);
 
                 Assert.That(allInstances.Count > 0,
                     "Provider returned zero instances when one was expected when looking up type '{0}'", context.MemberType);

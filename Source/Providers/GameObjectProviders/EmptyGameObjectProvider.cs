@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using ModestTree;
 using UnityEngine;
 
 namespace Zenject
@@ -25,11 +24,8 @@ namespace Zenject
             return typeof(GameObject);
         }
 
-        public void GetAllInstancesWithInjectSplit(
-            InjectContext context, List<TypeValuePair> args, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
         {
-            Assert.IsEmpty(args);
-
             injectAction = null;
 
             var gameObj = _container.CreateEmptyGameObject(_gameObjectBindInfo);

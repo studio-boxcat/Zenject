@@ -12,7 +12,7 @@ namespace Zenject
         readonly GameObjectCreationParameters _gameObjectBindInfo;
 
         public AddToNewGameObjectComponentProvider(DiContainer container, Type componentType,
-            IEnumerable<TypeValuePair> extraArguments, GameObjectCreationParameters gameObjectBindInfo,
+            object[] extraArguments, GameObjectCreationParameters gameObjectBindInfo,
             object concreteIdentifier)
             : base(container, componentType, extraArguments, concreteIdentifier)
         {

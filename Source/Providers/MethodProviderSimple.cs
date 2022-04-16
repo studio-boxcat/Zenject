@@ -19,10 +19,8 @@ namespace Zenject
             return typeof(TReturn);
         }
 
-        public void GetAllInstancesWithInjectSplit(
-            InjectContext context, List<TypeValuePair> args, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
         {
-            Assert.IsEmpty(args);
             Assert.IsNotNull(context);
 
             Assert.That(typeof(TReturn).DerivesFromOrEqual(context.MemberType));

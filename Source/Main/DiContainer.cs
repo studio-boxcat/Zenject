@@ -55,9 +55,14 @@ namespace Zenject
             _containerLookups[(int)InjectSources.Parent] = parentContainer != null
                 ? new[] { parentContainer } : Array.Empty<DiContainer>();
 
-            var ancestorContainers = FlattenInheritanceChain().ToArray();
-
-            _containerLookups[(int)InjectSources.Any] = new[] { this }.Concat(ancestorContainers).ToArray();
+            var containerChain = new List<DiContainer> {this};
+            var current = this;
+            while (current.ParentContainer != null)
+            {
+                containerChain.Add(current.ParentContainer);
+                current = current.ParentContainer;
+            }
+            _containerLookups[(int)InjectSources.Any] = containerChain.ToArray();
 
             if (parentContainer != null)
             {
@@ -360,22 +365,6 @@ namespace Zenject
             {
                 ZenPools.DespawnList(localProviders);
             }
-        }
-
-        // Get the full list of ancestor Di Containers, making sure to avoid
-        // duplicates and also order them in a breadth-first way
-        List<DiContainer> FlattenInheritanceChain()
-        {
-            var processed = new List<DiContainer>();
-            var current = this;
-
-            while (current.ParentContainer != null)
-            {
-                processed.Add(current.ParentContainer);
-                current = current.ParentContainer;
-            }
-
-            return processed;
         }
 
         void GetLocalProviders(BindingId bindingId, List<ProviderInfo> buffer)
@@ -840,106 +829,10 @@ namespace Zenject
             }
         }
 
-        object InstantiateInternal(
-            Type concreteType, bool autoInject, List<TypeValuePair> extraArgs, InjectContext context, object concreteIdentifier)
-        {
-#if !NOT_UNITY3D
-            Assert.That(!concreteType.DerivesFrom<Component>(),
-                "Error occurred while instantiating object of type '{0}'. Instantiator should not be used to create new mono behaviours.  Must use InstantiatePrefabForComponent, InstantiatePrefab, or InstantiateComponent.", concreteType);
-#endif
-
-            Assert.That(!concreteType.IsAbstract(), "Expected type '{0}' to be non-abstract", concreteType);
-
-            FlushBindings();
-            CheckForInstallWarning(context);
-
-            var typeInfo = TypeAnalyzer.TryGetInfo(concreteType);
-
-            Assert.IsNotNull(typeInfo, "Tried to create type '{0}' but could not find type information", concreteType);
-
-            object newObj;
-
-#if !NOT_UNITY3D
-            if (concreteType.DerivesFrom<ScriptableObject>())
-            {
-                Assert.That(typeInfo.InjectConstructor.Parameters.Length == 0,
-                    "Found constructor parameters on ScriptableObject type '{0}'.  This is not allowed.  Use an [Inject] method or fields instead.");
-
-                newObj = ScriptableObject.CreateInstance(concreteType);
-            }
-            else
-#endif
-            {
-                Assert.IsNotNull(typeInfo.InjectConstructor.ConstructorInfo,
-                    "More than one (or zero) constructors found for type '{0}' when creating dependencies.  Use one [Inject] attribute to specify which to use.", concreteType);
-
-                // Make a copy since we remove from it below
-                var paramValues = ParamArrayPool.Rent(typeInfo.InjectConstructor.Parameters.Length);
-
-                try
-                {
-                    for (int i = 0; i < typeInfo.InjectConstructor.Parameters.Length; i++)
-                    {
-                        var injectInfo = typeInfo.InjectConstructor.Parameters[i];
-
-                        object value;
-
-                        if (!InjectUtil.PopValueWithType(
-                            extraArgs, injectInfo.MemberType, out value))
-                        {
-                            using (var subContext = ZenPools.SpawnInjectContext(
-                                this, injectInfo, context, null, concreteType, concreteIdentifier))
-                            {
-                                value = Resolve(subContext);
-                            }
-                        }
-
-                        if (value == null)
-                        {
-                            paramValues[i] = injectInfo.MemberType.GetDefaultValue();
-                        }
-                        else
-                        {
-                            paramValues[i] = value;
-                        }
-                    }
-
-                    //ModestTree.Log.Debug("Zenject: Instantiating type '{0}'", concreteType);
-                    try
-                    {
-                        newObj = typeInfo.InjectConstructor.ConstructorInfo.Invoke(paramValues);
-                    }
-                    catch (Exception e)
-                    {
-                        throw Assert.CreateException(
-                            e, "Error occurred while instantiating object with type '{0}'", concreteType);
-                    }
-                }
-                finally
-                {
-                    ParamArrayPool.Release(paramValues);
-                }
-            }
-
-            if (autoInject)
-            {
-                InjectExplicit(newObj, concreteType, extraArgs, context, concreteIdentifier);
-
-                if (extraArgs.Count > 0)
-                {
-                    throw Assert.CreateException(
-                        "Passed unnecessary parameters when injecting into type '{0}'. \nExtra Parameters: {1}\nObject graph:\n{2}",
-                        newObj.GetType(), String.Join(",", extraArgs.Select(x => x.Type.PrettyName()).ToArray()), context.GetObjectGraphString());
-                }
-            }
-
-            return newObj;
-        }
-
         // InjectExplicit is only necessary when you want to inject null values into your object
         // otherwise you can just use Inject()
         // Note: Any arguments that are used will be removed from extraArgMap
-        public void InjectExplicit(object injectable, List<TypeValuePair> extraArgs)
+        public void InjectExplicit(object injectable, object[] extraArgs)
         {
             var injectableType = injectable.GetType();
 
@@ -953,106 +846,7 @@ namespace Zenject
 
         public void InjectExplicit(
             object injectable, Type injectableType,
-            List<TypeValuePair> extraArgs, InjectContext context, object concreteIdentifier)
-        {
-            InjectExplicitInternal(injectable, injectableType, extraArgs, context, concreteIdentifier);
-        }
-
-        void CallInjectMethodsTopDown(
-            object injectable, Type injectableType,
-            InjectTypeInfo typeInfo, List<TypeValuePair> extraArgs,
-            InjectContext context, object concreteIdentifier)
-        {
-            if (typeInfo.BaseTypeInfo != null)
-            {
-                CallInjectMethodsTopDown(
-                    injectable, injectableType, typeInfo.BaseTypeInfo, extraArgs,
-                    context, concreteIdentifier);
-            }
-
-            for (int i = 0; i < typeInfo.InjectMethods.Length; i++)
-            {
-                var method = typeInfo.InjectMethods[i];
-                var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
-
-                try
-                {
-                    for (int k = 0; k < method.Parameters.Length; k++)
-                    {
-                        var injectInfo = method.Parameters[k];
-
-                        object value;
-
-                        if (!InjectUtil.PopValueWithType(extraArgs, injectInfo.MemberType, out value))
-                        {
-                            using (var subContext = ZenPools.SpawnInjectContext(
-                                this, injectInfo, context, injectable, injectableType, concreteIdentifier))
-                            {
-                                value = Resolve(subContext);
-                            }
-                        }
-
-                        paramValues[k] = value;
-                    }
-
-                    method.MethodInfo.Invoke(injectable, paramValues);
-                }
-                finally
-                {
-                    ParamArrayPool.Release(paramValues);
-                }
-            }
-        }
-
-        void InjectMembersTopDown(
-            object injectable, Type injectableType,
-            InjectTypeInfo typeInfo, List<TypeValuePair> extraArgs,
-            InjectContext context, object concreteIdentifier)
-        {
-            if (typeInfo.BaseTypeInfo != null)
-            {
-                InjectMembersTopDown(
-                    injectable, injectableType, typeInfo.BaseTypeInfo, extraArgs,
-                    context, concreteIdentifier);
-            }
-
-            foreach (var injectField in typeInfo.InjectFields)
-                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs, context, concreteIdentifier);
-            foreach (var injectProperty in typeInfo.InjectProperties)
-                InjectMember(injectProperty.Info, injectProperty, injectable, injectableType, extraArgs, context, concreteIdentifier);
-        }
-
-        void InjectMember<T>(InjectableInfo injectInfo, T setter,  object injectable, Type injectableType, List<TypeValuePair> extraArgs, InjectContext context, object concreteIdentifier)
-            where T : InjectTypeInfo.IInjectMemberSetter
-        {
-            object value;
-
-            if (InjectUtil.PopValueWithType(extraArgs, injectInfo.MemberType, out value))
-            {
-                setter.Invoke(injectable, value);
-            }
-            else
-            {
-                using (var subContext = ZenPools.SpawnInjectContext(
-                           this, injectInfo, context, injectable, injectableType, concreteIdentifier))
-                {
-                    value = Resolve(subContext);
-                }
-
-                if (injectInfo.Optional && value == null)
-                {
-                    // Do not override in this case so it retains the hard-coded value
-                }
-                else
-                {
-                    setter.Invoke(injectable, value);
-                }
-            }
-        }
-
-        void InjectExplicitInternal(
-            object injectable, Type injectableType, List<TypeValuePair> extraArgs,
-            InjectContext context, object concreteIdentifier)
+            object[] extraArgs, InjectContext context, object concreteIdentifier)
         {
             Assert.That(injectable != null);
 
@@ -1060,7 +854,7 @@ namespace Zenject
 
             if (typeInfo == null)
             {
-                Assert.That(extraArgs.IsEmpty());
+                Assert.That(extraArgs == null);
                 return;
             }
 
@@ -1084,12 +878,94 @@ namespace Zenject
 
             CallInjectMethodsTopDown(
                 injectable, injectableType, typeInfo, extraArgs, context, concreteIdentifier);
+        }
 
-            if (extraArgs.Count > 0)
+        void CallInjectMethodsTopDown(
+            object injectable, Type injectableType,
+            InjectTypeInfo typeInfo, object[] extraArgs,
+            InjectContext context, object concreteIdentifier)
+        {
+            if (typeInfo.BaseTypeInfo != null)
             {
-                throw Assert.CreateException(
-                    "Passed unnecessary parameters when injecting into type '{0}'. \nExtra Parameters: {1}\nObject graph:\n{2}",
-                    injectableType, String.Join(",", extraArgs.Select(x => x.Type.PrettyName()).ToArray()), context.GetObjectGraphString());
+                CallInjectMethodsTopDown(
+                    injectable, injectableType, typeInfo.BaseTypeInfo, extraArgs,
+                    context, concreteIdentifier);
+            }
+
+            foreach (var method in typeInfo.InjectMethods)
+            {
+                var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
+
+                try
+                {
+                    for (int k = 0; k < method.Parameters.Length; k++)
+                    {
+                        var injectInfo = method.Parameters[k];
+
+                        object value;
+
+                        if (!InjectUtil.TryGetValueWithType(extraArgs, injectInfo.MemberType, out value))
+                        {
+                            using var subContext = ZenPools.SpawnInjectContext(
+                                this, injectInfo, context, injectable, injectableType, concreteIdentifier);
+                            value = Resolve(subContext);
+                        }
+
+                        paramValues[k] = value;
+                    }
+
+                    method.MethodInfo.Invoke(injectable, paramValues);
+                }
+                finally
+                {
+                    ParamArrayPool.Release(paramValues);
+                }
+            }
+        }
+
+        void InjectMembersTopDown(
+            object injectable, Type injectableType,
+            InjectTypeInfo typeInfo, object[] extraArgs,
+            InjectContext context, object concreteIdentifier)
+        {
+            if (typeInfo.BaseTypeInfo != null)
+            {
+                InjectMembersTopDown(
+                    injectable, injectableType, typeInfo.BaseTypeInfo, extraArgs,
+                    context, concreteIdentifier);
+            }
+
+            foreach (var injectField in typeInfo.InjectFields)
+                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs, context, concreteIdentifier);
+            foreach (var injectProperty in typeInfo.InjectProperties)
+                InjectMember(injectProperty.Info, injectProperty, injectable, injectableType, extraArgs, context, concreteIdentifier);
+        }
+
+        void InjectMember<T>(InjectableInfo injectInfo, T setter,  object injectable, Type injectableType, object[] extraArgs, InjectContext context, object concreteIdentifier)
+            where T : InjectTypeInfo.IInjectMemberSetter
+        {
+            object value;
+
+            if (InjectUtil.TryGetValueWithType(extraArgs, injectInfo.MemberType, out value))
+            {
+                setter.Invoke(injectable, value);
+            }
+            else
+            {
+                using (var subContext = ZenPools.SpawnInjectContext(
+                           this, injectInfo, context, injectable, injectableType, concreteIdentifier))
+                {
+                    value = Resolve(subContext);
+                }
+
+                if (injectInfo.Optional && value == null)
+                {
+                    // Do not override in this case so it retains the hard-coded value
+                }
+                else
+                {
+                    setter.Invoke(injectable, value);
+                }
             }
         }
 
@@ -1251,28 +1127,14 @@ namespace Zenject
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
-        public T Instantiate<T>(IEnumerable<object> extraArgs)
+        public T Instantiate<T>(object[] extraArgs)
         {
-            var result = Instantiate(typeof(T), extraArgs);
-
-            return (T)result;
+            return (T)InstantiateExplicit(typeof(T), extraArgs);
         }
 
         public object Instantiate(Type concreteType)
         {
-            return Instantiate(concreteType, Array.Empty<object>());
-        }
-
-        // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
-        // the argument list to avoid errors converting to IEnumerable<object>
-        public object Instantiate(
-            Type concreteType, IEnumerable<object> extraArgs)
-        {
-            Assert.That(!extraArgs.ContainsItem(null),
-                "Null value given to factory constructor arguments when instantiating object with type '{0}'. In order to use null use InstantiateExplicit", concreteType);
-
-            return InstantiateExplicit(
-                concreteType, InjectUtil.CreateArgList(extraArgs));
+            return InstantiateExplicit(concreteType, Array.Empty<object>());
         }
 
 #if !NOT_UNITY3D
@@ -1291,7 +1153,7 @@ namespace Zenject
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
         public TContract InstantiateComponent<TContract>(
-            GameObject gameObject, IEnumerable<object> extraArgs)
+            GameObject gameObject, object[] extraArgs)
             where TContract : Component
         {
             return (TContract)InstantiateComponent(typeof(TContract), gameObject, extraArgs);
@@ -1312,10 +1174,10 @@ namespace Zenject
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
         public Component InstantiateComponent(
-            Type componentType, GameObject gameObject, IEnumerable<object> extraArgs)
+            Type componentType, GameObject gameObject, object[] extraArgs)
         {
             return InstantiateComponentExplicit(
-                componentType, gameObject, InjectUtil.CreateArgList(extraArgs));
+                componentType, gameObject, extraArgs);
         }
 
         public T InstantiateComponentOnNewGameObject<T>()
@@ -1326,7 +1188,7 @@ namespace Zenject
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
-        public T InstantiateComponentOnNewGameObject<T>(IEnumerable<object> extraArgs) where T : Component
+        public T InstantiateComponentOnNewGameObject<T>(object[] extraArgs) where T : Component
         {
             return InstantiateComponent<T>(CreateEmptyGameObject(default), extraArgs);
         }
@@ -1424,10 +1286,9 @@ namespace Zenject
         // Same as Inject(injectable) except allows adding extra values to be injected
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
-        public void Inject(object injectable, IEnumerable<object> extraArgs)
+        public void Inject(object injectable, object[] extraArgs)
         {
-            InjectExplicit(
-                injectable, InjectUtil.CreateArgList(extraArgs));
+            InjectExplicit(injectable, extraArgs);
         }
 
         // Resolve<> - Lookup a value in the container.
@@ -1839,31 +1700,117 @@ namespace Zenject
             }
         }
 
-        public T InstantiateExplicit<T>(List<TypeValuePair> extraArgs)
+        public T InstantiateExplicit<T>(object[] extraArgs)
         {
             return (T)InstantiateExplicit(typeof(T), extraArgs);
         }
 
-        public object InstantiateExplicit(Type concreteType, List<TypeValuePair> extraArgs)
+        public object InstantiateExplicit(Type concreteType, [CanBeNull] object[] extraArgs = null)
         {
-            bool autoInject = true;
-
             return InstantiateExplicit(
                 concreteType,
-                autoInject,
+                true,
                 extraArgs,
                 new InjectContext(this, concreteType, null),
                 null);
         }
 
-        public object InstantiateExplicit(Type concreteType, bool autoInject, List<TypeValuePair> extraArgs, InjectContext context, object concreteIdentifier)
+        public object InstantiateExplicit(Type concreteType, bool autoInject, [CanBeNull] object[] extraArgs, InjectContext context, object concreteIdentifier)
         {
-            return InstantiateInternal(concreteType, autoInject, extraArgs, context, concreteIdentifier);
+#if !NOT_UNITY3D
+            Assert.That(!concreteType.DerivesFrom<Component>(),
+                "Error occurred while instantiating object of type '{0}'. Instantiator should not be used to create new mono behaviours.  Must use InstantiatePrefabForComponent, InstantiatePrefab, or InstantiateComponent.", concreteType);
+#endif
+
+            Assert.That(!concreteType.IsAbstract(), "Expected type '{0}' to be non-abstract", concreteType);
+
+            FlushBindings();
+            CheckForInstallWarning(context);
+
+            var typeInfo = TypeAnalyzer.TryGetInfo(concreteType);
+
+            Assert.IsNotNull(typeInfo, "Tried to create type '{0}' but could not find type information", concreteType);
+
+            object newObj;
+
+#if !NOT_UNITY3D
+            if (concreteType.DerivesFrom<ScriptableObject>())
+            {
+                Assert.That(typeInfo.InjectConstructor.Parameters.Length == 0,
+                    "Found constructor parameters on ScriptableObject type '{0}'.  This is not allowed.  Use an [Inject] method or fields instead.");
+
+                newObj = ScriptableObject.CreateInstance(concreteType);
+            }
+            else
+#endif
+            {
+                Assert.IsNotNull(typeInfo.InjectConstructor.ConstructorInfo,
+                    "More than one (or zero) constructors found for type '{0}' when creating dependencies.  Use one [Inject] attribute to specify which to use.", concreteType);
+
+                // Make a copy since we remove from it below
+                var paramValues = ParamArrayPool.Rent(typeInfo.InjectConstructor.Parameters.Length);
+
+                try
+                {
+                    for (int i = 0; i < typeInfo.InjectConstructor.Parameters.Length; i++)
+                    {
+                        var injectInfo = typeInfo.InjectConstructor.Parameters[i];
+
+                        object value;
+
+                        if (!InjectUtil.TryGetValueWithType(
+                            extraArgs, injectInfo.MemberType, out value))
+                        {
+                            using var subContext = ZenPools.SpawnInjectContext(
+                                this, injectInfo, context, null, concreteType, concreteIdentifier);
+                            value = Resolve(subContext);
+                        }
+
+                        if (value == null)
+                        {
+                            paramValues[i] = injectInfo.MemberType.GetDefaultValue();
+                        }
+                        else
+                        {
+                            paramValues[i] = value;
+                        }
+                    }
+
+                    //ModestTree.Log.Debug("Zenject: Instantiating type '{0}'", concreteType);
+                    try
+                    {
+                        newObj = typeInfo.InjectConstructor.ConstructorInfo.Invoke(paramValues);
+                    }
+                    catch (Exception e)
+                    {
+                        throw Assert.CreateException(
+                            e, "Error occurred while instantiating object with type '{0}'", concreteType);
+                    }
+                }
+                finally
+                {
+                    ParamArrayPool.Release(paramValues);
+                }
+            }
+
+            if (autoInject)
+            {
+                InjectExplicit(newObj, concreteType, extraArgs, context, concreteIdentifier);
+
+                if (extraArgs.Length > 0)
+                {
+                    throw Assert.CreateException(
+                        "Passed unnecessary parameters when injecting into type '{0}'. \nExtra Parameters: {1}\nObject graph:\n{2}",
+                        newObj.GetType(), String.Join(",", extraArgs.Select(x => x.GetType().PrettyName()).ToArray()), context.GetObjectGraphString());
+                }
+            }
+
+            return newObj;
         }
 
 #if !NOT_UNITY3D
         public Component InstantiateComponentExplicit(
-            Type componentType, GameObject gameObject, List<TypeValuePair> extraArgs)
+            Type componentType, GameObject gameObject, object[] extraArgs)
         {
             Assert.That(componentType.DerivesFrom<Component>());
 
@@ -1875,7 +1822,7 @@ namespace Zenject
         }
 
         public object InstantiateScriptableObjectResourceExplicit(
-            Type scriptableObjectType, string resourcePath, List<TypeValuePair> extraArgs)
+            Type scriptableObjectType, string resourcePath, object[] extraArgs)
         {
             var objects = Resources.LoadAll(resourcePath, scriptableObjectType);
 

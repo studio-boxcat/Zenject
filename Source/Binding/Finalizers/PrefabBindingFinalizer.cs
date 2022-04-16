@@ -40,6 +40,9 @@ namespace Zenject
 
         void FinalizeBindingConcrete(DiContainer container, List<Type> concreteTypes)
         {
+            Assert.That(BindInfo.Arguments == null,
+                "Cannot provide arguments to prefab instantiator when using more than one concrete type");
+
             var scope = GetScope();
 
             switch (scope)
@@ -55,25 +58,15 @@ namespace Zenject
                                 new PrefabInstantiator(
                                     container,
                                     _gameObjectBindInfo,
-                                    BindInfo.Arguments,
                                     new PrefabProvider(_prefab))));
                     break;
                 }
                 case ScopeTypes.Singleton:
                 {
-                    var argumentTarget = concreteTypes.OnlyOrDefault();
-
-                    if (argumentTarget == null)
-                    {
-                        Assert.That(BindInfo.Arguments.IsEmpty(),
-                            "Cannot provide arguments to prefab instantiator when using more than one concrete type");
-                    }
-
                     var prefabCreator = new PrefabInstantiatorCached(
                         new PrefabInstantiator(
                             container,
                             _gameObjectBindInfo,
-                            BindInfo.Arguments,
                             new PrefabProvider(_prefab)));
 
                     RegisterProvidersForAllContractsPerConcreteType(
@@ -92,6 +85,9 @@ namespace Zenject
 
         void FinalizeBindingSelf(DiContainer container)
         {
+            Assert.That(BindInfo.Arguments == null,
+                "Cannot provide arguments to prefab instantiator when using more than one concrete type");
+
             var scope = GetScope();
 
             switch (scope)
@@ -106,7 +102,6 @@ namespace Zenject
                                 new PrefabInstantiator(
                                     container,
                                     _gameObjectBindInfo,
-                                    BindInfo.Arguments,
                                     new PrefabProvider(_prefab))));
                     break;
                 }
@@ -124,7 +119,6 @@ namespace Zenject
                         new PrefabInstantiator(
                             container,
                             _gameObjectBindInfo,
-                            BindInfo.Arguments,
                             new PrefabProvider(_prefab)));
 
                     RegisterProviderPerContract(

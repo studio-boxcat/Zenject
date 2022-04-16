@@ -1,11 +1,4 @@
 using System;
-using System.Collections.Generic;
-using ModestTree;
-using System.Linq;
-
-#if !NOT_UNITY3D
-using UnityEngine;
-#endif
 
 namespace Zenject
 {
@@ -29,12 +22,6 @@ namespace Zenject
         public ScopeConcreteIdArgNonLazyBinder FromMethod(Func<InjectContext, TContract> method)
         {
             return FromMethodBase<TContract>(method);
-        }
-
-        public ScopeConcreteIdArgNonLazyBinder FromMethodMultiple(Func<InjectContext, IEnumerable<TContract>> method)
-        {
-            BindingUtil.AssertIsDerivedFromTypes(typeof(TContract), AllParentTypes);
-            return FromMethodMultipleBase<TContract>(method);
         }
 
         public ScopeConcreteIdArgNonLazyBinder FromResolveGetter<TObj>(Func<TObj, TContract> method)
@@ -71,32 +58,5 @@ namespace Zenject
         {
             return FromInstanceBase(instance);
         }
-
-#if !NOT_UNITY3D
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsInChildren(
-            Func<TContract, bool> predicate, bool includeInactive = true)
-        {
-            return FromComponentsInChildren(false, predicate, includeInactive);
-        }
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsInChildren(
-            bool excludeSelf = false, Func<TContract, bool> predicate = null, bool includeInactive = true)
-        {
-            Func<Component, bool> subPredicate;
-
-            if (predicate != null)
-            {
-                subPredicate = component => predicate((TContract)(object)component);
-            }
-            else
-            {
-                subPredicate = null;
-            }
-
-            return FromComponentsInChildrenBase(
-                excludeSelf, subPredicate, includeInactive);
-        }
-#endif
     }
 }

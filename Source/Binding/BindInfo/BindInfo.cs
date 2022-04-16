@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Zenject.Internal;
 
 namespace Zenject
@@ -37,13 +38,14 @@ namespace Zenject
         public ToChoices ToChoice;
         public readonly List<Type> ToTypes; // Only relevant with ToChoices.Concrete
         public ScopeTypes Scope;
-        public readonly List<TypeValuePair> Arguments;
+        [CanBeNull]
+        public object[] Arguments;
 
         public BindInfo()
         {
             ContractTypes = new List<Type>();
             ToTypes = new List<Type>();
-            Arguments = new List<TypeValuePair>();
+            Arguments = null;
 
             Reset();
         }
@@ -66,7 +68,7 @@ namespace Zenject
             ToChoice = ToChoices.Self;
             ToTypes.Clear();
             Scope = ScopeTypes.Unset;
-            Arguments.Clear();
+            Arguments = null;
         }
     }
 }

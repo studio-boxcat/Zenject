@@ -14,15 +14,15 @@ namespace Zenject
     {
         readonly Type _componentType;
         readonly DiContainer _container;
-        readonly List<TypeValuePair> _extraArguments;
+        readonly object[] _extraArguments;
         readonly object _concreteIdentifier;
 
         public AddToCurrentGameObjectComponentProvider(DiContainer container, Type componentType,
-            IEnumerable<TypeValuePair> extraArguments, object concreteIdentifier)
+            object[] extraArguments, object concreteIdentifier)
         {
             Assert.That(componentType.DerivesFrom<Component>());
 
-            _extraArguments = extraArguments.ToList();
+            _extraArguments = extraArguments;
             _componentType = componentType;
             _container = container;
             _concreteIdentifier = concreteIdentifier;
@@ -43,8 +43,7 @@ namespace Zenject
             return _componentType;
         }
 
-        public void GetAllInstancesWithInjectSplit(
-            InjectContext context, List<TypeValuePair> args, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
@@ -76,15 +75,9 @@ namespace Zenject
 
             injectAction = () =>
             {
-                var extraArgs = ZenPools.SpawnList<TypeValuePair>();
+                _container.InjectExplicit(instance, _componentType, _extraArguments, context, _concreteIdentifier);
 
-                extraArgs.AllocFreeAddRange(_extraArguments);
-                extraArgs.AllocFreeAddRange(args);
-
-                _container.InjectExplicit(instance, _componentType, extraArgs, context, _concreteIdentifier);
-
-                Assert.That(extraArgs.IsEmpty());
-                ZenPools.DespawnList(extraArgs);
+                Assert.That(_extraArguments.IsEmpty());
             };
 
             buffer.Add(instance);

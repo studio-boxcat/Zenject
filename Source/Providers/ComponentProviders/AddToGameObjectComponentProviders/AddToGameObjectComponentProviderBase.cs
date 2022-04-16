@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using ModestTree;
 using UnityEngine;
 using Zenject.Internal;
@@ -14,15 +15,15 @@ namespace Zenject
     {
         readonly Type _componentType;
         readonly DiContainer _container;
-        readonly List<TypeValuePair> _extraArguments;
+        [CanBeNull] readonly object[] _extraArguments;
         readonly object _concreteIdentifier;
 
         public AddToGameObjectComponentProviderBase(DiContainer container, Type componentType,
-            IEnumerable<TypeValuePair> extraArguments, object concreteIdentifier)
+            [CanBeNull] object[] extraArguments, object concreteIdentifier)
         {
             Assert.That(componentType.DerivesFrom<Component>());
 
-            _extraArguments = extraArguments.ToList();
+            _extraArguments = extraArguments;
             _componentType = componentType;
             _container = container;
             _concreteIdentifier = concreteIdentifier;
@@ -48,8 +49,7 @@ namespace Zenject
             return _componentType;
         }
 
-        public void GetAllInstancesWithInjectSplit(
-            InjectContext context, List<TypeValuePair> args, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
@@ -86,16 +86,7 @@ namespace Zenject
             {
                 try
                 {
-                    var extraArgs = ZenPools.SpawnList<TypeValuePair>();
-
-                    extraArgs.AllocFreeAddRange(_extraArguments);
-                    extraArgs.AllocFreeAddRange(args);
-
-                    _container.InjectExplicit(instance, _componentType, extraArgs, context, _concreteIdentifier);
-
-                    Assert.That(extraArgs.Count == 0);
-
-                    ZenPools.DespawnList(extraArgs);
+                    _container.InjectExplicit(instance, _componentType, _extraArguments, context, _concreteIdentifier);
                 }
                 finally
                 {
