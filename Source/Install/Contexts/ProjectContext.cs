@@ -21,9 +21,6 @@ namespace Zenject
 
         static ProjectContext _instance;
 
-        [SerializeField]
-        ZenjectSettings _settings = null;
-
         DiContainer _container;
 
         public override DiContainer Container
@@ -212,8 +209,6 @@ namespace Zenject
 
         void InstallBindings(List<MonoBehaviour> injectableMonoBehaviours)
         {
-            _container.Settings = _settings ?? ZenjectSettings.Default;
-
             ZenjectManagersInstaller.InstallBindings(_container);
 
             _container.Bind<Context>().FromInstance(this).AsSingle();

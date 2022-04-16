@@ -35,8 +35,6 @@ namespace Zenject
         bool _hasLookedUpContextTransform;
 #endif
 
-        ZenjectSettings _settings;
-
         bool _hasResolvedRoots;
         bool _isFinalizingBinding;
         bool _isInstalling;
@@ -53,8 +51,6 @@ namespace Zenject
             FlushBindings();
             Assert.That(_currentBindings.Count == 0);
 
-            _settings = ZenjectSettings.Default;
-
             _containerLookups[(int)InjectSources.Local] = new[] { this };
             _containerLookups[(int)InjectSources.Parent] = parentContainer != null
                 ? new[] { parentContainer } : Array.Empty<DiContainer>();
@@ -68,28 +64,6 @@ namespace Zenject
                 parentContainer.FlushBindings();
 
                 Assert.That(_currentBindings.Count == 0);
-            }
-
-            // Assumed to be configured in a parent container
-            var settings = TryResolve<ZenjectSettings>();
-
-            if (settings != null)
-            {
-                _settings = settings;
-            }
-        }
-
-        // By default the settings will be inherited from parent containers, but can be
-        // set explicitly here as well which is useful in particular in unit tests
-        // Note however that if you want child containers to use this same value you have
-        // to bind it as well
-        public ZenjectSettings Settings
-        {
-            get { return _settings; }
-            set
-            {
-                _settings = value;
-                Rebind<ZenjectSettings>().FromInstance(value);
             }
         }
 
@@ -520,7 +494,7 @@ namespace Zenject
 
         void CheckForInstallWarning(InjectContext context)
         {
-            if (!_settings.DisplayWarningWhenResolvingDuringInstall)
+            if (!ZenjectSettings.DisplayWarningWhenResolvingDuringInstall)
             {
                 return;
             }

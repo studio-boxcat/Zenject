@@ -10,9 +10,6 @@ namespace Zenject
     public class ProjectKernel : MonoKernel
     {
         [Inject]
-        ZenjectSettings _settings = null;
-
-        [Inject]
         SceneContextRegistry _contextRegistry = null;
 
         // One issue with relying on MonoKernel.OnDestroy to call IDisposable.Dispose
@@ -38,7 +35,7 @@ namespace Zenject
         // ZenjectSceneLoader which will do this for you
         public void OnApplicationQuit()
         {
-            if (_settings.EnsureDeterministicDestructionOrderOnApplicationQuit)
+            if (ZenjectSettings.EnsureDeterministicDestructionOrderOnApplicationQuit)
             {
                 DestroyEverythingInOrder();
             }
