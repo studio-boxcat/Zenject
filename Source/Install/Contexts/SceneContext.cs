@@ -27,14 +27,6 @@ namespace Zenject
         public static Action<DiContainer> ExtraBindingsInstallMethod;
         public static Action<DiContainer> ExtraBindingsLateInstallMethod;
 
-        [Tooltip("Optional contract names for this SceneContext, allowing contexts in subsequently loaded scenes to depend on it and be parented to it, and also for previously loaded decorators to be included")]
-        [SerializeField]
-        List<string> _contractNames = new List<string>();
-
-        [Tooltip("Optional contract names of SceneContexts in previously loaded scenes that this context depends on and to which it should be parented")]
-        [SerializeField]
-        List<string> _parentContractNames = new List<string>();
-
         DiContainer _container;
 
         bool _hasInstalled;
@@ -53,16 +45,6 @@ namespace Zenject
         public bool HasInstalled
         {
             get { return _hasInstalled; }
-        }
-
-        public IEnumerable<string> ContractNames
-        {
-            get { return _contractNames; }
-            set
-            {
-                _contractNames.Clear();
-                _contractNames.AddRange(value);
-            }
         }
 
         public void Awake()
