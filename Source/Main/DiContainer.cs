@@ -11,8 +11,6 @@ using UnityEngine;
 
 namespace Zenject
 {
-    public delegate bool BindingCondition(InjectContext c);
-
     // Responsibilities:
     // - Expose methods to configure object graph via BindX() methods
     // - Look up bound values via Resolve() method
@@ -307,9 +305,9 @@ namespace Zenject
         }
 
         public void RegisterProvider(
-            BindingId bindingId, BindingCondition condition, IProvider provider, bool nonLazy)
+            BindingId bindingId, IProvider provider, bool nonLazy)
         {
-            var info = new ProviderInfo(provider, condition, nonLazy, this);
+            var info = new ProviderInfo(provider, nonLazy, this);
 
             List<ProviderInfo> providerInfos;
 
@@ -337,12 +335,7 @@ namespace Zenject
 
                 for (int i = 0; i < allMatches.Count; i++)
                 {
-                    var match = allMatches[i];
-
-                    if (match.Condition == null || match.Condition(context))
-                    {
-                        buffer.Add(match);
-                    }
+                    buffer.Add(allMatches[i]);
                 }
             }
             finally
@@ -371,7 +364,6 @@ namespace Zenject
             {
                 ProviderInfo selected = null;
                 int selectedDistance = Int32.MaxValue;
-                bool selectedHasCondition = false;
                 bool ambiguousSelection = false;
 
                 for (int i = 0; i < containerLookups.Length; i++)
@@ -394,44 +386,15 @@ namespace Zenject
                     {
                         var provider = localProviders[k];
 
-                        bool curHasCondition = provider.Condition != null;
-
-                        if (curHasCondition && !provider.Condition(context))
-                        {
-                            // The condition is not satisfied.
-                            continue;
-                        }
-
                         // The distance can't decrease becuase we are iterating over the containers with increasing distance.
                         // The distance can't increase because  we skip the container if the distance is greater than selected.
                         // So the distances are equal and only the condition can help resolving the amiguity.
                         Assert.That(selected == null || selectedDistance == curDistance);
 
-                        if (curHasCondition)
+                        if (selected != null)
                         {
-                            if (selectedHasCondition)
-                            {
-                                // Both providers have condition and are on equal depth.
-                                ambiguousSelection = true;
-                            }
-                            else
-                            {
-                                // Ambiguity is resolved because a provider with condition was found.
-                                ambiguousSelection = false;
-                            }
-                        }
-                        else
-                        {
-                            if (selectedHasCondition)
-                            {
-                                // Selected provider is better because it has condition.
-                                continue;
-                            }
-                            if (selected != null)
-                            {
-                                // Both providers don't have a condition and are on equal depth.
-                                ambiguousSelection = true;
-                            }
+                            // Both providers don't have a condition and are on equal depth.
+                            ambiguousSelection = true;
                         }
 
                         if (ambiguousSelection)
@@ -440,7 +403,6 @@ namespace Zenject
                         }
 
                         selectedDistance = curDistance;
-                        selectedHasCondition = curHasCondition;
                         selected = provider;
                     }
                 }
@@ -2522,10 +2484,9 @@ namespace Zenject
         class ProviderInfo
         {
             public ProviderInfo(
-                IProvider provider, BindingCondition condition, bool nonLazy, DiContainer container)
+                IProvider provider, bool nonLazy, DiContainer container)
             {
                 Provider = provider;
-                Condition = condition;
                 NonLazy = nonLazy;
                 Container = container;
             }
@@ -2533,7 +2494,6 @@ namespace Zenject
             public readonly DiContainer Container;
             public readonly bool NonLazy;
             public readonly IProvider Provider;
-            public readonly BindingCondition Condition;
         }
     }
 }

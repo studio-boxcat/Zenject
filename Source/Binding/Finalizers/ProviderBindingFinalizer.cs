@@ -32,7 +32,7 @@ namespace Zenject
                 // XXX: 너무 많은 힙할당이 발생해서 Assert.That 에서 예외를 직접 던지는 식으로 변경.
 #if DEBUG
                 // If condition is set then it's probably fine to allow the default of transient
-                if (BindInfo.RequireExplicitScope && BindInfo.Condition == null)
+                if (BindInfo.RequireExplicitScope)
                 {
                     throw Assert.CreateException(
                         "Scope must be set for the previous binding!  Please either specify AsTransient, AsCached, or AsSingle. Last binding: Contract: {0}, Identifier: {1} {2}",
@@ -88,7 +88,6 @@ namespace Zenject
 
             container.RegisterProvider(
                 new BindingId(contractType, BindInfo.Identifier),
-                BindInfo.Condition,
                 provider, BindInfo.NonLazy);
 
             if (contractType.IsValueType() && !(contractType.IsGenericType() && contractType.GetGenericTypeDefinition() == typeof(Nullable<>)))
@@ -99,7 +98,6 @@ namespace Zenject
                 // this is useful so that we can have optional primitive dependencies
                 container.RegisterProvider(
                     new BindingId(nullableType, BindInfo.Identifier),
-                    BindInfo.Condition,
                     provider, BindInfo.NonLazy);
             }
         }

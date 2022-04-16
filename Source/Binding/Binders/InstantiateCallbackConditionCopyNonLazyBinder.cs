@@ -4,21 +4,21 @@ using ModestTree;
 namespace Zenject
 {
     [NoReflectionBaking]
-    public class InstantiateCallbackConditionCopyNonLazyBinder : ConditionCopyNonLazyBinder
+    public class InstantiateCallbackConditionCopyNonLazyBinder : CopyNonLazyBinder
     {
         public InstantiateCallbackConditionCopyNonLazyBinder(BindInfo bindInfo)
             : base(bindInfo)
         {
         }
 
-        public ConditionCopyNonLazyBinder OnInstantiated(
+        public CopyNonLazyBinder OnInstantiated(
             Action<InjectContext, object> callback)
         {
             BindInfo.InstantiatedCallback = callback;
             return this;
         }
 
-        public ConditionCopyNonLazyBinder OnInstantiated<T>(
+        public CopyNonLazyBinder OnInstantiated<T>(
             Action<InjectContext, T> callback)
         {
             // Can't do this here because of factory bindings

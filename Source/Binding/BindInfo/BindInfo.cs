@@ -47,7 +47,6 @@ namespace Zenject
         public BindingInheritanceMethods BindingInheritanceMethod;
         public InvalidBindResponses InvalidBindResponse;
         public bool NonLazy;
-        public BindingCondition Condition;
         public ToChoices ToChoice;
         public string ContextInfo;
         public readonly List<Type> ToTypes; // Only relevant with ToChoices.Concrete
@@ -88,7 +87,6 @@ namespace Zenject
             BindingInheritanceMethod = BindingInheritanceMethods.None;
             InvalidBindResponse = InvalidBindResponses.Assert;
             NonLazy = false;
-            Condition = null;
             ToChoice = ToChoices.Self;
             ContextInfo = null;
             ToTypes.Clear();
