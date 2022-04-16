@@ -1214,24 +1214,14 @@ namespace Zenject
                 gameObj.transform.SetParent(parent, positionAndRotationWereSet);
             }
 
-            if (gameObjectBindInfo.Name != null)
-            {
-                gameObj.name = gameObjectBindInfo.Name;
-            }
-
             return gameObj;
-        }
-
-        public GameObject CreateEmptyGameObject(string name)
-        {
-            return CreateEmptyGameObject(new GameObjectCreationParameters { Name = name });
         }
 
         public GameObject CreateEmptyGameObject(GameObjectCreationParameters gameObjectBindInfo)
         {
             FlushBindings();
 
-            var gameObj = new GameObject(gameObjectBindInfo.Name ?? "GameObject");
+            var gameObj = new GameObject();
             var parent = gameObjectBindInfo.ParentTransform;
 
             if (parent == null)
@@ -1331,39 +1321,14 @@ namespace Zenject
         public T InstantiateComponentOnNewGameObject<T>()
             where T : Component
         {
-            return InstantiateComponentOnNewGameObject<T>(typeof(T).Name);
+            return InstantiateComponentOnNewGameObject<T>(Array.Empty<object>());
         }
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
-        public T InstantiateComponentOnNewGameObject<T>(IEnumerable<object> extraArgs)
-            where T : Component
+        public T InstantiateComponentOnNewGameObject<T>(IEnumerable<object> extraArgs) where T : Component
         {
-            return InstantiateComponentOnNewGameObject<T>(typeof(T).Name, extraArgs);
-        }
-
-        public T InstantiateComponentOnNewGameObject<T>(string gameObjectName)
-            where T : Component
-        {
-            return InstantiateComponentOnNewGameObject<T>(gameObjectName, new object[0]);
-        }
-
-        // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
-        // the argument list to avoid errors converting to IEnumerable<object>
-        public T InstantiateComponentOnNewGameObject<T>(
-            string gameObjectName, IEnumerable<object> extraArgs)
-            where T : Component
-        {
-            return InstantiateComponent<T>(
-                CreateEmptyGameObject(gameObjectName),
-                extraArgs);
-        }
-
-        // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(UnityEngine.Object prefab)
-        {
-            return InstantiatePrefab(
-                prefab, GameObjectCreationParameters.Default);
+            return InstantiateComponent<T>(CreateEmptyGameObject(default), extraArgs);
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
@@ -1388,7 +1353,7 @@ namespace Zenject
 
         // Create a new game object from a prefab and fill in dependencies for all children
         public GameObject InstantiatePrefab(
-            UnityEngine.Object prefab, GameObjectCreationParameters gameObjectBindInfo)
+            UnityEngine.Object prefab, GameObjectCreationParameters gameObjectBindInfo = default)
         {
             FlushBindings();
 
@@ -1404,12 +1369,6 @@ namespace Zenject
             }
 
             return gameObj;
-        }
-
-        // Create a new game object from a resource path and fill in dependencies for all children
-        public GameObject InstantiatePrefabResource(string resourcePath)
-        {
-            return InstantiatePrefabResource(resourcePath, GameObjectCreationParameters.Default);
         }
 
         // Create a new game object from a resource path and fill in dependencies for all children
@@ -1432,7 +1391,7 @@ namespace Zenject
 
         // Create a new game object from a resource path and fill in dependencies for all children
         public GameObject InstantiatePrefabResource(
-            string resourcePath, GameObjectCreationParameters creationInfo)
+            string resourcePath, GameObjectCreationParameters creationInfo = default)
         {
             var prefab = (GameObject)Resources.Load(resourcePath);
 
@@ -2256,15 +2215,7 @@ namespace Zenject
 
         public object InstantiatePrefabForComponentExplicit(
             Type componentType, UnityEngine.Object prefab,
-            List<TypeValuePair> extraArgs)
-        {
-            return InstantiatePrefabForComponentExplicit(
-                componentType, prefab, extraArgs, GameObjectCreationParameters.Default);
-        }
-
-        public object InstantiatePrefabForComponentExplicit(
-            Type componentType, UnityEngine.Object prefab,
-            List<TypeValuePair> extraArgs, GameObjectCreationParameters gameObjectBindInfo)
+            List<TypeValuePair> extraArgs, GameObjectCreationParameters gameObjectBindInfo = default)
         {
             return InstantiatePrefabForComponentExplicit(
                 componentType, prefab, extraArgs, new InjectContext(this, componentType, null), null, gameObjectBindInfo);

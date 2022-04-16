@@ -26,11 +26,6 @@ namespace Zenject
 
         protected override GameObject GetGameObject(InjectContext context)
         {
-            if (_gameObjectBindInfo.Name == null)
-            {
-                _gameObjectBindInfo.Name = ComponentType.Name;
-            }
-
             return Container.CreateEmptyGameObject(_gameObjectBindInfo);
         }
     }
