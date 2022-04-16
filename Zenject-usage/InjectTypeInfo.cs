@@ -1,5 +1,4 @@
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -29,11 +28,16 @@ namespace Zenject
             InjectProperties = injectProperties;
         }
 
-        // Filled in later
-        public InjectTypeInfo BaseTypeInfo
+        public bool IsInjectionRequired()
         {
-            get; set;
+            return InjectFields.Length != 0
+                   || InjectProperties.Length != 0
+                   || InjectMethods.Length != 0
+                   || InjectConstructor.ConstructorInfo != null;
         }
+
+        // Filled in later
+        public InjectTypeInfo BaseTypeInfo { get; set; }
 
         public IEnumerable<InjectableInfo> AllInjectables
         {
@@ -49,7 +53,7 @@ namespace Zenject
                     yield return info.Info;
 
                 foreach (var info in InjectMethods)
-                foreach(var paramInfo in info.Parameters)
+                foreach (var paramInfo in info.Parameters)
                 {
                     yield return paramInfo;
                 }

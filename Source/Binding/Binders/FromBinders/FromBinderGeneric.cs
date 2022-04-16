@@ -97,23 +97,6 @@ namespace Zenject
             return FromComponentsInChildrenBase(
                 excludeSelf, subPredicate, includeInactive);
         }
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsInHierarchy(
-            Func<TContract, bool> predicate = null, bool includeInactive = true)
-        {
-            Func<Component, bool> subPredicate;
-
-            if (predicate != null)
-            {
-                subPredicate = component => predicate((TContract)(object)component);
-            }
-            else
-            {
-                subPredicate = null;
-            }
-
-            return FromComponentsInHierarchyBase(subPredicate, includeInactive);
-        }
 #endif
     }
 }

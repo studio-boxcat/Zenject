@@ -1,14 +1,10 @@
 #if !NOT_UNITY3D
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using ModestTree;
-using ModestTree.Util;
 using UnityEngine;
-using UnityEngine.Serialization;
-using Zenject.Internal;
 using UnityEngine.Events;
+using Object = UnityEngine.Object;
 
 namespace Zenject
 {
@@ -62,11 +58,6 @@ namespace Zenject
             Resolve();
         }
 
-        public override IEnumerable<GameObject> GetRootGameObjects()
-        {
-            return ZenUtilInternal.GetRootGameObjects(gameObject.scene);
-        }
-
         public void Install()
         {
             Assert.That(!_hasInstalled);
@@ -85,8 +76,8 @@ namespace Zenject
             // so that it doesn't inject on the game object twice
             // InitialComponentsInjecter will also guarantee that any component that is injected into
             // another component has itself been injected
-            var injectableMonoBehaviours = new List<MonoBehaviour>();
-            GetInjectableMonoBehaviours(injectableMonoBehaviours);
+            var injectableMonoBehaviours = gameObject.GetComponent<InjectTargetCollection>().Targets;
+
             foreach (var instance in injectableMonoBehaviours)
             {
                 _container.QueueForInject(instance);
@@ -122,7 +113,7 @@ namespace Zenject
             OnPostResolve?.Invoke();
         }
 
-        void InstallBindings(List<MonoBehaviour> injectableMonoBehaviours)
+        void InstallBindings(Object[] injectableMonoBehaviours)
         {
             ZenjectManagersInstaller.InstallBindings(_container);
 
@@ -149,13 +140,6 @@ namespace Zenject
                 // Reset extra bindings for next time we change scenes
                 ExtraBindingsLateInstallMethod = null;
             }
-        }
-
-        protected override void GetInjectableMonoBehaviours(List<MonoBehaviour> monoBehaviours)
-        {
-            var scene = gameObject.scene;
-
-            ZenUtilInternal.GetInjectableMonoBehavioursInScene(scene, monoBehaviours);
         }
 
         // These methods can be used for cases where you need to create the SceneContext entirely in code

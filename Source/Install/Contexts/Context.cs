@@ -52,8 +52,6 @@ namespace Zenject
         {
             get;
         }
-        public abstract IEnumerable<GameObject> GetRootGameObjects();
-
 
         void CheckInstallerPrefabTypes(List<MonoInstaller> installers, List<MonoInstaller> installerPrefabs)
         {
@@ -153,7 +151,7 @@ namespace Zenject
             }
         }
 
-        protected void InstallSceneBindings(List<MonoBehaviour> injectableMonoBehaviours)
+        protected void InstallSceneBindings(Object[] injectableMonoBehaviours)
         {
             foreach (var binding in injectableMonoBehaviours.OfType<ZenjectBinding>())
             {
@@ -254,8 +252,6 @@ namespace Zenject
                 }
             }
         }
-
-        protected abstract void GetInjectableMonoBehaviours(List<MonoBehaviour> components);
     }
 }
 

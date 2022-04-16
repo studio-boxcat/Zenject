@@ -24,11 +24,6 @@ namespace Zenject
             get { return _subInstantiator.ExtraArguments; }
         }
 
-        public Type ArgumentTarget
-        {
-            get { return _subInstantiator.ArgumentTarget; }
-        }
-
         public GameObjectCreationParameters GameObjectCreationParameters
         {
             get { return _subInstantiator.GameObjectCreationParameters; }

@@ -8,11 +8,6 @@ namespace Zenject
 {
     public interface IPrefabInstantiator
     {
-        Type ArgumentTarget
-        {
-            get;
-        }
-
         List<TypeValuePair> ExtraArguments
         {
             get;

@@ -76,12 +76,6 @@ namespace Zenject
         {
             return FromComponentsInChildrenBase(excludeSelf, predicate, includeInactive);
         }
-
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsInHierarchy(
-            Func<Component, bool> predicate = null, bool includeInactive = true)
-        {
-            return FromComponentsInHierarchyBase(predicate, includeInactive);
-        }
 #endif
     }
 }

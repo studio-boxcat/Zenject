@@ -55,7 +55,6 @@ namespace Zenject
                                 new PrefabInstantiator(
                                     container,
                                     _gameObjectBindInfo,
-                                    concreteType,
                                     BindInfo.Arguments,
                                     new PrefabProvider(_prefab))));
                     break;
@@ -74,7 +73,6 @@ namespace Zenject
                         new PrefabInstantiator(
                             container,
                             _gameObjectBindInfo,
-                            argumentTarget,
                             BindInfo.Arguments,
                             new PrefabProvider(_prefab)));
 
@@ -108,7 +106,6 @@ namespace Zenject
                                 new PrefabInstantiator(
                                     container,
                                     _gameObjectBindInfo,
-                                    contractType,
                                     BindInfo.Arguments,
                                     new PrefabProvider(_prefab))));
                     break;
@@ -127,7 +124,6 @@ namespace Zenject
                         new PrefabInstantiator(
                             container,
                             _gameObjectBindInfo,
-                            argumentTarget,
                             BindInfo.Arguments,
                             new PrefabProvider(_prefab)));
 

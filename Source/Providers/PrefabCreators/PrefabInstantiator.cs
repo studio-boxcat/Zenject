@@ -16,11 +16,9 @@ namespace Zenject
         readonly DiContainer _container;
         readonly List<TypeValuePair> _extraArguments;
         readonly GameObjectCreationParameters _gameObjectBindInfo;
-        readonly Type _argumentTarget;
 
         public PrefabInstantiator(DiContainer container,
             GameObjectCreationParameters gameObjectBindInfo,
-            Type argumentTarget,
             IEnumerable<TypeValuePair> extraArguments,
             IPrefabProvider prefabProvider)
         {
@@ -28,17 +26,11 @@ namespace Zenject
             _extraArguments = extraArguments.ToList();
             _container = container;
             _gameObjectBindInfo = gameObjectBindInfo;
-            _argumentTarget = argumentTarget;
         }
 
         public GameObjectCreationParameters GameObjectCreationParameters
         {
             get { return _gameObjectBindInfo; }
-        }
-
-        public Type ArgumentTarget
-        {
-            get { return _argumentTarget; }
         }
 
         public List<TypeValuePair> ExtraArguments
@@ -53,8 +45,6 @@ namespace Zenject
 
         public GameObject Instantiate(InjectContext context, List<TypeValuePair> args, out Action injectAction)
         {
-            Assert.That(_argumentTarget == null || _argumentTarget.DerivesFromOrEqual(context.MemberType));
-
             bool shouldMakeActive;
             var gameObject = _container.CreateAndParentPrefab(
                 GetPrefab(context), _gameObjectBindInfo, context, out shouldMakeActive);
@@ -62,31 +52,7 @@ namespace Zenject
 
             injectAction = () =>
             {
-                var allArgs = ZenPools.SpawnList<TypeValuePair>();
-
-                allArgs.AllocFreeAddRange(_extraArguments);
-                allArgs.AllocFreeAddRange(args);
-
-                if (_argumentTarget == null)
-                {
-                    Assert.That(
-                        allArgs.IsEmpty(),
-                        "Unexpected arguments provided to prefab instantiator.  Arguments are not allowed if binding multiple components in the same binding");
-                }
-
-                if (_argumentTarget == null || allArgs.IsEmpty())
-                {
-                    _container.InjectGameObject(gameObject);
-                }
-                else
-                {
-                    _container.InjectGameObjectForComponentExplicit(
-                        gameObject, _argumentTarget, allArgs, context, null);
-
-                    Assert.That(allArgs.Count == 0);
-                }
-
-                ZenPools.DespawnList(allArgs);
+                _container.InjectGameObject(gameObject);
 
                 if (shouldMakeActive)
                 {

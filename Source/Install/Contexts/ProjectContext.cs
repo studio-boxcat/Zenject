@@ -1,11 +1,10 @@
 #if !NOT_UNITY3D
 
 using System;
-using System.Collections.Generic;
-using System.Threading;
 using ModestTree;
 using UnityEngine;
 using Zenject.Internal;
+using Object = UnityEngine.Object;
 
 namespace Zenject
 {
@@ -45,11 +44,6 @@ namespace Zenject
 
                 return _instance;
             }
-        }
-
-        public override IEnumerable<GameObject> GetRootGameObjects()
-        {
-            return new[] { gameObject };
         }
 
         public static GameObject TryGetPrefab()
@@ -165,8 +159,8 @@ namespace Zenject
                 PreInstall();
             }
 
-            var injectableMonoBehaviours = new List<MonoBehaviour>();
-            GetInjectableMonoBehaviours(injectableMonoBehaviours);
+            var injectableMonoBehaviours = gameObject.TryGetComponent(out InjectTargetCollection injectTargetCollection)
+                ? injectTargetCollection.Targets : Array.Empty<Object>();
 
             foreach (var instance in injectableMonoBehaviours)
             {
@@ -202,12 +196,7 @@ namespace Zenject
             }
         }
 
-        protected override void GetInjectableMonoBehaviours(List<MonoBehaviour> monoBehaviours)
-        {
-            ZenUtilInternal.GetInjectableMonoBehavioursUnderGameObject(gameObject, monoBehaviours);
-        }
-
-        void InstallBindings(List<MonoBehaviour> injectableMonoBehaviours)
+        void InstallBindings(Object[] injectableMonoBehaviours)
         {
             ZenjectManagersInstaller.InstallBindings(_container);
 
