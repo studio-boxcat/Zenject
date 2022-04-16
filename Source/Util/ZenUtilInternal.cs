@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ModestTree;
-using ModestTree.Util;
 #if !NOT_UNITY3D
 using UnityEngine.SceneManagement;
 using UnityEngine;
@@ -26,70 +25,7 @@ namespace Zenject.Internal
             return obj == null || obj.Equals(null);
         }
 
-#if UNITY_EDITOR
-        // This can be useful if you are running code outside unity
-        // since in that case you have to make sure to avoid calling anything
-        // inside Unity DLLs
-        public static bool IsOutsideUnity()
-        {
-            return AppDomain.CurrentDomain.FriendlyName != "Unity Child Domain";
-        }
-#endif
-
-        public static bool AreFunctionsEqual(Delegate left, Delegate right)
-        {
-            return left.Target == right.Target && left.Method() == right.Method();
-        }
-
-        // Taken from here:
-        // http://stackoverflow.com/questions/28937324/in-c-how-could-i-get-a-classs-inheritance-distance-to-base-class/28937542#28937542
-        public static int GetInheritanceDelta(Type derived, Type parent)
-        {
-            Assert.That(derived.DerivesFromOrEqual(parent));
-
-            if (parent.IsInterface())
-            {
-                // Not sure if we can calculate this so just return 1
-                return 1;
-            }
-
-            if (derived == parent)
-            {
-                return 0;
-            }
-
-            int distance = 1;
-
-            Type child = derived;
-
-            while ((child = child.BaseType()) != parent)
-            {
-                distance++;
-            }
-
-            return distance;
-        }
-
 #if !NOT_UNITY3D
-        public static IEnumerable<SceneContext> GetAllSceneContexts()
-        {
-            foreach (var scene in UnityUtil.AllLoadedScenes)
-            {
-                var contexts = scene.GetRootGameObjects()
-                    .SelectMany(root => root.GetComponentsInChildren<SceneContext>()).ToList();
-
-                if (contexts.IsEmpty())
-                {
-                    continue;
-                }
-
-                Assert.That(contexts.Count == 1,
-                    "Found multiple scene contexts in scene '{0}'", scene.name);
-
-                yield return contexts[0];
-            }
-        }
-
         public static void GetInjectableMonoBehavioursInScene(
             Scene scene, List<MonoBehaviour> monoBehaviours)
         {
