@@ -2215,7 +2215,6 @@ namespace Zenject
             }
 
             bindInfo.ContractTypes.AllocFreeAddRange(interfaces);
-            bindInfo.SetContextInfo("BindInterfacesTo({0})".Fmt(type));
 
             // Almost always, you don't want to use the default AsTransient so make them type it
             bindInfo.RequireExplicitScope = true;
@@ -2235,8 +2234,6 @@ namespace Zenject
 
             bindInfo.ContractTypes.AllocFreeAddRange(type.Interfaces());
             bindInfo.ContractTypes.Add(type);
-
-            bindInfo.SetContextInfo("BindInterfacesAndSelfTo({0})".Fmt(type));
 
             // Almost always, you don't want to use the default AsTransient so make them type it
             bindInfo.RequireExplicitScope = true;

@@ -15,12 +15,12 @@ namespace Zenject
         readonly object _concreteIdentifier;
 
         public TransientProvider(Type concreteType, DiContainer container,
-            IEnumerable<TypeValuePair> extraArguments, string bindingContext,
+            IEnumerable<TypeValuePair> extraArguments,
             object concreteIdentifier)
         {
             Assert.That(!concreteType.IsAbstract(),
-                "Expected non-abstract type for given binding but instead found type '{0}'{1}",
-                concreteType, bindingContext == null ? "" : " when binding '{0}'".Fmt(bindingContext));
+                "Expected non-abstract type for given binding but instead found type '{0}'",
+                concreteType);
 
             _container = container;
             _concreteType = concreteType;

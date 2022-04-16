@@ -36,7 +36,6 @@ namespace Zenject
         public InvalidBindResponses InvalidBindResponse;
         public bool NonLazy;
         public ToChoices ToChoice;
-        public string ContextInfo;
         public readonly List<Type> ToTypes; // Only relevant with ToChoices.Concrete
         public ScopeTypes Scope;
         public readonly List<TypeValuePair> Arguments;
@@ -55,12 +54,6 @@ namespace Zenject
             ZenPools.DespawnBindInfo(this);
         }
 
-        [Conditional("UNITY_EDITOR")]
-        public void SetContextInfo(string contextInfo)
-        {
-            ContextInfo = contextInfo;
-        }
-
         public void Reset()
         {
             MarkAsCreationBinding = true;
@@ -72,7 +65,6 @@ namespace Zenject
             InvalidBindResponse = InvalidBindResponses.Assert;
             NonLazy = false;
             ToChoice = ToChoices.Self;
-            ContextInfo = null;
             ToTypes.Clear();
             Scope = ScopeTypes.Unset;
             Arguments.Clear();
