@@ -5,9 +5,9 @@ using UnityEngine;
 namespace Zenject
 {
     [NoReflectionBaking]
-    public class TransformScopeConcreteIdArgConditionCopyNonLazyBinder : ScopeConcreteIdArgConditionCopyNonLazyBinder
+    public class TransformScopeConcreteIdArgCopyNonLazyBinder : ScopeConcreteIdArgCopyNonLazyBinder
     {
-        public TransformScopeConcreteIdArgConditionCopyNonLazyBinder(
+        public TransformScopeConcreteIdArgCopyNonLazyBinder(
             BindInfo bindInfo,
             GameObjectCreationParameters gameObjectInfo)
             : base(bindInfo)
@@ -21,7 +21,7 @@ namespace Zenject
             private set;
         }
 
-        public ScopeConcreteIdArgConditionCopyNonLazyBinder UnderTransform(Transform parent)
+        public ScopeConcreteIdArgCopyNonLazyBinder UnderTransform(Transform parent)
         {
             GameObjectInfo.ParentTransform = parent;
             return this;

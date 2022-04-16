@@ -1,20 +1,20 @@
 namespace Zenject
 {
     [NoReflectionBaking]
-    public class ScopeConcreteIdArgConditionCopyNonLazyBinder : ConcreteIdArgConditionCopyNonLazyBinder
+    public class ScopeConcreteIdArgCopyNonLazyBinder : ConcreteIdArgCopyNonLazyBinder
     {
-        public ScopeConcreteIdArgConditionCopyNonLazyBinder(BindInfo bindInfo)
+        public ScopeConcreteIdArgCopyNonLazyBinder(BindInfo bindInfo)
             : base(bindInfo)
         {
         }
 
-        public ConcreteIdArgConditionCopyNonLazyBinder AsCached()
+        public ConcreteIdArgCopyNonLazyBinder AsCached()
         {
             BindInfo.Scope = ScopeTypes.Singleton;
             return this;
         }
 
-        public ConcreteIdArgConditionCopyNonLazyBinder AsSingle()
+        public ConcreteIdArgCopyNonLazyBinder AsSingle()
         {
             BindInfo.Scope = ScopeTypes.Singleton;
             BindInfo.MarkAsUniqueSingleton = true;
@@ -22,7 +22,7 @@ namespace Zenject
         }
 
         // Note that this is the default so it's not necessary to call this
-        public ConcreteIdArgConditionCopyNonLazyBinder AsTransient()
+        public ConcreteIdArgCopyNonLazyBinder AsTransient()
         {
             BindInfo.Scope = ScopeTypes.Transient;
             return this;

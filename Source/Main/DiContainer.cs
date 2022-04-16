@@ -2326,7 +2326,7 @@ namespace Zenject
         //
         //      Container.Bind<Foo>().FromInstance(new Foo());
         //
-        public IdScopeConcreteIdArgConditionCopyNonLazyBinder BindInstance<TContract>(TContract instance)
+        public IdScopeConcreteIdArgCopyNonLazyBinder BindInstance<TContract>(TContract instance)
         {
             var statement = StartBinding();
             var bindInfo = statement.SpawnBindInfo();
@@ -2337,7 +2337,7 @@ namespace Zenject
                     bindInfo,
                     (container, type) => new InstanceProvider(type, instance, container)));
 
-            return new IdScopeConcreteIdArgConditionCopyNonLazyBinder(bindInfo);
+            return new IdScopeConcreteIdArgCopyNonLazyBinder(bindInfo);
         }
 
         // Unfortunately we can't support setting scope / condition / etc. here since all the
