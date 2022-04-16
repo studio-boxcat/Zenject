@@ -1700,28 +1700,6 @@ namespace Zenject
             return bindStatement;
         }
 
-        public ConcreteBinderGeneric<TContract> Rebind<TContract>()
-        {
-            return RebindId<TContract>(null);
-        }
-
-        public ConcreteBinderGeneric<TContract> RebindId<TContract>(object identifier)
-        {
-            UnbindId<TContract>(identifier);
-            return Bind<TContract>().WithId(identifier);
-        }
-
-        public ConcreteBinderNonGeneric Rebind(Type contractType)
-        {
-            return RebindId(contractType, null);
-        }
-
-        public ConcreteBinderNonGeneric RebindId(Type contractType, object identifier)
-        {
-            UnbindId(contractType, identifier);
-            return Bind(contractType).WithId(identifier);
-        }
-
         // Map the given type to a way of obtaining it
         // Note that this can include open generic types as well such as List<>
         public ConcreteIdBinderGeneric<TContract> Bind<TContract>()
