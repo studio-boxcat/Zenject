@@ -123,15 +123,8 @@ namespace Zenject
             _container = new DiContainer(ProjectContext.Instance.Container);
 
             // Do this after creating DiContainer in case it's needed by the pre install logic
-            if (PreInstall != null)
-            {
-                PreInstall();
-            }
-
-            if (OnPreInstall != null)
-            {
-                OnPreInstall.Invoke();
-            }
+            PreInstall?.Invoke();
+            OnPreInstall?.Invoke();
 
             if (_parentNewObjectsUnderSceneContext)
             {
@@ -165,28 +158,14 @@ namespace Zenject
                 _container.IsInstalling = false;
             }
 
-            if (PostInstall != null)
-            {
-                PostInstall();
-            }
-
-            if (OnPostInstall != null)
-            {
-                OnPostInstall.Invoke();
-            }
+            PostInstall?.Invoke();
+            OnPostInstall?.Invoke();
         }
 
         public void Resolve()
         {
-            if (PreResolve != null)
-            {
-                PreResolve();
-            }
-
-            if (OnPreResolve != null)
-            {
-                OnPreResolve.Invoke();
-            }
+            PreResolve?.Invoke();
+            OnPreResolve?.Invoke();
 
             Assert.That(_hasInstalled);
             Assert.That(!_hasResolved);
@@ -194,15 +173,8 @@ namespace Zenject
 
             _container.ResolveRoots();
 
-            if (PostResolve != null)
-            {
-                PostResolve();
-            }
-
-            if (OnPostResolve != null)
-            {
-                OnPostResolve.Invoke();
-            }
+            PostResolve?.Invoke();
+            OnPostResolve?.Invoke();
         }
 
         void InstallBindings(List<MonoBehaviour> injectableMonoBehaviours)
