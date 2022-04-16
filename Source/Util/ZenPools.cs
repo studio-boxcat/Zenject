@@ -7,14 +7,8 @@ namespace Zenject.Internal
     public static class ZenPools
     {
         static readonly StaticMemoryPool<InjectContext> _contextPool = new();
-        static readonly StaticMemoryPool<LookupId> _lookupIdPool = new();
         static readonly StaticMemoryPool<BindInfo> _bindInfoPool = new();
         static readonly StaticMemoryPool<BindStatement> _bindStatementPool = new();
-
-        public static HashSet<T> SpawnHashSet<T>()
-        {
-            return HashSetPool<T>.Get();
-        }
 
         public static Dictionary<TKey, TValue> SpawnDictionary<TKey, TValue>()
         {
@@ -51,22 +45,6 @@ namespace Zenject.Internal
         public static void DespawnHashSet<T>(HashSet<T> set)
         {
             HashSetPool<T>.Release(set);
-        }
-
-        public static LookupId SpawnLookupId(IProvider provider, BindingId bindingId)
-        {
-            var lookupId = _lookupIdPool.Spawn();
-
-            lookupId.Provider = provider;
-            lookupId.BindingId = bindingId;
-
-            return lookupId;
-        }
-
-        public static void DespawnLookupId(LookupId lookupId)
-        {
-            lookupId.Reset();
-            _lookupIdPool.Despawn(lookupId);
         }
 
         public static List<T> SpawnList<T>()

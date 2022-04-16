@@ -805,56 +805,49 @@ namespace Zenject
 
             var provider = providerInfo.Provider;
 
-            var lookupId = ZenPools.SpawnLookupId(provider, context.BindingId);
+            var lookupId = new LookupId(provider, context.BindingId);
+
+            // Use the container associated with the provider to address some rare cases
+            // which would otherwise result in an infinite loop.  Like this:
+            // Container.Bind<ICharacter>().FromComponentInNewPrefab(Prefab).AsTransient()
+            // With the prefab being a GameObjectContext containing a script that has a
+            // ICharacter dependency.  In this case, we would otherwise use the _resolvesInProgress
+            // associated with the GameObjectContext container, which will allow the recursive
+            // lookup, which will trigger another GameObjectContext and container (since it is
+            // transient) and the process continues indefinitely
+            var providerContainer = providerInfo.Container;
+
+            if (providerContainer._resolvesTwiceInProgress.Contains(lookupId))
+            {
+                // Allow one before giving up so that you can do circular dependencies via postinject or fields
+                throw Assert.CreateException(
+                    "Circular dependency detected! Object graph:\n {0}", context.GetObjectGraphString());
+            }
+
+            bool twice = false;
+            if (!providerContainer._resolvesInProgress.Add(lookupId))
+            {
+                bool added = providerContainer._resolvesTwiceInProgress.Add(lookupId);
+                Assert.That(added);
+                twice = true;
+            }
 
             try
             {
-                // Use the container associated with the provider to address some rare cases
-                // which would otherwise result in an infinite loop.  Like this:
-                // Container.Bind<ICharacter>().FromComponentInNewPrefab(Prefab).AsTransient()
-                // With the prefab being a GameObjectContext containing a script that has a
-                // ICharacter dependency.  In this case, we would otherwise use the _resolvesInProgress
-                // associated with the GameObjectContext container, which will allow the recursive
-                // lookup, which will trigger another GameObjectContext and container (since it is
-                // transient) and the process continues indefinitely
-                var providerContainer = providerInfo.Container;
-
-                if (providerContainer._resolvesTwiceInProgress.Contains(lookupId))
-                {
-                    // Allow one before giving up so that you can do circular dependencies via postinject or fields
-                    throw Assert.CreateException(
-                        "Circular dependency detected! Object graph:\n {0}", context.GetObjectGraphString());
-                }
-
-                bool twice = false;
-                if (!providerContainer._resolvesInProgress.Add(lookupId))
-                {
-                    bool added = providerContainer._resolvesTwiceInProgress.Add(lookupId);
-                    Assert.That(added);
-                    twice = true;
-                }
-
-                try
-                {
-                    provider.GetAllInstances(context, instances);
-                }
-                finally
-                {
-                    if (twice)
-                    {
-                        bool removed = providerContainer._resolvesTwiceInProgress.Remove(lookupId);
-                        Assert.That(removed);
-                    }
-                    else
-                    {
-                        bool removed = providerContainer._resolvesInProgress.Remove(lookupId);
-                        Assert.That(removed);
-                    }
-                }
+                provider.GetAllInstances(context, instances);
             }
             finally
             {
-                ZenPools.DespawnLookupId(lookupId);
+                if (twice)
+                {
+                    bool removed = providerContainer._resolvesTwiceInProgress.Remove(lookupId);
+                    Assert.That(removed);
+                }
+                else
+                {
+                    bool removed = providerContainer._resolvesInProgress.Remove(lookupId);
+                    Assert.That(removed);
+                }
             }
         }
 

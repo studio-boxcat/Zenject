@@ -2,15 +2,10 @@ using ModestTree;
 
 namespace Zenject.Internal
 {
-    [NoReflectionBaking]
-    public class LookupId
+    public struct LookupId
     {
-        public IProvider Provider;
-        public BindingId BindingId;
-
-        public LookupId()
-        {
-        }
+        public readonly IProvider Provider;
+        public readonly BindingId BindingId;
 
         public LookupId(IProvider provider, BindingId bindingId)
         {
@@ -27,13 +22,6 @@ namespace Zenject.Internal
             hash = hash * 23 + Provider.GetHashCode();
             hash = hash * 23 + BindingId.GetHashCode();
             return hash;
-        }
-
-        public void Reset()
-        {
-            Provider = null;
-            BindingId.Type = null;
-            BindingId.Identifier = null;
         }
     }
 }
