@@ -40,65 +40,6 @@ namespace Zenject.Internal
             return false;
         }
 
-        // Feel free to call this method from an editor script, or a unit test, etc.
-        // An exception will be thrown if any validation errors are encountered
-        public static void ValidateCurrentSceneSetup()
-        {
-            bool encounteredError = false;
-
-            Application.LogCallback logCallback = (condition, stackTrace, type) =>
-            {
-                if (type == LogType.Error || type == LogType.Assert
-                    || type == LogType.Exception)
-                {
-                    encounteredError = true;
-                }
-            };
-
-            Application.logMessageReceived += logCallback;
-
-            try
-            {
-                Assert.That(!ProjectContext.HasInstance);
-                ProjectContext.ValidateOnNextRun = true;
-
-                foreach (var sceneContext in GetAllSceneContexts())
-                {
-                    sceneContext.Validate();
-                }
-            }
-            catch (Exception e)
-            {
-                Log.ErrorException(e);
-                encounteredError = true;
-            }
-            finally
-            {
-                Application.logMessageReceived -= logCallback;
-            }
-
-            if (encounteredError)
-            {
-                throw new ZenjectException("Zenject Validation Failed!  See errors below for details.");
-            }
-        }
-
-        // NOTE: An exception will be thrown if any validation errors are encountered
-        // Returns the number of scenes that successfully validated
-        public static int ValidateAllActiveScenes()
-        {
-            var activeScenePaths = EditorBuildSettings.scenes.Where(x => x.enabled)
-                .Select(x => x.path).ToList();
-
-            foreach (var scenePath in activeScenePaths)
-            {
-                EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
-                ValidateCurrentSceneSetup();
-            }
-
-            return activeScenePaths.Count;
-        }
-
         // Don't use this
         public static void RunCurrentSceneSetup()
         {

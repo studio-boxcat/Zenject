@@ -95,7 +95,7 @@ namespace Zenject
 
                 ZenPools.DespawnList<TypeValuePair>(allArgs);
 
-                if (shouldMakeActive && !_container.IsValidating)
+                if (shouldMakeActive)
                 {
 #if ZEN_INTERNAL_PROFILING
                     using (ProfileTimers.CreateTimedBlock("User Code"))

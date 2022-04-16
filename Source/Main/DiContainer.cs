@@ -32,9 +32,6 @@ namespace Zenject
         readonly Queue<BindStatement> _currentBindings = new Queue<BindStatement>();
         readonly List<BindStatement> _childBindings = new List<BindStatement>();
 
-        readonly HashSet<Type> _validatedTypes = new HashSet<Type>();
-        readonly List<IValidatable> _validationQueue = new List<IValidatable>();
-
 #if !NOT_UNITY3D
         Transform _contextTransform;
         bool _hasLookedUpContextTransform;
@@ -47,17 +44,14 @@ namespace Zenject
 
         bool _hasResolvedRoots;
         bool _isFinalizingBinding;
-        bool _isValidating;
         bool _isInstalling;
 #if DEBUG || UNITY_EDITOR
         bool _hasDisplayedInstallWarning;
 #endif
 
         public DiContainer(
-            IEnumerable<DiContainer> parentContainersEnumerable, bool isValidating)
+            IEnumerable<DiContainer> parentContainersEnumerable)
         {
-            _isValidating = isValidating;
-
             _lazyInjector = new LazyInstanceInjector(this);
 
             InstallDefaultBindings();
@@ -114,28 +108,13 @@ namespace Zenject
             }
         }
 
-        public DiContainer(bool isValidating)
-            : this(Enumerable.Empty<DiContainer>(), isValidating)
-        {
-        }
-
         public DiContainer()
-            : this(Enumerable.Empty<DiContainer>(), false)
-        {
-        }
-
-        public DiContainer(DiContainer parentContainer, bool isValidating)
-            : this(new [] { parentContainer }, isValidating)
+            : this(Enumerable.Empty<DiContainer>())
         {
         }
 
         public DiContainer(DiContainer parentContainer)
-            : this(new [] { parentContainer }, false)
-        {
-        }
-
-        public DiContainer(IEnumerable<DiContainer> parentContainers)
-            : this(parentContainers, false)
+            : this(new [] { parentContainer })
         {
         }
 
@@ -180,27 +159,7 @@ namespace Zenject
                 typeof(LazyInject<>)
                 .MakeGenericType(newContext.MemberType), this, newContext);
 
-            if (_isValidating)
-            {
-                QueueForValidate((IValidatable)result);
-            }
-
             return result;
-        }
-
-        public void QueueForValidate(IValidatable validatable)
-        {
-            // Don't bother adding to queue if the initial resolve is already completed
-            if (!_hasResolvedRoots)
-            {
-                var concreteType = validatable.GetType();
-
-                if (!_validatedTypes.Contains(concreteType))
-                {
-                    _validatedTypes.Add(concreteType);
-                    _validationQueue.Add(validatable);
-                }
-            }
         }
 
         bool ShouldInheritBinding(BindStatement binding, DiContainer ancestorContainer)
@@ -282,13 +241,6 @@ namespace Zenject
             get { return _containerLookups[(int)InjectSources.AnyParent]; }
         }
 
-        public const bool ChecksForCircularDependencies = true;
-
-        public bool IsValidating
-        {
-            get { return _isValidating; }
-        }
-
         // When this is true, it will log warnings when Resolve or Instantiate
         // methods are called
         // Used to ensure that Resolve and Instantiate methods are not called
@@ -317,19 +269,8 @@ namespace Zenject
             FlushBindings();
 
             ResolveDependencyRoots();
-#if DEBUG
-            if (IsValidating && _settings.ValidationRootResolveMethod == RootResolveMethods.All)
-            {
-                ValidateFullResolve();
-            }
-#endif
 
             _lazyInjector.LazyInjectAll();
-
-            if (IsValidating)
-            {
-                FlushValidationQueue();
-            }
 
             Assert.That(!_hasResolvedRoots);
             _hasResolvedRoots = true;
@@ -396,52 +337,9 @@ namespace Zenject
             }
         }
 
-        void ValidateFullResolve()
-        {
-            Assert.That(!_hasResolvedRoots);
-            Assert.That(IsValidating);
-
-            foreach (var bindingId in _providers.Keys.ToList())
-            {
-                if (!bindingId.Type.IsOpenGenericType())
-                {
-                    using (var context = ZenPools.SpawnInjectContext(this, bindingId.Type))
-                    {
-                        context.Identifier = bindingId.Identifier;
-                        context.SourceType = InjectSources.Local;
-                        context.Optional = true;
-
-                        ResolveAll(context);
-                    }
-                }
-            }
-        }
-
-        void FlushValidationQueue()
-        {
-            Assert.That(!_hasResolvedRoots);
-            Assert.That(IsValidating);
-
-            var validatables = new List<IValidatable>();
-
-            // Repeatedly flush the validation queue until it's empty, to account for
-            // cases where calls to Validate() add more objects to the queue
-            while (_validationQueue.Any())
-            {
-                validatables.Clear();
-                validatables.AllocFreeAddRange(_validationQueue);
-                _validationQueue.Clear();
-
-                for (int i = 0; i < validatables.Count; i++)
-                {
-                    validatables[i].Validate();
-                }
-            }
-        }
-
         public DiContainer CreateSubContainer()
         {
-            return CreateSubContainer(_isValidating);
+            return new DiContainer(new[] { this });
         }
 
         public void QueueForInject(object instance)
@@ -460,11 +358,6 @@ namespace Zenject
         {
             _lazyInjector.LazyInject(instance);
             return instance;
-        }
-
-        DiContainer CreateSubContainer(bool isValidating)
-        {
-            return new DiContainer(new[] { this }, isValidating);
         }
 
         public void RegisterProvider(
@@ -769,19 +662,6 @@ namespace Zenject
                                 "Could not find required dependency with type '{0}'.  Found providers but they returned zero results!", context.MemberType);
                         }
 
-                        if (IsValidating)
-                        {
-                            for (int i = 0; i < allInstances.Count; i++)
-                            {
-                                var instance = allInstances[i];
-
-                                if (instance is ValidationMarker)
-                                {
-                                    allInstances[i] = context.MemberType.GetDefaultValue();
-                                }
-                            }
-                        }
-
                         buffer.AllocFreeAddRange(allInstances);
                     }
                     finally
@@ -830,10 +710,6 @@ namespace Zenject
                 return;
             }
 #endif
-            if (IsValidating && TypeAnalyzer.ShouldAllowDuringValidation(context.MemberType))
-            {
-                return;
-            }
 
             var rootContext = context.ParentContextsAndSelf.Last();
 
@@ -1199,8 +1075,6 @@ namespace Zenject
 
             Assert.IsNotNull(typeInfo, "Tried to create type '{0}' but could not find type information", concreteType);
 
-            bool allowDuringValidation = IsValidating && TypeAnalyzer.ShouldAllowDuringValidation(concreteType);
-
             object newObj;
 
 #if !NOT_UNITY3D
@@ -1209,14 +1083,7 @@ namespace Zenject
                 Assert.That(typeInfo.InjectConstructor.Parameters.Length == 0,
                     "Found constructor parameters on ScriptableObject type '{0}'.  This is not allowed.  Use an [Inject] method or fields instead.");
 
-                if (!IsValidating || allowDuringValidation)
-                {
-                    newObj = ScriptableObject.CreateInstance(concreteType);
-                }
-                else
-                {
-                    newObj = new ValidationMarker(concreteType);
-                }
+                newObj = ScriptableObject.CreateInstance(concreteType);
             }
             else
 #endif
@@ -1245,7 +1112,7 @@ namespace Zenject
                             }
                         }
 
-                        if (value == null || value is ValidationMarker)
+                        if (value == null)
                         {
                             paramValues[i] = injectInfo.MemberType.GetDefaultValue();
                         }
@@ -1255,30 +1122,23 @@ namespace Zenject
                         }
                     }
 
-                    if (!IsValidating || allowDuringValidation)
+                    //ModestTree.Log.Debug("Zenject: Instantiating type '{0}'", concreteType);
+                    try
                     {
-                        //ModestTree.Log.Debug("Zenject: Instantiating type '{0}'", concreteType);
-                        try
-                        {
 #if ZEN_INTERNAL_PROFILING
-                            using (ProfileTimers.CreateTimedBlock("User Code"))
+                        using (ProfileTimers.CreateTimedBlock("User Code"))
 #endif
 #if UNITY_EDITOR
-                            using (ProfileBlock.Start("{0}.{1}()", concreteType, concreteType.Name))
+                        using (ProfileBlock.Start("{0}.{1}()", concreteType, concreteType.Name))
 #endif
-                            {
-                                newObj = typeInfo.InjectConstructor.ConstructorInfo.Invoke(paramValues);
-                            }
-                        }
-                        catch (Exception e)
                         {
-                            throw Assert.CreateException(
-                                e, "Error occurred while instantiating object with type '{0}'", concreteType);
+                            newObj = typeInfo.InjectConstructor.ConstructorInfo.Invoke(paramValues);
                         }
                     }
-                    else
+                    catch (Exception e)
                     {
-                        newObj = new ValidationMarker(concreteType);
+                        throw Assert.CreateException(
+                            e, "Error occurred while instantiating object with type '{0}'", concreteType);
                     }
                 }
                 finally
@@ -1291,20 +1151,13 @@ namespace Zenject
             {
                 InjectExplicit(newObj, concreteType, extraArgs, context, concreteIdentifier);
 
-                if (extraArgs.Count > 0 && !(newObj is ValidationMarker))
+                if (extraArgs.Count > 0)
                 {
                     throw Assert.CreateException(
                         "Passed unnecessary parameters when injecting into type '{0}'. \nExtra Parameters: {1}\nObject graph:\n{2}",
                         newObj.GetType(), String.Join(",", extraArgs.Select(x => x.Type.PrettyName()).ToArray()), context.GetObjectGraphString());
                 }
             }
-
-#if DEBUG
-            if (IsValidating && newObj is IValidatable)
-            {
-                QueueForValidate((IValidatable)newObj);
-            }
-#endif
 
             return newObj;
         }
@@ -1314,16 +1167,7 @@ namespace Zenject
         // Note: Any arguments that are used will be removed from extraArgMap
         public void InjectExplicit(object injectable, List<TypeValuePair> extraArgs)
         {
-            Type injectableType;
-
-            if (injectable is ValidationMarker)
-            {
-                injectableType = ((ValidationMarker)injectable).MarkedType;
-            }
-            else
-            {
-                injectableType = injectable.GetType();
-            }
+            var injectableType = injectable.GetType();
 
             InjectExplicit(
                 injectable,
@@ -1341,53 +1185,20 @@ namespace Zenject
             using (ProfileTimers.CreateTimedBlock("DiContainer.Inject"))
 #endif
             {
-                if (IsValidating)
-                {
-                    var marker = injectable as ValidationMarker;
-
-                    if (marker != null && marker.InstantiateFailed)
-                    {
-                        // Do nothing in this case because it already failed and so there
-                        // could be many knock-on errors that aren't related to the user
-                        return;
-                    }
-
-                    if (_settings.ValidationErrorResponse == ValidationErrorResponses.Throw)
-                    {
-                        InjectExplicitInternal(
-                            injectable, injectableType, extraArgs, context, concreteIdentifier);
-                    }
-                    else
-                    {
-                        // In this case, just log it and continue to print out multiple validation errors
-                        // at once
-                        try
-                        {
-                            InjectExplicitInternal(injectable, injectableType, extraArgs, context, concreteIdentifier);
-                        }
-                        catch (Exception e)
-                        {
-                            Log.ErrorException(e);
-                        }
-                    }
-                }
-                else
-                {
-                    InjectExplicitInternal(injectable, injectableType, extraArgs, context, concreteIdentifier);
-                }
+                InjectExplicitInternal(injectable, injectableType, extraArgs, context, concreteIdentifier);
             }
         }
 
         void CallInjectMethodsTopDown(
             object injectable, Type injectableType,
             InjectTypeInfo typeInfo, List<TypeValuePair> extraArgs,
-            InjectContext context, object concreteIdentifier, bool isDryRun)
+            InjectContext context, object concreteIdentifier)
         {
             if (typeInfo.BaseTypeInfo != null)
             {
                 CallInjectMethodsTopDown(
                     injectable, injectableType, typeInfo.BaseTypeInfo, extraArgs,
-                    context, concreteIdentifier, isDryRun);
+                    context, concreteIdentifier);
             }
 
             for (int i = 0; i < typeInfo.InjectMethods.Length; i++)
@@ -1412,29 +1223,17 @@ namespace Zenject
                             }
                         }
 
-                        if (value is ValidationMarker)
-                        {
-                            Assert.That(IsValidating);
-
-                            paramValues[k] = injectInfo.MemberType.GetDefaultValue();
-                        }
-                        else
-                        {
-                            paramValues[k] = value;
-                        }
+                        paramValues[k] = value;
                     }
 
-                    if (!isDryRun)
-                    {
 #if ZEN_INTERNAL_PROFILING
-                        using (ProfileTimers.CreateTimedBlock("User Code"))
+                    using (ProfileTimers.CreateTimedBlock("User Code"))
 #endif
 #if UNITY_EDITOR
-                        using (ProfileBlock.Start("{0}.{1}()", typeInfo.Type, method.MethodInfo.Name))
+                    using (ProfileBlock.Start("{0}.{1}()", typeInfo.Type, method.MethodInfo.Name))
 #endif
-                        {
-                            method.MethodInfo.Invoke(injectable, paramValues);
-                        }
+                    {
+                        method.MethodInfo.Invoke(injectable, paramValues);
                     }
                 }
                 finally
@@ -1447,39 +1246,29 @@ namespace Zenject
         void InjectMembersTopDown(
             object injectable, Type injectableType,
             InjectTypeInfo typeInfo, List<TypeValuePair> extraArgs,
-            InjectContext context, object concreteIdentifier, bool isDryRun)
+            InjectContext context, object concreteIdentifier)
         {
             if (typeInfo.BaseTypeInfo != null)
             {
                 InjectMembersTopDown(
                     injectable, injectableType, typeInfo.BaseTypeInfo, extraArgs,
-                    context, concreteIdentifier, isDryRun);
+                    context, concreteIdentifier);
             }
 
             foreach (var injectField in typeInfo.InjectFields)
-                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs, context, concreteIdentifier, isDryRun);
+                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs, context, concreteIdentifier);
             foreach (var injectProperty in typeInfo.InjectProperties)
-                InjectMember(injectProperty.Info, injectProperty, injectable, injectableType, extraArgs, context, concreteIdentifier, isDryRun);
+                InjectMember(injectProperty.Info, injectProperty, injectable, injectableType, extraArgs, context, concreteIdentifier);
         }
 
-        void InjectMember<T>(InjectableInfo injectInfo, T setter,  object injectable, Type injectableType, List<TypeValuePair> extraArgs, InjectContext context, object concreteIdentifier, bool isDryRun)
+        void InjectMember<T>(InjectableInfo injectInfo, T setter,  object injectable, Type injectableType, List<TypeValuePair> extraArgs, InjectContext context, object concreteIdentifier)
             where T : InjectTypeInfo.IInjectMemberSetter
         {
             object value;
 
             if (InjectUtil.PopValueWithType(extraArgs, injectInfo.MemberType, out value))
             {
-                if (!isDryRun)
-                {
-                    if (value is ValidationMarker)
-                    {
-                        Assert.That(IsValidating);
-                    }
-                    else
-                    {
-                        setter.Invoke(injectable, value);
-                    }
-                }
+                setter.Invoke(injectable, value);
             }
             else
             {
@@ -1495,17 +1284,7 @@ namespace Zenject
                 }
                 else
                 {
-                    if (!isDryRun)
-                    {
-                        if (value is ValidationMarker)
-                        {
-                            Assert.That(IsValidating);
-                        }
-                        else
-                        {
-                            setter.Invoke(injectable, value);
-                        }
-                    }
+                    setter.Invoke(injectable, value);
                 }
             }
         }
@@ -1524,15 +1303,9 @@ namespace Zenject
                 return;
             }
 
-            var allowDuringValidation = IsValidating && TypeAnalyzer.ShouldAllowDuringValidation(injectableType);
-
             // Installers are the only things that we instantiate/inject on during validation
-            var isDryRun = IsValidating && !allowDuringValidation;
 
-            if (!isDryRun)
-            {
-                Assert.IsEqual(injectable.GetType(), injectableType);
-            }
+            Assert.IsEqual(injectable.GetType(), injectableType);
 
 #if !NOT_UNITY3D
             if (injectableType == typeof(GameObject))
@@ -1546,10 +1319,10 @@ namespace Zenject
             CheckForInstallWarning(context);
 
             InjectMembersTopDown(
-                injectable, injectableType, typeInfo, extraArgs, context, concreteIdentifier, isDryRun);
+                injectable, injectableType, typeInfo, extraArgs, context, concreteIdentifier);
 
             CallInjectMethodsTopDown(
-                injectable, injectableType, typeInfo, extraArgs, context, concreteIdentifier, isDryRun);
+                injectable, injectableType, typeInfo, extraArgs, context, concreteIdentifier);
 
             if (extraArgs.Count > 0)
             {
@@ -1742,7 +1515,7 @@ namespace Zenject
 
             // Don't execute the ParentTransformGetter method during validation
             // since it might do a resolve etc.
-            if (gameObjectBindInfo.ParentTransformGetter != null && !IsValidating)
+            if (gameObjectBindInfo.ParentTransformGetter != null)
             {
                 Assert.IsNull(gameObjectBindInfo.GroupName);
 
@@ -1816,12 +1589,6 @@ namespace Zenject
         public T Instantiate<T>(IEnumerable<object> extraArgs)
         {
             var result = Instantiate(typeof(T), extraArgs);
-
-            if (IsValidating && !(result is T))
-            {
-                Assert.That(result is ValidationMarker);
-                return default(T);
-            }
 
             return (T)result;
         }
@@ -1956,7 +1723,7 @@ namespace Zenject
 
             InjectGameObject(gameObj);
 
-            if (shouldMakeActive && !IsValidating)
+            if (shouldMakeActive)
             {
 #if ZEN_INTERNAL_PROFILING
                 using (ProfileTimers.CreateTimedBlock("User Code"))
@@ -2814,26 +2581,6 @@ namespace Zenject
             using (ProfileTimers.CreateTimedBlock("DiContainer.Instantiate"))
 #endif
             {
-                if (IsValidating)
-                {
-                    if (_settings.ValidationErrorResponse == ValidationErrorResponses.Throw)
-                    {
-                        return InstantiateInternal(concreteType, autoInject, extraArgs, context, concreteIdentifier);
-                    }
-
-                    // In this case, just log it and continue to print out multiple validation errors
-                    // at once
-                    try
-                    {
-                        return InstantiateInternal(concreteType, autoInject, extraArgs, context, concreteIdentifier);
-                    }
-                    catch (Exception e)
-                    {
-                        Log.ErrorException(e);
-                        return new ValidationMarker(concreteType, true);
-                    }
-                }
-
                 return InstantiateInternal(concreteType, autoInject, extraArgs, context, concreteIdentifier);
             }
         }
@@ -2926,7 +2673,7 @@ namespace Zenject
             var component = InjectGameObjectForComponentExplicit(
                 gameObj, componentType, extraArgs, context, concreteIdentifier);
 
-            if (shouldMakeActive && !IsValidating)
+            if (shouldMakeActive)
             {
 #if ZEN_INTERNAL_PROFILING
                 using (ProfileTimers.CreateTimedBlock("User Code"))

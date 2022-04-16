@@ -148,7 +148,7 @@ namespace Zenject
             var gameObj = container.CreateAndParentPrefabResource(
                 resourcePath, GameObjectCreationParameters.Default, null, out shouldMakeActive);
 
-            if (shouldMakeActive && !container.IsValidating)
+            if (shouldMakeActive)
             {
 #if ZEN_INTERNAL_PROFILING
                 using (ProfileTimers.CreateTimedBlock("User Code"))

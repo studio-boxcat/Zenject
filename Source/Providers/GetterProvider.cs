@@ -60,22 +60,6 @@ namespace Zenject
 
             injectAction = null;
 
-            if (_container.IsValidating)
-            {
-                // All we can do is validate that the getter object can be resolved
-                if (_matchAll)
-                {
-                    _container.ResolveAll(GetSubContext(context));
-                }
-                else
-                {
-                    _container.Resolve(GetSubContext(context));
-                }
-
-                buffer.Add(new ValidationMarker(typeof(TResult)));
-                return;
-            }
-
             if (_matchAll)
             {
                 Assert.That(buffer.Count == 0);

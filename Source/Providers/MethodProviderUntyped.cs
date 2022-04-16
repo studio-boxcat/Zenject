@@ -40,26 +40,19 @@ namespace Zenject
             Assert.IsNotNull(context);
 
             injectAction = null;
-            if (_container.IsValidating && !TypeAnalyzer.ShouldAllowDuringValidation(context.MemberType))
+            var result = _method(context);
+
+            if (result == null)
             {
-                buffer.Add(new ValidationMarker(context.MemberType));
+                Assert.That(!context.MemberType.IsPrimitive(),
+                    "Invalid value returned from FromMethod.  Expected non-null.");
             }
             else
             {
-                var result = _method(context);
-
-                if (result == null)
-                {
-                    Assert.That(!context.MemberType.IsPrimitive(),
-                        "Invalid value returned from FromMethod.  Expected non-null.");
-                }
-                else
-                {
-                    Assert.That(result.GetType().DerivesFromOrEqual(context.MemberType));
-                }
-
-                buffer.Add(result);
+                Assert.That(result.GetType().DerivesFromOrEqual(context.MemberType));
             }
+
+            buffer.Add(result);
         }
     }
 }

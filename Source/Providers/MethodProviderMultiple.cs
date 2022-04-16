@@ -42,25 +42,18 @@ namespace Zenject
             Assert.That(typeof(TReturn).DerivesFromOrEqual(context.MemberType));
 
             injectAction = null;
-            if (_container.IsValidating && !TypeAnalyzer.ShouldAllowDuringValidation(context.MemberType))
+            var result = _method(context);
+
+            if (result == null)
             {
-                buffer.Add(new ValidationMarker(typeof(TReturn)));
+                throw Assert.CreateException(
+                    "Method '{0}' returned null when list was expected. Object graph:\n {1}",
+                    _method.ToDebugString(), context.GetObjectGraphString());
             }
-            else
+
+            foreach (var obj in result)
             {
-                var result = _method(context);
-
-                if (result == null)
-                {
-                    throw Assert.CreateException(
-                        "Method '{0}' returned null when list was expected. Object graph:\n {1}",
-                        _method.ToDebugString(), context.GetObjectGraphString());
-                }
-
-                foreach (var obj in result)
-                {
-                    buffer.Add(obj);
-                }
+                buffer.Add(obj);
             }
         }
     }

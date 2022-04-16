@@ -68,29 +68,22 @@ namespace Zenject
 
             object instance;
 
-            if (!_container.IsValidating || TypeAnalyzer.ShouldAllowDuringValidation(_componentType))
+            var gameObj = ((Component) context.ObjectInstance).gameObject;
+
+            var componentInstance = gameObj.GetComponent(_componentType);
+            instance = componentInstance;
+
+            // Use componentInstance so that it triggers unity's overloaded comparison operator
+            // So if the component is there but missing then it returns null
+            // (https://github.com/svermeulen/Zenject/issues/582)
+            if (componentInstance != null)
             {
-                var gameObj = ((Component)context.ObjectInstance).gameObject;
-
-                var componentInstance = gameObj.GetComponent(_componentType);
-                instance = componentInstance;
-
-                // Use componentInstance so that it triggers unity's overloaded comparison operator
-                // So if the component is there but missing then it returns null
-                // (https://github.com/svermeulen/Zenject/issues/582)
-                if (componentInstance != null)
-                {
-                    injectAction = null;
-                    buffer.Add(instance);
-                    return;
-                }
-
-                instance = gameObj.AddComponent(_componentType);
+                injectAction = null;
+                buffer.Add(instance);
+                return;
             }
-            else
-            {
-                instance = new ValidationMarker(_componentType);
-            }
+
+            instance = gameObj.AddComponent(_componentType);
 
             // Note that we don't just use InstantiateComponentOnNewGameObjectExplicit here
             // because then circular references don't work

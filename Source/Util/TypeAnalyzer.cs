@@ -10,44 +10,6 @@ namespace Zenject
     {
         static Dictionary<Type, InjectTypeInfo> _typeInfo = new();
 
-        // We store this separately from InjectTypeInfo because this flag is needed for contract
-        // types whereas InjectTypeInfo is only needed for types that are instantiated, and
-        // we want to minimize the types that generate InjectTypeInfo for
-        static Dictionary<Type, bool> _allowDuringValidation = new();
-
-        public static bool ShouldAllowDuringValidation<T>()
-        {
-            return ShouldAllowDuringValidation(typeof(T));
-        }
-
-        public static bool ShouldAllowDuringValidation(Type type)
-        {
-            bool shouldAllow;
-
-            if (!_allowDuringValidation.TryGetValue(type, out shouldAllow))
-            {
-                shouldAllow = ShouldAllowDuringValidationInternal(type);
-                _allowDuringValidation.Add(type, shouldAllow);
-            }
-
-            return shouldAllow;
-        }
-
-        static bool ShouldAllowDuringValidationInternal(Type type)
-        {
-            // During validation, do not instantiate or inject anything except for
-            // Installers, IValidatable's, or types marked with attribute ZenjectAllowDuringValidation
-            // You would typically use ZenjectAllowDuringValidation attribute for data that you
-            // inject into factories
-
-            if (type.DerivesFrom<IInstaller>() || type.DerivesFrom<IValidatable>() || type.DerivesFrom<Context>())
-            {
-                return true;
-            }
-
-            return type.IsDefined(typeof(ZenjectAllowDuringValidationAttribute));
-        }
-
         public static bool HasInfo<T>()
         {
             return HasInfo(typeof(T));

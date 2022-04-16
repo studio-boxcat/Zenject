@@ -55,12 +55,6 @@ namespace Zenject
             }
         }
 
-        public static bool ValidateOnNextRun
-        {
-            get;
-            set;
-        }
-
         public override IEnumerable<GameObject> GetRootGameObjects()
         {
             return new[] { gameObject };
@@ -191,12 +185,7 @@ namespace Zenject
         {
             Assert.IsNull(_container);
 
-            var isValidating = ValidateOnNextRun;
-
-            // Reset immediately to ensure it doesn't get used in another run
-            ValidateOnNextRun = false;
-
-            _container = new DiContainer(isValidating);
+            _container = new DiContainer();
 
             // Do this after creating DiContainer in case it's needed by the pre install logic
             if (PreInstall != null)

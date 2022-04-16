@@ -63,14 +63,6 @@ namespace Zenject
             get { return _hasInstalled; }
         }
 
-        public bool IsValidating
-        {
-            get
-            {
-                return ProjectContext.Instance.Container.IsValidating;
-            }
-        }
-
         public IEnumerable<string> ContractNames
         {
             get { return _contractNames; }
@@ -110,14 +102,6 @@ namespace Zenject
             {
                 Initialize();
             }
-        }
-
-        public void Validate()
-        {
-            Assert.That(IsValidating);
-
-            Install();
-            Resolve();
         }
 
         protected override void RunInternal()
@@ -197,9 +181,8 @@ namespace Zenject
 
             var parents = GetParentContainers();
             Assert.That(!parents.IsEmpty());
-            Assert.That(parents.All(x => x.IsValidating == parents.First().IsValidating));
 
-            _container = new DiContainer(parents, parents.First().IsValidating);
+            _container = new DiContainer(parents);
 
             // Do this after creating DiContainer in case it's needed by the pre install logic
             if (PreInstall != null)

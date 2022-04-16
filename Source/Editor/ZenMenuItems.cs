@@ -10,23 +10,6 @@ namespace Zenject.Internal
 {
     public static class ZenMenuItems
     {
-        // NOTE: We use shift+alt+v instead of control+shift+v because control+shift+v conflicts
-        // with a vuforia shortcut
-        [MenuItem("Edit/Zenject/Validate Current Scenes #&v")]
-        public static void ValidateCurrentScene()
-        {
-            ValidateCurrentSceneInternal();
-        }
-
-        [MenuItem("Edit/Zenject/Validate Then Run #%r")]
-        public static void ValidateCurrentSceneThenRun()
-        {
-            if (ValidateCurrentSceneInternal())
-            {
-                EditorApplication.isPlaying = true;
-            }
-        }
-
         [MenuItem("Edit/Zenject/Help...")]
         public static void OpenDocumentation()
         {
@@ -236,26 +219,6 @@ namespace Zenject.Internal
             Selection.activeObject = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
 
             return assetPath;
-        }
-
-        [MenuItem("Edit/Zenject/Validate All Active Scenes")]
-        public static void ValidateAllActiveScenes()
-        {
-            ZenUnityEditorUtil.SaveThenRunPreserveSceneSetup(() =>
-                {
-                    var numValidated = ZenUnityEditorUtil.ValidateAllActiveScenes();
-                    Log.Info("Validated all '{0}' active scenes successfully", numValidated);
-                });
-        }
-
-        static bool ValidateCurrentSceneInternal()
-        {
-            return ZenUnityEditorUtil.SaveThenRunPreserveSceneSetup(() =>
-                {
-                    SceneParentAutomaticLoader.ValidateMultiSceneSetupAndLoadDefaultSceneParents();
-                    ZenUnityEditorUtil.ValidateCurrentSceneSetup();
-                    Log.Info("All scenes validated successfully");
-                });
         }
 
         [MenuItem("Assets/Create/Zenject/Unit Test", false, 60)]

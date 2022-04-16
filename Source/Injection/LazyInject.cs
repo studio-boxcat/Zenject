@@ -2,9 +2,8 @@ using ModestTree;
 
 namespace Zenject
 {
-    [ZenjectAllowDuringValidation]
     [NoReflectionBaking]
-    public class LazyInject<T> : IValidatable
+    public class LazyInject<T>
     {
         readonly DiContainer _container;
         readonly InjectContext _context;
@@ -18,11 +17,6 @@ namespace Zenject
 
             _container = container;
             _context = context;
-        }
-
-        void IValidatable.Validate()
-        {
-            _container.Resolve(_context);
         }
 
         public T Value
