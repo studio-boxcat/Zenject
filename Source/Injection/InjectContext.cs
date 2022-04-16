@@ -17,7 +17,6 @@ namespace Zenject
         string _memberName;
         bool _optional;
         InjectSources _sourceType;
-        object _fallBackValue;
         object _concreteIdentifier;
         DiContainer _container;
 
@@ -59,7 +58,6 @@ namespace Zenject
             _memberName = "";
             _optional = false;
             _sourceType = InjectSources.Any;
-            _fallBackValue = null;
             _container = null;
             _bindingId.Type = null;
             _bindingId.Identifier = null;
@@ -144,13 +142,6 @@ namespace Zenject
             set { _concreteIdentifier = value; }
         }
 
-        // When optional, this is used to provide the value
-        public object FallBackValue
-        {
-            get { return _fallBackValue; }
-            set { _fallBackValue = value; }
-        }
-
         // The container used for this injection
         public DiContainer Container
         {
@@ -222,7 +213,6 @@ namespace Zenject
             // Clear these
             subContext.ConcreteIdentifier = null;
             subContext.MemberName = "";
-            subContext.FallBackValue = null;
 
             // Inherit these ones by default
             subContext.ObjectType = ObjectType;
@@ -247,7 +237,6 @@ namespace Zenject
             clone.MemberName = MemberName;
             clone.Optional = Optional;
             clone.SourceType = SourceType;
-            clone.FallBackValue = FallBackValue;
             clone.Container = Container;
 
             return clone;

@@ -108,7 +108,6 @@ namespace Zenject.Internal
             context.MemberName = injectableInfo.MemberName;
             context.Optional = injectableInfo.Optional;
             context.SourceType = injectableInfo.SourceType;
-            context.FallBackValue = injectableInfo.DefaultValue;
             context.ConcreteIdentifier = concreteIdentifier;
 
             return context;

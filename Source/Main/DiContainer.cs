@@ -836,7 +836,7 @@ namespace Zenject
 
                     if (context.Optional)
                     {
-                        return context.FallBackValue;
+                        return null;
                     }
 
                     throw Assert.CreateException("Unable to resolve '{0}'{1}. Object graph:\n{2}", context.BindingId,
@@ -854,7 +854,7 @@ namespace Zenject
                     {
                         if (context.Optional)
                         {
-                            return context.FallBackValue;
+                            return null;
                         }
 
                         throw Assert.CreateException(

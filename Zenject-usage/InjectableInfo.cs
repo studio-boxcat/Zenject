@@ -16,17 +16,14 @@ namespace Zenject
         // The field type or property type from source code
         public readonly Type MemberType;
 
-        public readonly object DefaultValue;
-
         public InjectableInfo(
             bool optional, object identifier, string memberName, Type memberType,
-            object defaultValue, InjectSources sourceType)
+            InjectSources sourceType)
         {
             Optional = optional;
             MemberType = memberType;
             MemberName = memberName;
             Identifier = identifier;
-            DefaultValue = defaultValue;
             SourceType = sourceType;
         }
     }
