@@ -6,7 +6,6 @@ namespace ModestTree
 {
     public static class TypeExtensions
     {
-        static readonly Dictionary<Type, bool> _isOpenGenericType = new Dictionary<Type, bool>();
         static readonly Dictionary<Type, bool> _isValueType = new Dictionary<Type, bool>();
         static readonly Dictionary<Type, Type[]> _interfaces = new Dictionary<Type, Type[]>();
 
@@ -260,17 +259,6 @@ namespace ModestTree
             }
 
             return null;
-        }
-
-        public static bool IsOpenGenericType(this Type type)
-        {
-            bool result;
-            if (!_isOpenGenericType.TryGetValue(type, out result))
-            {
-                result = type.IsGenericType() && type == type.GetGenericTypeDefinition();
-                _isOpenGenericType[type] = result;
-            }
-            return result;
         }
     }
 }

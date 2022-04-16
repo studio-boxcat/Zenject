@@ -19,16 +19,6 @@ namespace Zenject
             _container = container;
         }
 
-        public bool IsCached
-        {
-            get { return true; }
-        }
-
-        public bool TypeVariesBasedOnMemberType
-        {
-            get { return false; }
-        }
-
         public Type GetInstanceType(InjectContext context)
         {
             return _instanceType;

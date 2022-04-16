@@ -32,16 +32,6 @@ namespace Zenject
             _instantiateCallback = instantiateCallback;
         }
 
-        public bool IsCached
-        {
-            get { return false; }
-        }
-
-        public bool TypeVariesBasedOnMemberType
-        {
-            get { return false; }
-        }
-
         protected DiContainer Container
         {
             get { return _container; }

@@ -16,16 +16,6 @@ namespace Zenject
             _method = method;
         }
 
-        public bool IsCached
-        {
-            get { return false; }
-        }
-
-        public bool TypeVariesBasedOnMemberType
-        {
-            get { return false; }
-        }
-
         public Type GetInstanceType(InjectContext context)
         {
             return typeof(TValue);
@@ -54,16 +44,6 @@ namespace Zenject
         public MethodProviderWithContainer(Func<DiContainer, TParam1, TValue> method)
         {
             _method = method;
-        }
-
-        public bool IsCached
-        {
-            get { return false; }
-        }
-
-        public bool TypeVariesBasedOnMemberType
-        {
-            get { return false; }
         }
 
         public Type GetInstanceType(InjectContext context)
@@ -98,16 +78,6 @@ namespace Zenject
         public MethodProviderWithContainer(Func<DiContainer, TParam1, TParam2, TValue> method)
         {
             _method = method;
-        }
-
-        public bool IsCached
-        {
-            get { return false; }
-        }
-
-        public bool TypeVariesBasedOnMemberType
-        {
-            get { return false; }
         }
 
         public Type GetInstanceType(InjectContext context)

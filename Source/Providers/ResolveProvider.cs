@@ -26,16 +26,6 @@ namespace Zenject
             _matchAll = matchAll;
         }
 
-        public bool IsCached
-        {
-            get { return false; }
-        }
-
-        public bool TypeVariesBasedOnMemberType
-        {
-            get { return false; }
-        }
-
         public Type GetInstanceType(InjectContext context)
         {
             return _contractType;

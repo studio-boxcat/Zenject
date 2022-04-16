@@ -18,16 +18,6 @@ namespace Zenject
             _method = method;
         }
 
-        public bool IsCached
-        {
-            get { return false; }
-        }
-
-        public bool TypeVariesBasedOnMemberType
-        {
-            get { return false; }
-        }
-
         public Type GetInstanceType(InjectContext context)
         {
             return context.MemberType;

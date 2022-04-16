@@ -16,20 +16,6 @@ namespace Zenject
             _creator = creator;
         }
 
-        public bool IsCached
-        {
-            get { return true; }
-        }
-
-        public bool TypeVariesBasedOnMemberType
-        {
-            get
-            {
-                // Should not call this
-                throw Assert.CreateException();
-            }
-        }
-
         public int NumInstances => _instances?.Count ?? 0;
 
         // This method can be called if you want to clear the memory for an AsSingle instance,

@@ -32,16 +32,6 @@ namespace Zenject
             _instantiateCallback = instantiateCallback;
         }
 
-        public bool IsCached
-        {
-            get { return false; }
-        }
-
-        public bool TypeVariesBasedOnMemberType
-        {
-            get { return _concreteType.IsOpenGenericType(); }
-        }
-
         public Type GetInstanceType(InjectContext context)
         {
             if (!_concreteType.DerivesFromOrEqual(context.MemberType))
