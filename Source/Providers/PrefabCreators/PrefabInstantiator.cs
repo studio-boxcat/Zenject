@@ -17,25 +17,18 @@ namespace Zenject
         readonly List<TypeValuePair> _extraArguments;
         readonly GameObjectCreationParameters _gameObjectBindInfo;
         readonly Type _argumentTarget;
-        readonly List<Type> _instantiateCallbackTypes;
-        readonly Action<InjectContext, object> _instantiateCallback;
 
-        public PrefabInstantiator(
-            DiContainer container,
+        public PrefabInstantiator(DiContainer container,
             GameObjectCreationParameters gameObjectBindInfo,
             Type argumentTarget,
-            IEnumerable<Type> instantiateCallbackTypes,
             IEnumerable<TypeValuePair> extraArguments,
-            IPrefabProvider prefabProvider,
-            Action<InjectContext, object> instantiateCallback)
+            IPrefabProvider prefabProvider)
         {
             _prefabProvider = prefabProvider;
             _extraArguments = extraArguments.ToList();
             _container = container;
             _gameObjectBindInfo = gameObjectBindInfo;
             _argumentTarget = argumentTarget;
-            _instantiateCallbackTypes = instantiateCallbackTypes.ToList();
-            _instantiateCallback = instantiateCallback;
         }
 
         public GameObjectCreationParameters GameObjectCreationParameters
@@ -93,7 +86,7 @@ namespace Zenject
                     Assert.That(allArgs.Count == 0);
                 }
 
-                ZenPools.DespawnList<TypeValuePair>(allArgs);
+                ZenPools.DespawnList(allArgs);
 
                 if (shouldMakeActive)
                 {
@@ -103,28 +96,6 @@ namespace Zenject
                     {
                         gameObject.SetActive(true);
                     }
-                }
-
-                if (_instantiateCallback != null)
-                {
-                    var callbackObjects = ZenPools.SpawnHashSet<object>();
-
-                    foreach (var type in _instantiateCallbackTypes)
-                    {
-                        var obj = gameObject.GetComponentInChildren(type);
-
-                        if (obj != null)
-                        {
-                            callbackObjects.Add(obj);
-                        }
-                    }
-
-                    foreach (var obj in callbackObjects)
-                    {
-                        _instantiateCallback(context, obj);
-                    }
-
-                    ZenPools.DespawnHashSet(callbackObjects);
                 }
             };
 

@@ -25,8 +25,7 @@ namespace Zenject
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo, (container, type) => new TransientProvider(
                     type, container, BindInfo.Arguments,
-                    BindInfo.ContextInfo, BindInfo.ConcreteIdentifier,
-                    BindInfo.InstantiatedCallback));
+                    BindInfo.ContextInfo, BindInfo.ConcreteIdentifier));
 
             return this;
         }

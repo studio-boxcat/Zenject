@@ -225,7 +225,7 @@ namespace Zenject
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
                 (container, type) => new AddToExistingGameObjectComponentProvider(
-                    gameObject, container, type, BindInfo.Arguments, BindInfo.ConcreteIdentifier, BindInfo.InstantiatedCallback));
+                    gameObject, container, type, BindInfo.Arguments, BindInfo.ConcreteIdentifier));
 
             return new ScopeConcreteIdArgCopyNonLazyBinder(BindInfo);
         }
@@ -239,7 +239,7 @@ namespace Zenject
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
                 (container, type) => new AddToExistingGameObjectComponentProviderGetter(
-                    gameObjectGetter, container, type, BindInfo.Arguments, BindInfo.ConcreteIdentifier, BindInfo.InstantiatedCallback));
+                    gameObjectGetter, container, type, BindInfo.Arguments, BindInfo.ConcreteIdentifier));
 
             return new ScopeConcreteIdArgCopyNonLazyBinder(BindInfo);
         }
@@ -252,7 +252,7 @@ namespace Zenject
             BindInfo.RequireExplicitScope = true;
             SubFinalizer = new SingleProviderBindingFinalizer(
                 BindInfo, (container, type) => new AddToCurrentGameObjectComponentProvider(
-                    container, type, BindInfo.Arguments, BindInfo.ConcreteIdentifier, BindInfo.InstantiatedCallback));
+                    container, type, BindInfo.Arguments, BindInfo.ConcreteIdentifier));
 
             return new ScopeConcreteIdArgCopyNonLazyBinder(BindInfo);
         }
@@ -281,7 +281,7 @@ namespace Zenject
                     container,
                     type,
                     BindInfo.Arguments,
-                    gameObjectInfo, BindInfo.ConcreteIdentifier, BindInfo.InstantiatedCallback));
+                    gameObjectInfo, BindInfo.ConcreteIdentifier));
 
             return new NameTransformScopeConcreteIdArgCopyNonLazyBinder(BindInfo, gameObjectInfo);
         }

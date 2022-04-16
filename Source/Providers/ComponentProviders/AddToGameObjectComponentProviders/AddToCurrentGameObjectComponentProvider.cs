@@ -16,12 +16,9 @@ namespace Zenject
         readonly DiContainer _container;
         readonly List<TypeValuePair> _extraArguments;
         readonly object _concreteIdentifier;
-        readonly Action<InjectContext, object> _instantiateCallback;
 
-        public AddToCurrentGameObjectComponentProvider(
-            DiContainer container, Type componentType,
-            IEnumerable<TypeValuePair> extraArguments, object concreteIdentifier,
-            Action<InjectContext, object> instantiateCallback)
+        public AddToCurrentGameObjectComponentProvider(DiContainer container, Type componentType,
+            IEnumerable<TypeValuePair> extraArguments, object concreteIdentifier)
         {
             Assert.That(componentType.DerivesFrom<Component>());
 
@@ -29,7 +26,6 @@ namespace Zenject
             _componentType = componentType;
             _container = container;
             _concreteIdentifier = concreteIdentifier;
-            _instantiateCallback = instantiateCallback;
         }
 
         protected DiContainer Container
@@ -89,11 +85,6 @@ namespace Zenject
 
                 Assert.That(extraArgs.IsEmpty());
                 ZenPools.DespawnList(extraArgs);
-
-                if (_instantiateCallback != null)
-                {
-                    _instantiateCallback(context, instance);
-                }
             };
 
             buffer.Add(instance);

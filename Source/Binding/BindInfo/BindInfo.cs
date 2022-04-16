@@ -39,8 +39,6 @@ namespace Zenject
         public bool MarkAsCreationBinding;
         public bool MarkAsUniqueSingleton;
         public object ConcreteIdentifier;
-        public bool SaveProvider;
-        public bool OnlyBindIfNotBound;
         public bool RequireExplicitScope;
         public object Identifier;
         public readonly List<Type> ContractTypes;
@@ -52,7 +50,6 @@ namespace Zenject
         public readonly List<Type> ToTypes; // Only relevant with ToChoices.Concrete
         public ScopeTypes Scope;
         public readonly List<TypeValuePair> Arguments;
-        public Action<InjectContext, object> InstantiatedCallback;
 
         public BindInfo()
         {
@@ -79,8 +76,6 @@ namespace Zenject
             MarkAsCreationBinding = true;
             MarkAsUniqueSingleton = false;
             ConcreteIdentifier = null;
-            SaveProvider = false;
-            OnlyBindIfNotBound = false;
             RequireExplicitScope = false;
             Identifier = null;
             ContractTypes.Clear();
@@ -92,7 +87,6 @@ namespace Zenject
             ToTypes.Clear();
             Scope = ScopeTypes.Unset;
             Arguments.Clear();
-            InstantiatedCallback = null;
         }
     }
 }

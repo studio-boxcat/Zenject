@@ -12,11 +12,9 @@ namespace Zenject
     {
         readonly GameObject _gameObject;
 
-        public AddToExistingGameObjectComponentProvider(
-            GameObject gameObject, DiContainer container, Type componentType,
-            IEnumerable<TypeValuePair> extraArguments, object concreteIdentifier,
-            Action<InjectContext, object> instantiateCallback)
-            : base(container, componentType, extraArguments, concreteIdentifier, instantiateCallback)
+        public AddToExistingGameObjectComponentProvider(GameObject gameObject, DiContainer container, Type componentType,
+            IEnumerable<TypeValuePair> extraArguments, object concreteIdentifier)
+            : base(container, componentType, extraArguments, concreteIdentifier)
         {
             _gameObject = gameObject;
         }
@@ -40,11 +38,9 @@ namespace Zenject
     {
         readonly Func<InjectContext, GameObject> _gameObjectGetter;
 
-        public AddToExistingGameObjectComponentProviderGetter(
-            Func<InjectContext, GameObject> gameObjectGetter, DiContainer container, Type componentType,
-            List<TypeValuePair> extraArguments, object concreteIdentifier,
-            Action<InjectContext, object> instantiateCallback)
-            : base(container, componentType, extraArguments, concreteIdentifier, instantiateCallback)
+        public AddToExistingGameObjectComponentProviderGetter(Func<InjectContext, GameObject> gameObjectGetter, DiContainer container, Type componentType,
+            List<TypeValuePair> extraArguments, object concreteIdentifier)
+            : base(container, componentType, extraArguments, concreteIdentifier)
         {
             _gameObjectGetter = gameObjectGetter;
         }

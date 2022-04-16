@@ -13,13 +13,10 @@ namespace Zenject
         readonly Type _concreteType;
         readonly List<TypeValuePair> _extraArguments;
         readonly object _concreteIdentifier;
-        readonly Action<InjectContext, object> _instantiateCallback;
 
-        public TransientProvider(
-            Type concreteType, DiContainer container,
+        public TransientProvider(Type concreteType, DiContainer container,
             IEnumerable<TypeValuePair> extraArguments, string bindingContext,
-            object concreteIdentifier,
-            Action<InjectContext, object> instantiateCallback)
+            object concreteIdentifier)
         {
             Assert.That(!concreteType.IsAbstract(),
                 "Expected non-abstract type for given binding but instead found type '{0}'{1}",
@@ -29,7 +26,6 @@ namespace Zenject
             _concreteType = concreteType;
             _extraArguments = extraArguments.ToList();
             _concreteIdentifier = concreteIdentifier;
-            _instantiateCallback = instantiateCallback;
         }
 
         public Type GetInstanceType(InjectContext context)
@@ -63,11 +59,6 @@ namespace Zenject
 
                 Assert.That(extraArgs.Count == 0);
                 ZenPools.DespawnList(extraArgs);
-
-                if (_instantiateCallback != null)
-                {
-                    _instantiateCallback(context, instance);
-                }
             };
 
             buffer.Add(instance);

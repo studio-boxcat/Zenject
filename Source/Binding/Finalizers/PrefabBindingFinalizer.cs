@@ -56,10 +56,8 @@ namespace Zenject
                                     container,
                                     _gameObjectBindInfo,
                                     concreteType,
-                                    concreteTypes,
                                     BindInfo.Arguments,
-                                    new PrefabProvider(_prefab),
-                                    BindInfo.InstantiatedCallback)));
+                                    new PrefabProvider(_prefab))));
                     break;
                 }
                 case ScopeTypes.Singleton:
@@ -77,10 +75,8 @@ namespace Zenject
                             container,
                             _gameObjectBindInfo,
                             argumentTarget,
-                            concreteTypes,
                             BindInfo.Arguments,
-                            new PrefabProvider(_prefab),
-                            BindInfo.InstantiatedCallback));
+                            new PrefabProvider(_prefab)));
 
                     RegisterProvidersForAllContractsPerConcreteType(
                         container,
@@ -113,10 +109,8 @@ namespace Zenject
                                     container,
                                     _gameObjectBindInfo,
                                     contractType,
-                                    BindInfo.ContractTypes,
                                     BindInfo.Arguments,
-                                    new PrefabProvider(_prefab),
-                                    BindInfo.InstantiatedCallback)));
+                                    new PrefabProvider(_prefab))));
                     break;
                 }
                 case ScopeTypes.Singleton:
@@ -134,10 +128,8 @@ namespace Zenject
                             container,
                             _gameObjectBindInfo,
                             argumentTarget,
-                            BindInfo.ContractTypes,
                             BindInfo.Arguments,
-                            new PrefabProvider(_prefab),
-                            BindInfo.InstantiatedCallback));
+                            new PrefabProvider(_prefab)));
 
                     RegisterProviderPerContract(
                         container,
