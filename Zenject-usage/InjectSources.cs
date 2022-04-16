@@ -5,6 +5,5 @@ namespace Zenject
         Any,
         Local,
         Parent,
-        AnyParent,
     }
 }

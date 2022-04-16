@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using ModestTree;
 using Zenject.Internal;
 #if !NOT_UNITY3D
@@ -21,7 +22,7 @@ namespace Zenject
     {
         readonly Dictionary<BindingId, List<ProviderInfo>> _providers = new Dictionary<BindingId, List<ProviderInfo>>();
 
-        readonly DiContainer[][] _containerLookups = new DiContainer[4][];
+        readonly DiContainer[][] _containerLookups = new DiContainer[3][];
 
         readonly HashSet<LookupId> _resolvesInProgress = new HashSet<LookupId>();
         readonly HashSet<LookupId> _resolvesTwiceInProgress = new HashSet<LookupId>();
@@ -50,7 +51,7 @@ namespace Zenject
 #endif
 
         public DiContainer(
-            IEnumerable<DiContainer> parentContainersEnumerable)
+            [CanBeNull] DiContainer parentContainer = null)
         {
             _lazyInjector = new LazyInstanceInjector(this);
 
@@ -60,26 +61,20 @@ namespace Zenject
 
             _settings = ZenjectSettings.Default;
 
-            var selfLookup = new[] { this };
-            _containerLookups[(int)InjectSources.Local] = selfLookup;
-
-            var parentContainers = parentContainersEnumerable.ToArray();
-            _containerLookups[(int)InjectSources.Parent] = parentContainers;
+            _containerLookups[(int)InjectSources.Local] = new[] { this };
+            _containerLookups[(int)InjectSources.Parent] = parentContainer != null
+                ? new[] { parentContainer } : Array.Empty<DiContainer>();
 
             var ancestorContainers = FlattenInheritanceChain().ToArray();
 
-            _containerLookups[(int)InjectSources.AnyParent] = ancestorContainers;
-            _containerLookups[(int)InjectSources.Any] = selfLookup.Concat(ancestorContainers).ToArray();
+            _containerLookups[(int)InjectSources.Any] = new[] { this }.Concat(ancestorContainers).ToArray();
 
-            if (!parentContainers.IsEmpty())
+            if (parentContainer != null)
             {
-                for (int i = 0; i < parentContainers.Length; i++)
-                {
-                    parentContainers[i].FlushBindings();
-                }
+                parentContainer.FlushBindings();
 
 #if !NOT_UNITY3D
-                _inheritedDefaultParent = parentContainers.First().DefaultParent;
+                _inheritedDefaultParent = parentContainer.DefaultParent;
 #endif
 
                 // Make sure to avoid duplicates which could happen if a parent container
@@ -106,16 +101,6 @@ namespace Zenject
             {
                 _settings = settings;
             }
-        }
-
-        public DiContainer()
-            : this(Enumerable.Empty<DiContainer>())
-        {
-        }
-
-        public DiContainer(DiContainer parentContainer)
-            : this(new [] { parentContainer })
-        {
         }
 
         // By default the settings will be inherited from parent containers, but can be
@@ -172,7 +157,7 @@ namespace Zenject
 
             if ((binding.BindingInheritanceMethod == BindingInheritanceMethods.CopyDirectOnly
                     || binding.BindingInheritanceMethod == BindingInheritanceMethods.MoveDirectOnly)
-                && ParentContainers.Contains(ancestorContainer))
+                && ParentContainer == ancestorContainer)
             {
                 return true;
             }
@@ -231,14 +216,10 @@ namespace Zenject
         }
 #endif
 
-        public DiContainer[] ParentContainers
+        [CanBeNull]
+        public DiContainer ParentContainer
         {
-            get { return _containerLookups[(int)InjectSources.Parent]; }
-        }
-
-        public DiContainer[] AncestorContainers
-        {
-            get { return _containerLookups[(int)InjectSources.AnyParent]; }
+            get { return _containerLookups[(int)InjectSources.Parent].FirstOrDefault(); }
         }
 
         // When this is true, it will log warnings when Resolve or Instantiate
@@ -339,7 +320,7 @@ namespace Zenject
 
         public DiContainer CreateSubContainer()
         {
-            return new DiContainer(new[] { this });
+            return new DiContainer(this);
         }
 
         public void QueueForInject(object instance)
@@ -523,22 +504,12 @@ namespace Zenject
         List<DiContainer> FlattenInheritanceChain()
         {
             var processed = new List<DiContainer>();
+            var current = this;
 
-            var containerQueue = new Queue<DiContainer>();
-            containerQueue.Enqueue(this);
-
-            while (containerQueue.Count > 0)
+            while (current.ParentContainer != null)
             {
-                var current = containerQueue.Dequeue();
-
-                foreach (var parent in current.ParentContainers)
-                {
-                    if (!processed.Contains(parent))
-                    {
-                        processed.Add(parent);
-                        containerQueue.Enqueue(parent);
-                    }
-                }
+                processed.Add(current.ParentContainer);
+                current = current.ParentContainer;
             }
 
             return processed;
@@ -1014,28 +985,7 @@ namespace Zenject
 
         int? GetContainerHeirarchyDistance(DiContainer container, int depth)
         {
-            if (container == this)
-            {
-                return depth;
-            }
-
-            int? result = null;
-
-            var parentContainers = ParentContainers;
-
-            for (int i = 0; i < parentContainers.Length; i++)
-            {
-                var parent = parentContainers[i];
-
-                var distance = parent.GetContainerHeirarchyDistance(container, depth + 1);
-
-                if (distance.HasValue && (!result.HasValue || distance.Value < result.Value))
-                {
-                    result = distance;
-                }
-            }
-
-            return result;
+            return container == this ? depth : ParentContainer?.GetContainerHeirarchyDistance(container, depth + 1);
         }
 
         public IEnumerable<Type> GetDependencyContracts<TContract>()

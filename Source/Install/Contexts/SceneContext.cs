@@ -27,8 +27,6 @@ namespace Zenject
         public static Action<DiContainer> ExtraBindingsInstallMethod;
         public static Action<DiContainer> ExtraBindingsLateInstallMethod;
 
-        public static IEnumerable<DiContainer> ParentContainers;
-
         [FormerlySerializedAs("ParentNewObjectsUnderRoot")]
         [FormerlySerializedAs("_parentNewObjectsUnderRoot")]
         [Tooltip("When true, objects that are created at runtime will be parented to the SceneContext")]
@@ -70,20 +68,6 @@ namespace Zenject
             {
                 _contractNames.Clear();
                 _contractNames.AddRange(value);
-            }
-        }
-
-        public IReadOnlyList<string> ParentContractNames
-        {
-            get
-            {
-                var result = new List<string>();
-                result.AddRange(_parentContractNames);
-                return result;
-            }
-            set
-            {
-                _parentContractNames = value.ToList();
             }
         }
 
@@ -129,49 +113,6 @@ namespace Zenject
             return ZenUtilInternal.GetRootGameObjects(gameObject.scene);
         }
 
-        IEnumerable<DiContainer> GetParentContainers()
-        {
-            var parentContractNames = ParentContractNames;
-
-            if (parentContractNames.IsEmpty())
-            {
-                if (ParentContainers != null)
-                {
-                    var tempParentContainer = ParentContainers;
-
-                    // Always reset after using it - it is only used to pass the reference
-                    // between scenes via ZenjectSceneLoader
-                    ParentContainers = null;
-
-                    return tempParentContainer;
-                }
-
-                return new[] { ProjectContext.Instance.Container };
-            }
-
-            Assert.IsNull(ParentContainers,
-                "Scene cannot have both a parent scene context name set and also an explicit parent container given");
-
-            var parentContainers = UnityUtil.AllLoadedScenes
-                .Except(gameObject.scene)
-                .SelectMany(scene => scene.GetRootGameObjects())
-                .SelectMany(root => root.GetComponentsInChildren<SceneContext>())
-                .Where(sceneContext => sceneContext.ContractNames.Where(x => parentContractNames.Contains(x)).Any())
-                .Select(x => x.Container)
-                .ToList();
-
-            if (!parentContainers.Any())
-            {
-                throw Assert.CreateException(
-                    "SceneContext on object {0} of scene {1} requires at least one of contracts '{2}', but none of the loaded SceneContexts implements that contract.",
-                    gameObject.name,
-                    gameObject.scene.name,
-                    parentContractNames.Join(", "));
-            }
-
-            return parentContainers;
-        }
-
         public void Install()
         {
             Assert.That(!_hasInstalled);
@@ -179,10 +120,7 @@ namespace Zenject
 
             Assert.IsNull(_container);
 
-            var parents = GetParentContainers();
-            Assert.That(!parents.IsEmpty());
-
-            _container = new DiContainer(parents);
+            _container = new DiContainer(ProjectContext.Instance.Container);
 
             // Do this after creating DiContainer in case it's needed by the pre install logic
             if (PreInstall != null)

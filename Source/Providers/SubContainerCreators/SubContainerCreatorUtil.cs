@@ -13,7 +13,7 @@ namespace Zenject
         {
             if (subContainerBindInfo.CreateKernel)
             {
-                var parentContainer = subContainer.ParentContainers.OnlyOrDefault();
+                var parentContainer = subContainer.ParentContainer;
                 Assert.IsNotNull(parentContainer, "Could not find unique container when using WithKernel!");
 
                 if (subContainerBindInfo.KernelType != null)
