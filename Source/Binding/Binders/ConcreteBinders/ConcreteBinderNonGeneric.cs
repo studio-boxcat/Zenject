@@ -56,25 +56,5 @@ namespace Zenject
 
             return this;
         }
-
-#if !(UNITY_WSA && ENABLE_DOTNET)
-        public FromBinderNonGeneric To(
-            Action<ConventionSelectTypesBinder> generator)
-        {
-            var bindInfo = new ConventionBindInfo();
-
-            // This is nice because it allows us to do things like Bind(all interfaces).To(specific types)
-            // instead of having to do Bind(all interfaces).To(specific types that inherit from one of these interfaces)
-            BindInfo.InvalidBindResponse = InvalidBindResponses.Skip;
-
-            generator(new ConventionSelectTypesBinder(bindInfo));
-
-            BindInfo.ToChoice = ToChoices.Concrete;
-            BindInfo.ToTypes.Clear();
-            BindInfo.ToTypes.AddRange(bindInfo.ResolveTypes());
-
-            return this;
-        }
-#endif
     }
 }

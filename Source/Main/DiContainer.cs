@@ -2160,27 +2160,6 @@ namespace Zenject
             }
         }
 
-#if !(UNITY_WSA && ENABLE_DOTNET)
-        public ConcreteIdBinderNonGeneric Bind(
-            Action<ConventionSelectTypesBinder> generator)
-        {
-            var conventionBindInfo = new ConventionBindInfo();
-            generator(new ConventionSelectTypesBinder(conventionBindInfo));
-
-            var contractTypesList = conventionBindInfo.ResolveTypes();
-
-            var statement = StartBinding();
-            var bindInfo = statement.SpawnBindInfo();
-            bindInfo.ContractTypes.AllocFreeAddRange(contractTypesList);
-
-            // This is nice because it allows us to do things like Bind(all interfaces).To<Foo>()
-            // (though of course it would be more efficient to use BindInterfacesTo in this case)
-            bindInfo.InvalidBindResponse = InvalidBindResponses.Skip;
-
-            return new ConcreteIdBinderNonGeneric(this, bindInfo, statement);
-        }
-#endif
-
         // Bind all the interfaces for the given type to the same thing.
         //
         // Example:
