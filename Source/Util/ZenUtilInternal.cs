@@ -130,22 +130,6 @@ namespace Zenject.Internal
 
             var monoBehaviours = gameObject.GetComponents<MonoBehaviour>();
 
-            for (int i = 0; i < monoBehaviours.Length; i++)
-            {
-                var monoBehaviour = monoBehaviours[i];
-
-                // Can be null for broken component references
-                if (monoBehaviour != null
-                        && monoBehaviour.GetType().DerivesFromOrEqual<GameObjectContext>())
-                {
-                    // Need to make sure we don't inject on any MonoBehaviour's that are below a GameObjectContext
-                    // Since that is the responsibility of the GameObjectContext
-                    // BUT we do want to inject on the GameObjectContext itself
-                    injectableComponents.Add(monoBehaviour);
-                    return;
-                }
-            }
-
             // Recurse first so it adds components bottom up though it shouldn't really matter much
             // because it should always inject in the dependency order
             for (int i = 0; i < gameObject.transform.childCount; i++)

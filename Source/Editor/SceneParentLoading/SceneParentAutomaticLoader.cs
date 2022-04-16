@@ -73,41 +73,7 @@ namespace Zenject.Internal
             Dictionary<string, LoadedSceneInfo> contractMap,
             Dictionary<string, string> defaultContractsMap)
         {
-            if (sceneInfo.SceneContext != null)
-            {
-                Assert.IsNull(sceneInfo.DecoratorContext);
-                ProcessSceneParents(sceneInfo, contractMap, defaultContractsMap);
-            }
-            else
-            {
-                Assert.IsNotNull(sceneInfo.DecoratorContext);
-                ProcessSceneDecorators(sceneInfo, contractMap, defaultContractsMap);
-            }
-        }
-
-        static void ProcessSceneDecorators(
-            LoadedSceneInfo sceneInfo,
-            Dictionary<string, LoadedSceneInfo> contractMap,
-            Dictionary<string, string> defaultContractsMap)
-        {
-            var decoratedContractName = sceneInfo.DecoratorContext.DecoratedContractName;
-
-            LoadedSceneInfo decoratedSceneInfo;
-
-            if (contractMap.TryGetValue(decoratedContractName, out decoratedSceneInfo))
-            {
-                ValidateDecoratedSceneMatch(sceneInfo, decoratedSceneInfo);
-                return;
-            }
-
-            decoratedSceneInfo = LoadDefaultSceneForContract(
-                sceneInfo, decoratedContractName, defaultContractsMap);
-
-            EditorSceneManager.MoveSceneAfter(decoratedSceneInfo.Scene, sceneInfo.Scene);
-
-            ValidateDecoratedSceneMatch(sceneInfo, decoratedSceneInfo);
-
-            ProcessScene(decoratedSceneInfo, contractMap, defaultContractsMap);
+            ProcessSceneParents(sceneInfo, contractMap, defaultContractsMap);
         }
 
         static void ProcessSceneParents(
@@ -246,9 +212,8 @@ namespace Zenject.Internal
         static LoadedSceneInfo TryCreateLoadedSceneInfo(Scene scene)
         {
             var sceneContext = ZenUnityEditorUtil.TryGetSceneContextForScene(scene);
-            var decoratorContext = ZenUnityEditorUtil.TryGetDecoratorContextForScene(scene);
 
-            if (sceneContext == null && decoratorContext == null)
+            if (sceneContext == null)
             {
                 return null;
             }
@@ -258,19 +223,7 @@ namespace Zenject.Internal
                 Scene = scene
             };
 
-            if (sceneContext != null)
-            {
-                Assert.IsNull(decoratorContext,
-                "Found both SceneContext and SceneDecoratorContext in scene '{0}'", scene.name);
-
-                info.SceneContext = sceneContext;
-            }
-            else
-            {
-                Assert.IsNotNull(decoratorContext);
-
-                info.DecoratorContext = decoratorContext;
-            }
+            info.SceneContext = sceneContext;
 
             return info;
         }
@@ -319,7 +272,6 @@ namespace Zenject.Internal
         public class LoadedSceneInfo
         {
             public SceneContext SceneContext;
-            public SceneDecoratorContext DecoratorContext;
             public Scene Scene;
         }
     }

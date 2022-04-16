@@ -150,74 +150,19 @@ namespace Zenject.Internal
             return sceneContexts[0];
         }
 
-        public static SceneDecoratorContext GetDecoratorContextForScene(Scene scene)
-        {
-            var decoratorContext = TryGetDecoratorContextForScene(scene);
-
-            Assert.IsNotNull(decoratorContext,
-                "Could not find decorator context for scene '{0}'", scene.name);
-
-            return decoratorContext;
-        }
-
-        public static SceneDecoratorContext TryGetDecoratorContextForScene(Scene scene)
-        {
-            if (!scene.isLoaded)
-            {
-                return null;
-            }
-
-            var decoratorContexts = scene.GetRootGameObjects()
-                .SelectMany(x => x.GetComponentsInChildren<SceneDecoratorContext>()).ToList();
-
-            if (decoratorContexts.IsEmpty())
-            {
-                return null;
-            }
-
-            Assert.That(decoratorContexts.Count == 1,
-                "Found multiple DecoratorContexts in scene '{0}'.  Expected a maximum of one.", scene.name);
-
-            return decoratorContexts[0];
-        }
-
         static IEnumerable<SceneContext> GetAllSceneContexts()
         {
-            var decoratedSceneNames = new List<string>();
-
             for (int i = 0; i < EditorSceneManager.sceneCount; i++)
             {
                 var scene = EditorSceneManager.GetSceneAt(i);
 
                 var sceneContext = TryGetSceneContextForScene(scene);
-                var decoratorContext = TryGetDecoratorContextForScene(scene);
 
                 if (sceneContext != null)
                 {
-                    Assert.That(decoratorContext == null,
-                        "Found both SceneDecoratorContext and SceneContext in the same scene '{0}'.  This is not allowed", scene.name);
-
-                    decoratedSceneNames.RemoveAll(x => sceneContext.ContractNames.Contains(x));
-
                     yield return sceneContext;
                 }
-                else if (decoratorContext != null)
-                {
-                    Assert.That(!string.IsNullOrEmpty(decoratorContext.DecoratedContractName),
-                        "Missing Decorated Contract Name on SceneDecoratorContext in scene '{0}'", scene.name);
-
-                    decoratedSceneNames.Add(decoratorContext.DecoratedContractName);
-                }
             }
-
-            Assert.That(decoratedSceneNames.IsEmpty(),
-                "Found decorator scenes without a corresponding scene to decorator.  Missing scene contracts: {0}", decoratedSceneNames.Join(", "));
-        }
-
-        public static string ConvertAssetPathToAbsolutePath(string assetPath)
-        {
-            return Path.Combine(
-                Path.Combine(Path.GetFullPath(Application.dataPath), ".."), assetPath);
         }
 
         public static string ConvertFullAbsolutePathToAssetPath(string fullPath)

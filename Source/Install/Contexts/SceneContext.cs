@@ -45,8 +45,6 @@ namespace Zenject
 
         DiContainer _container;
 
-        readonly List<SceneDecoratorContext> _decoratorContexts = new List<SceneDecoratorContext>();
-
         bool _hasInstalled;
         bool _hasResolved;
 
@@ -190,21 +188,6 @@ namespace Zenject
             return parentContainers;
         }
 
-        List<SceneDecoratorContext> LookupDecoratorContexts()
-        {
-            if (_contractNames.IsEmpty())
-            {
-                return new List<SceneDecoratorContext>();
-            }
-
-            return UnityUtil.AllLoadedScenes
-                .Except(gameObject.scene)
-                .SelectMany(scene => scene.GetRootGameObjects())
-                .SelectMany(root => root.GetComponentsInChildren<SceneDecoratorContext>())
-                .Where(decoratorContext => _contractNames.Contains(decoratorContext.DecoratedContractName))
-                .ToList();
-        }
-
         public void Install()
         {
             Assert.That(!_hasInstalled);
@@ -229,9 +212,6 @@ namespace Zenject
                 OnPreInstall.Invoke();
             }
 
-            Assert.That(_decoratorContexts.IsEmpty());
-            _decoratorContexts.AddRange(LookupDecoratorContexts());
-
             if (_parentNewObjectsUnderSceneContext)
             {
                 _container.DefaultParent = transform;
@@ -251,11 +231,6 @@ namespace Zenject
             foreach (var instance in injectableMonoBehaviours)
             {
                 _container.QueueForInject(instance);
-            }
-
-            foreach (var decoratorContext in _decoratorContexts)
-            {
-                decoratorContext.Initialize(_container);
             }
 
             _container.IsInstalling = true;
@@ -314,11 +289,6 @@ namespace Zenject
             _container.Bind(typeof(Context), typeof(SceneContext)).To<SceneContext>().FromInstance(this);
             _container.BindInterfacesTo<SceneContextRegistryAdderAndRemover>().AsSingle();
 
-            foreach (var decoratorContext in _decoratorContexts)
-            {
-                decoratorContext.InstallDecoratorSceneBindings();
-            }
-
             InstallSceneBindings(injectableMonoBehaviours);
 
             _container.Bind(typeof(SceneKernel), typeof(MonoKernel))
@@ -333,19 +303,7 @@ namespace Zenject
                 ExtraBindingsInstallMethod = null;
             }
 
-            // Always install the installers last so they can be injected with
-            // everything above
-            foreach (var decoratorContext in _decoratorContexts)
-            {
-                decoratorContext.InstallDecoratorInstallers();
-            }
-
             InstallInstallers();
-
-            foreach (var decoratorContext in _decoratorContexts)
-            {
-                decoratorContext.InstallLateDecoratorInstallers();
-            }
 
             if (ExtraBindingsLateInstallMethod != null)
             {

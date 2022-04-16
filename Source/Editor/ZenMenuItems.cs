@@ -42,24 +42,6 @@ namespace Zenject.Internal
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         }
 
-        [MenuItem("GameObject/Zenject/Decorator Context", false, 9)]
-        public static void CreateDecoratorContext(MenuCommand menuCommand)
-        {
-            var root = new GameObject("DecoratorContext").AddComponent<SceneDecoratorContext>();
-            Selection.activeGameObject = root.gameObject;
-
-            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-        }
-
-        [MenuItem("GameObject/Zenject/Game Object Context", false, 9)]
-        public static void CreateGameObjectContext(MenuCommand menuCommand)
-        {
-            var root = new GameObject("GameObjectContext").AddComponent<GameObjectContext>();
-            Selection.activeGameObject = root.gameObject;
-
-            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-        }
-
         [MenuItem("Edit/Zenject/Create Project Context")]
         public static void CreateProjectContextInDefaultLocation()
         {
