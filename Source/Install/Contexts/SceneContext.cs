@@ -45,7 +45,14 @@ namespace Zenject
 
         public void Awake()
         {
+            SceneContextRegistry.Add(this);
+
             Initialize();
+        }
+
+        void OnDestroy()
+        {
+            SceneContextRegistry.Remove(this);
         }
 
         protected override void RunInternal()
@@ -118,7 +125,6 @@ namespace Zenject
             ZenjectManagersInstaller.InstallBindings(_container);
 
             _container.Bind(typeof(Context), typeof(SceneContext)).To<SceneContext>().FromInstance(this);
-            _container.BindInterfacesTo<SceneContextRegistryAdderAndRemover>().AsSingle();
 
             InstallSceneBindings(injectableMonoBehaviours);
 

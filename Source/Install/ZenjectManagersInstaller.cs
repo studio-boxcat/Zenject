@@ -14,7 +14,6 @@ namespace Zenject
         public static void InstallBindings(DiContainer container)
         {
             container.Bind(typeof(TickableManager)).ToSelf().AsSingle();
-            container.Bind(typeof(InitializableManager)).ToSelf().AsSingle();
             container.Bind(typeof(DisposableManager)).ToSelf().AsSingle();
         }
     }

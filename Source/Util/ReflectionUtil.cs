@@ -67,8 +67,6 @@ namespace ModestTree
                 list = new List<IDisposable>(count);
             else if (elementType == typeof(IFixedTickable))
                 list = new List<IFixedTickable>(count);
-            else if (elementType == typeof(IInitializable))
-                list = new List<IInitializable>(count);
             else if (elementType == typeof(ILateDisposable))
                 list = new List<ILateDisposable>(count);
             else if (elementType == typeof(ILateTickable))

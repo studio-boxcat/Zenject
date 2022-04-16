@@ -11,32 +11,13 @@ namespace Zenject
         TickableManager _tickableManager = null;
 
         [InjectLocal]
-        InitializableManager _initializableManager = null;
-
-        [InjectLocal]
         DisposableManager _disposablesManager = null;
 
-        bool _hasInitialized;
         bool _isDestroyed;
 
         protected bool IsDestroyed
         {
             get { return _isDestroyed; }
-        }
-
-        public virtual void Start()
-        {
-            Initialize();
-        }
-
-        public void Initialize()
-        {
-            // We don't put this in start in case Start is overridden
-            if (!_hasInitialized)
-            {
-                _hasInitialized = true;
-                _initializableManager.Initialize();
-            }
         }
 
         public virtual void Update()

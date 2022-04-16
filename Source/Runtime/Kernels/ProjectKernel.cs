@@ -63,8 +63,10 @@ namespace Zenject
 
             // Destroy the scene contexts from bottom to top
             // Since this is the reverse order that they were loaded in
-            foreach (var sceneContext in SceneContextRegistry.List.OrderByDescending(x => sceneOrder.IndexOf(x.gameObject.scene)).ToList())
+            for (var i = SceneContextRegistry.List.Count - 1; i >= 0; i--)
             {
+                var sceneContext = SceneContextRegistry.List[i];
+
                 if (immediate)
                 {
                     DestroyImmediate(sceneContext.gameObject);
