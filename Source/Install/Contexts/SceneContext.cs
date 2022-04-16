@@ -140,6 +140,8 @@ namespace Zenject
 
         void InstallBindings(List<MonoBehaviour> injectableMonoBehaviours)
         {
+            ZenjectManagersInstaller.InstallBindings(_container);
+
             _container.Bind(typeof(Context), typeof(SceneContext)).To<SceneContext>().FromInstance(this);
             _container.BindInterfacesTo<SceneContextRegistryAdderAndRemover>().AsSingle();
 
@@ -147,8 +149,6 @@ namespace Zenject
 
             _container.Bind(typeof(SceneKernel), typeof(MonoKernel))
                 .To<SceneKernel>().FromNewComponentOn(gameObject).AsSingle().NonLazy();
-
-            _container.Bind<ZenjectSceneLoader>().AsSingle();
 
             if (ExtraBindingsInstallMethod != null)
             {

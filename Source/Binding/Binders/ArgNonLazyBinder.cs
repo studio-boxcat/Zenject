@@ -4,9 +4,9 @@ using ModestTree;
 namespace Zenject
 {
     [NoReflectionBaking]
-    public class ArgCopyNonLazyBinder : CopyNonLazyBinder
+    public class ArgNonLazyBinder : NonLazyBinder
     {
-        public ArgCopyNonLazyBinder(BindInfo bindInfo)
+        public ArgNonLazyBinder(BindInfo bindInfo)
             : base(bindInfo)
         {
         }
@@ -14,14 +14,14 @@ namespace Zenject
         // We use generics instead of params object[] so that we preserve type info
         // So that you can for example pass in a variable that is null and the type info will
         // still be used to map null on to the correct field
-        public CopyNonLazyBinder WithArguments<T>(T param)
+        public NonLazyBinder WithArguments<T>(T param)
         {
             BindInfo.Arguments.Clear();
             BindInfo.Arguments.Add(InjectUtil.CreateTypePair(param));
             return this;
         }
 
-        public CopyNonLazyBinder WithArguments<TParam1, TParam2>(TParam1 param1, TParam2 param2)
+        public NonLazyBinder WithArguments<TParam1, TParam2>(TParam1 param1, TParam2 param2)
         {
             BindInfo.Arguments.Clear();
             BindInfo.Arguments.Add(InjectUtil.CreateTypePair(param1));
@@ -29,7 +29,7 @@ namespace Zenject
             return this;
         }
 
-        public CopyNonLazyBinder WithArguments<TParam1, TParam2, TParam3>(
+        public NonLazyBinder WithArguments<TParam1, TParam2, TParam3>(
             TParam1 param1, TParam2 param2, TParam3 param3)
         {
             BindInfo.Arguments.Clear();
@@ -39,7 +39,7 @@ namespace Zenject
             return this;
         }
 
-        public CopyNonLazyBinder WithArguments<TParam1, TParam2, TParam3, TParam4>(
+        public NonLazyBinder WithArguments<TParam1, TParam2, TParam3, TParam4>(
             TParam1 param1, TParam2 param2, TParam3 param3, TParam4 param4)
         {
             BindInfo.Arguments.Clear();
@@ -50,7 +50,7 @@ namespace Zenject
             return this;
         }
 
-        public CopyNonLazyBinder WithArguments<TParam1, TParam2, TParam3, TParam4, TParam5>(
+        public NonLazyBinder WithArguments<TParam1, TParam2, TParam3, TParam4, TParam5>(
             TParam1 param1, TParam2 param2, TParam3 param3, TParam4 param4, TParam5 param5)
         {
             BindInfo.Arguments.Clear();
@@ -62,7 +62,7 @@ namespace Zenject
             return this;
         }
 
-        public CopyNonLazyBinder WithArguments<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
+        public NonLazyBinder WithArguments<TParam1, TParam2, TParam3, TParam4, TParam5, TParam6>(
             TParam1 param1, TParam2 param2, TParam3 param3, TParam4 param4, TParam5 param5, TParam6 param6)
         {
             BindInfo.Arguments.Clear();
@@ -75,7 +75,7 @@ namespace Zenject
             return this;
         }
 
-        public CopyNonLazyBinder WithArguments(object[] args)
+        public NonLazyBinder WithArguments(object[] args)
         {
             BindInfo.Arguments.Clear();
 
@@ -92,7 +92,7 @@ namespace Zenject
             return this;
         }
 
-        public CopyNonLazyBinder WithArgumentsExplicit(IEnumerable<TypeValuePair> extraArgs)
+        public NonLazyBinder WithArgumentsExplicit(IEnumerable<TypeValuePair> extraArgs)
         {
             BindInfo.Arguments.Clear();
 

@@ -1,18 +1,18 @@
 namespace Zenject
 {
     [NoReflectionBaking]
-    public class WithKernelScopeConcreteIdArgCopyNonLazyBinder : ScopeConcreteIdArgCopyNonLazyBinder
+    public class WithKernelScopeConcreteIdArgNonLazyBinder : ScopeConcreteIdArgNonLazyBinder
     {
         SubContainerCreatorBindInfo _subContainerBindInfo;
 
-        public WithKernelScopeConcreteIdArgCopyNonLazyBinder(
+        public WithKernelScopeConcreteIdArgNonLazyBinder(
             SubContainerCreatorBindInfo subContainerBindInfo, BindInfo bindInfo)
             : base(bindInfo)
         {
             _subContainerBindInfo = subContainerBindInfo;
         }
 
-        public ScopeConcreteIdArgCopyNonLazyBinder WithKernel()
+        public ScopeConcreteIdArgNonLazyBinder WithKernel()
         {
             _subContainerBindInfo.CreateKernel = true;
             return this;
@@ -20,7 +20,7 @@ namespace Zenject
 
         // This would be used in cases where you want to control the execution order for the
         // subcontainer
-        public ScopeConcreteIdArgCopyNonLazyBinder WithKernel<TKernel>()
+        public ScopeConcreteIdArgNonLazyBinder WithKernel<TKernel>()
             where TKernel : Kernel
         {
             _subContainerBindInfo.CreateKernel = true;

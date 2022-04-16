@@ -228,11 +228,9 @@ namespace Zenject
         {
             _container.Settings = _settings ?? ZenjectSettings.Default;
 
-            _container.Bind<ZenjectSceneLoader>().AsSingle();
+            ZenjectManagersInstaller.InstallBindings(_container);
 
-            ZenjectManagersInstaller.Install(_container);
-
-            _container.Bind<Context>().FromInstance(this);
+            _container.Bind<Context>().FromInstance(this).AsSingle();
 
             _container.Bind(typeof(ProjectKernel), typeof(MonoKernel))
                 .To<ProjectKernel>().FromNewComponentOn(gameObject).AsSingle().NonLazy();

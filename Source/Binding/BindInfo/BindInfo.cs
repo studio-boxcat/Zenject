@@ -24,15 +24,6 @@ namespace Zenject
         Skip
     }
 
-    public enum BindingInheritanceMethods
-    {
-        None,
-        CopyIntoAll,
-        CopyDirectOnly,
-        MoveIntoAll,
-        MoveDirectOnly
-    }
-
     [NoReflectionBaking]
     public class BindInfo : IDisposable
     {
@@ -42,7 +33,6 @@ namespace Zenject
         public bool RequireExplicitScope;
         public object Identifier;
         public readonly List<Type> ContractTypes;
-        public BindingInheritanceMethods BindingInheritanceMethod;
         public InvalidBindResponses InvalidBindResponse;
         public bool NonLazy;
         public ToChoices ToChoice;
@@ -79,7 +69,6 @@ namespace Zenject
             RequireExplicitScope = false;
             Identifier = null;
             ContractTypes.Clear();
-            BindingInheritanceMethod = BindingInheritanceMethods.None;
             InvalidBindResponse = InvalidBindResponses.Assert;
             NonLazy = false;
             ToChoice = ToChoices.Self;

@@ -9,12 +9,13 @@ namespace Zenject
     // you are working in
     //
     // You might also want to use this installer in a ZenjectUnitTestFixture
-    public class ZenjectManagersInstaller : Installer<ZenjectManagersInstaller>
+    public static class ZenjectManagersInstaller
     {
-        public override void InstallBindings()
+        public static void InstallBindings(DiContainer container)
         {
-            Container.Bind(typeof(TickableManager), typeof(InitializableManager), typeof(DisposableManager))
-                .ToSelf().AsSingle().CopyIntoAllSubContainers();
+            container.Bind(typeof(TickableManager)).ToSelf().AsSingle();
+            container.Bind(typeof(InitializableManager)).ToSelf().AsSingle();
+            container.Bind(typeof(DisposableManager)).ToSelf().AsSingle();
         }
     }
 }

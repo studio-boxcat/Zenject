@@ -1,14 +1,14 @@
 namespace Zenject
 {
     [NoReflectionBaking]
-    public class ConcreteIdArgCopyNonLazyBinder : ArgCopyNonLazyBinder
+    public class ConcreteIdArgNonLazyBinder : ArgNonLazyBinder
     {
-        public ConcreteIdArgCopyNonLazyBinder(BindInfo bindInfo)
+        public ConcreteIdArgNonLazyBinder(BindInfo bindInfo)
             : base(bindInfo)
         {
         }
 
-        public ArgCopyNonLazyBinder WithConcreteId(object id)
+        public ArgNonLazyBinder WithConcreteId(object id)
         {
             BindInfo.ConcreteIdentifier = id;
             return this;

@@ -30,30 +30,30 @@ namespace Zenject
             set { _bindStatement.SetFinalizer(value); }
         }
 
-        public ScopeConcreteIdArgCopyNonLazyBinder ByInstance(DiContainer subContainer)
+        public ScopeConcreteIdArgNonLazyBinder ByInstance(DiContainer subContainer)
         {
             SubFinalizer = new SubContainerBindingFinalizer(
                 _bindInfo, _subIdentifier, _resolveAll,
                 (_) => new SubContainerCreatorByInstance(subContainer));
 
-            return new ScopeConcreteIdArgCopyNonLazyBinder(_bindInfo);
+            return new ScopeConcreteIdArgNonLazyBinder(_bindInfo);
         }
 
-        public ScopeConcreteIdArgCopyNonLazyBinder ByInstanceGetter(
+        public ScopeConcreteIdArgNonLazyBinder ByInstanceGetter(
             Func<InjectContext, DiContainer> subContainerGetter)
         {
             SubFinalizer = new SubContainerBindingFinalizer(
                 _bindInfo, _subIdentifier, _resolveAll,
                 (_) => new SubContainerCreatorByInstanceGetter(subContainerGetter));
 
-            return new ScopeConcreteIdArgCopyNonLazyBinder(_bindInfo);
+            return new ScopeConcreteIdArgNonLazyBinder(_bindInfo);
         }
 
         public
 #if NOT_UNITY3D
-            WithKernelScopeConcreteIdArgConditionCopyNonLazyBinder
+            WithKernelScopeConcreteIdArgConditionNonLazyBinder
 #else
-            WithKernelDefaultParentScopeConcreteIdArgCopyNonLazyBinder
+            WithKernelDefaultParentScopeConcreteIdArgNonLazyBinder
 #endif
             ByInstaller<TInstaller>()
             where TInstaller : InstallerBase
@@ -63,9 +63,9 @@ namespace Zenject
 
         public
 #if NOT_UNITY3D
-            WithKernelScopeConcreteIdArgConditionCopyNonLazyBinder
+            WithKernelScopeConcreteIdArgConditionNonLazyBinder
 #else
-            WithKernelDefaultParentScopeConcreteIdArgCopyNonLazyBinder
+            WithKernelDefaultParentScopeConcreteIdArgNonLazyBinder
 #endif
             ByInstaller(Type installerType)
         {
@@ -80,18 +80,18 @@ namespace Zenject
 
             return new
 #if NOT_UNITY3D
-                WithKernelScopeConcreteIdArgConditionCopyNonLazyBinder
+                WithKernelScopeConcreteIdArgConditionNonLazyBinder
 #else
-                WithKernelDefaultParentScopeConcreteIdArgCopyNonLazyBinder
+                WithKernelDefaultParentScopeConcreteIdArgNonLazyBinder
 #endif
                 (subContainerBindInfo, _bindInfo);
         }
 
         public
 #if NOT_UNITY3D
-            WithKernelScopeConcreteIdArgConditionCopyNonLazyBinder
+            WithKernelScopeConcreteIdArgConditionNonLazyBinder
 #else
-            WithKernelDefaultParentScopeConcreteIdArgCopyNonLazyBinder
+            WithKernelDefaultParentScopeConcreteIdArgNonLazyBinder
 #endif
             ByMethod(Action<DiContainer> installerMethod)
         {
@@ -103,9 +103,9 @@ namespace Zenject
 
             return new
 #if NOT_UNITY3D
-                WithKernelScopeConcreteIdArgConditionCopyNonLazyBinder
+                WithKernelScopeConcreteIdArgConditionNonLazyBinder
 #else
-                WithKernelDefaultParentScopeConcreteIdArgCopyNonLazyBinder
+                WithKernelDefaultParentScopeConcreteIdArgNonLazyBinder
 #endif
                 (subContainerBindInfo, _bindInfo);
         }

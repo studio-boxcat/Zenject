@@ -1,9 +1,9 @@
 namespace Zenject
 {
     [NoReflectionBaking]
-    public class DefaultParentScopeConcreteIdArgCopyNonLazyBinder : ScopeConcreteIdArgCopyNonLazyBinder
+    public class DefaultParentScopeConcreteIdArgNonLazyBinder : ScopeConcreteIdArgNonLazyBinder
     {
-        public DefaultParentScopeConcreteIdArgCopyNonLazyBinder(
+        public DefaultParentScopeConcreteIdArgNonLazyBinder(
             SubContainerCreatorBindInfo subContainerBindInfo, BindInfo bindInfo)
             : base(bindInfo)
         {
@@ -15,7 +15,7 @@ namespace Zenject
             get; private set;
         }
 
-        public ScopeConcreteIdArgCopyNonLazyBinder WithDefaultGameObjectParent(string defaultParentName)
+        public ScopeConcreteIdArgNonLazyBinder WithDefaultGameObjectParent(string defaultParentName)
         {
             SubContainerCreatorBindInfo.DefaultParentName = defaultParentName;
             return this;

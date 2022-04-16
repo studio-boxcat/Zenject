@@ -29,7 +29,6 @@ namespace Zenject
 
         readonly SingletonMarkRegistry _singletonMarkRegistry = new SingletonMarkRegistry();
         readonly Queue<BindStatement> _currentBindings = new Queue<BindStatement>();
-        readonly List<BindStatement> _childBindings = new List<BindStatement>();
 
 #if !NOT_UNITY3D
         Transform _contextTransform;
@@ -68,21 +67,7 @@ namespace Zenject
             {
                 parentContainer.FlushBindings();
 
-                // Make sure to avoid duplicates which could happen if a parent container
-                // appears multiple times in the inheritance chain
-                foreach (var ancestorContainer in ancestorContainers.Distinct())
-                {
-                    foreach (var binding in ancestorContainer._childBindings)
-                    {
-                        if (ShouldInheritBinding(binding, ancestorContainer))
-                        {
-                            FinalizeBinding(binding);
-                        }
-                    }
-                }
-
                 Assert.That(_currentBindings.Count == 0);
-                Assert.That(_childBindings.Count == 0);
             }
 
             // Assumed to be configured in a parent container
@@ -136,24 +121,6 @@ namespace Zenject
                 .MakeGenericType(newContext.MemberType), this, newContext);
 
             return result;
-        }
-
-        bool ShouldInheritBinding(BindStatement binding, DiContainer ancestorContainer)
-        {
-            if (binding.BindingInheritanceMethod == BindingInheritanceMethods.CopyIntoAll
-                || binding.BindingInheritanceMethod == BindingInheritanceMethods.MoveIntoAll)
-            {
-                return true;
-            }
-
-            if ((binding.BindingInheritanceMethod == BindingInheritanceMethods.CopyDirectOnly
-                    || binding.BindingInheritanceMethod == BindingInheritanceMethods.MoveDirectOnly)
-                && ParentContainer == ancestorContainer)
-            {
-                return true;
-            }
-
-            return false;
         }
 
 #if !NOT_UNITY3D
@@ -2110,20 +2077,9 @@ namespace Zenject
             {
                 var binding = _currentBindings.Dequeue();
 
-                if (binding.BindingInheritanceMethod != BindingInheritanceMethods.MoveDirectOnly
-                    && binding.BindingInheritanceMethod != BindingInheritanceMethods.MoveIntoAll)
-                {
-                    FinalizeBinding(binding);
-                }
+                FinalizeBinding(binding);
 
-                if (binding.BindingInheritanceMethod != BindingInheritanceMethods.None)
-                {
-                    _childBindings.Add(binding);
-                }
-                else
-                {
-                    binding.Dispose();
-                }
+                binding.Dispose();
             }
         }
 
@@ -2212,14 +2168,6 @@ namespace Zenject
             var statement = StartBinding();
             var bindInfo = statement.SpawnBindInfo();
             bindInfo.ContractTypes.AllocFreeAddRange(contractTypes);
-            return BindInternal(bindInfo, statement);
-        }
-
-        public ConcreteIdBinderNonGeneric Bind(IEnumerable<Type> contractTypes)
-        {
-            var statement = StartBinding();
-            var bindInfo = statement.SpawnBindInfo();
-            bindInfo.ContractTypes.AddRange(contractTypes);
             return BindInternal(bindInfo, statement);
         }
 
@@ -2326,7 +2274,7 @@ namespace Zenject
         //
         //      Container.Bind<Foo>().FromInstance(new Foo());
         //
-        public IdScopeConcreteIdArgCopyNonLazyBinder BindInstance<TContract>(TContract instance)
+        public IdScopeConcreteIdArgNonLazyBinder BindInstance<TContract>(TContract instance)
         {
             var statement = StartBinding();
             var bindInfo = statement.SpawnBindInfo();
@@ -2337,7 +2285,7 @@ namespace Zenject
                     bindInfo,
                     (container, type) => new InstanceProvider(type, instance, container)));
 
-            return new IdScopeConcreteIdArgCopyNonLazyBinder(bindInfo);
+            return new IdScopeConcreteIdArgNonLazyBinder(bindInfo);
         }
 
         // Unfortunately we can't support setting scope / condition / etc. here since all the

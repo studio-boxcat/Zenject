@@ -17,15 +17,6 @@ namespace Zenject
             Reset();
         }
 
-        public BindingInheritanceMethods BindingInheritanceMethod
-        {
-            get
-            {
-                AssertHasFinalizer();
-                return _bindingFinalizer.BindingInheritanceMethod;
-            }
-        }
-
         public bool HasFinalizer
         {
             get { return _bindingFinalizer != null; }
