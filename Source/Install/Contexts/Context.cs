@@ -17,16 +17,11 @@ namespace Zenject
         [SerializeField]
         List<ScriptableObjectInstaller> _scriptableObjectInstallers = new List<ScriptableObjectInstaller>();
 
-        [FormerlySerializedAs("Installers")]
-        [FormerlySerializedAs("_installers")]
         [SerializeField]
         List<MonoInstaller> _monoInstallers = new List<MonoInstaller>();
 
         [SerializeField]
         List<MonoInstaller> _installerPrefabs = new List<MonoInstaller>();
-
-        List<InstallerBase> _normalInstallers = new List<InstallerBase>();
-        List<Type> _normalInstallerTypes = new List<Type>();
 
         public IEnumerable<MonoInstaller> Installers
         {
@@ -58,49 +53,12 @@ namespace Zenject
             }
         }
 
-        // Unlike other installer types this has to be set through code
-        public IEnumerable<Type> NormalInstallerTypes
-        {
-            get { return _normalInstallerTypes; }
-            set
-            {
-                Assert.That(value.All(x => x != null && x.DerivesFrom<InstallerBase>()));
-
-                _normalInstallerTypes.Clear();
-                _normalInstallerTypes.AddRange(value);
-            }
-        }
-
-        // Unlike other installer types this has to be set through code
-        public IEnumerable<InstallerBase> NormalInstallers
-        {
-            get { return _normalInstallers; }
-            set
-            {
-                _normalInstallers.Clear();
-                _normalInstallers.AddRange(value);
-            }
-        }
-
         public abstract DiContainer Container
         {
             get;
         }
         public abstract IEnumerable<GameObject> GetRootGameObjects();
 
-
-        public void AddNormalInstallerType(Type installerType)
-        {
-            Assert.IsNotNull(installerType);
-            Assert.That(installerType.DerivesFrom<InstallerBase>());
-
-            _normalInstallerTypes.Add(installerType);
-        }
-
-        public void AddNormalInstaller(InstallerBase installer)
-        {
-            _normalInstallers.Add(installer);
-        }
 
         void CheckInstallerPrefabTypes(List<MonoInstaller> installers, List<MonoInstaller> installerPrefabs)
         {
@@ -142,13 +100,10 @@ namespace Zenject
 
         protected void InstallInstallers()
         {
-            InstallInstallers(
-                _normalInstallers, _normalInstallerTypes, _scriptableObjectInstallers, _monoInstallers, _installerPrefabs);
+            InstallInstallers(_scriptableObjectInstallers, _monoInstallers, _installerPrefabs);
         }
 
         protected void InstallInstallers(
-            List<InstallerBase> normalInstallers,
-            List<Type> normalInstallerTypes,
             List<ScriptableObjectInstaller> scriptableObjectInstallers,
             List<MonoInstaller> installers,
             List<MonoInstaller> installerPrefabs)
@@ -173,8 +128,7 @@ namespace Zenject
             // ScriptableObjectInstallers are often used for settings (including settings
             // that are injected into other installers like MonoInstallers)
 
-            var allInstallers = normalInstallers.Cast<IInstaller>()
-                .Concat(scriptableObjectInstallers.Cast<IInstaller>())
+            var allInstallers = scriptableObjectInstallers.Cast<IInstaller>()
                 .Concat(installers.Cast<IInstaller>()).ToList();
 
             foreach (var installerPrefab in installerPrefabs)
@@ -196,18 +150,6 @@ namespace Zenject
                 Assert.IsNotNull(installer, "Could not find installer component on prefab '{0}'", installerPrefab.name);
 
                 allInstallers.Add(installer);
-            }
-
-            foreach (var installerType in normalInstallerTypes)
-            {
-                var installer = (InstallerBase)Container.Instantiate(installerType);
-
-#if ZEN_INTERNAL_PROFILING
-                using (ProfileTimers.CreateTimedBlock("User Code"))
-#endif
-                {
-                    installer.InstallBindings();
-                }
             }
 
             foreach (var installer in allInstallers)
