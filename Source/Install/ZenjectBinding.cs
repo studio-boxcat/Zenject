@@ -64,7 +64,6 @@ namespace Zenject
             Self,
             AllInterfaces,
             AllInterfacesAndSelf,
-            BaseType
         }
     }
 }

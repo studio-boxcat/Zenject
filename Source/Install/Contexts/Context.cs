@@ -1,14 +1,9 @@
 #if !NOT_UNITY3D
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using ModestTree;
 using UnityEngine;
-using UnityEngine.Serialization;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Zenject
 {
@@ -250,11 +245,6 @@ namespace Zenject
                     case ZenjectBinding.BindTypes.Self:
                     {
                         Container.Bind(componentType).WithId(identifier).FromInstance(component);
-                        break;
-                    }
-                    case ZenjectBinding.BindTypes.BaseType:
-                    {
-                        Container.Bind(componentType.BaseType()).WithId(identifier).FromInstance(component);
                         break;
                     }
                     case ZenjectBinding.BindTypes.AllInterfaces:
