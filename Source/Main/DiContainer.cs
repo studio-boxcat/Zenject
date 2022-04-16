@@ -36,9 +36,6 @@ namespace Zenject
 #if !NOT_UNITY3D
         Transform _contextTransform;
         bool _hasLookedUpContextTransform;
-        Transform _inheritedDefaultParent;
-        Transform _explicitDefaultParent;
-        bool _hasExplicitDefaultParent;
 #endif
 
         ZenjectSettings _settings;
@@ -72,10 +69,6 @@ namespace Zenject
             if (parentContainer != null)
             {
                 parentContainer.FlushBindings();
-
-#if !NOT_UNITY3D
-                _inheritedDefaultParent = parentContainer.DefaultParent;
-#endif
 
                 // Make sure to avoid duplicates which could happen if a parent container
                 // appears multiple times in the inheritance chain
@@ -184,34 +177,6 @@ namespace Zenject
                 }
 
                 return _contextTransform;
-            }
-        }
-#endif
-
-        // When true, this will throw exceptions whenever we create new game objects
-        // This is helpful when used in places like EditorWindowKernel where we can't
-        // assume that there is a "scene" to place objects
-        public bool AssertOnNewGameObjects
-        {
-            get;
-            set;
-        }
-
-#if !NOT_UNITY3D
-
-        public Transform InheritedDefaultParent
-        {
-            get { return _inheritedDefaultParent; }
-        }
-
-        public Transform DefaultParent
-        {
-            get { return _explicitDefaultParent; }
-            set
-            {
-                _explicitDefaultParent = value;
-                // Need to use a flag because null is a valid explicit default parent
-                _hasExplicitDefaultParent = true;
             }
         }
 #endif
@@ -1319,9 +1284,6 @@ namespace Zenject
         {
             Assert.That(prefab != null, "Null prefab found when instantiating game object");
 
-            Assert.That(!AssertOnNewGameObjects,
-                "Given DiContainer does not support creating new game objects");
-
             FlushBindings();
 
             var prefabAsGameObject = GetPrefabAsGameObject(prefab);
@@ -1330,7 +1292,7 @@ namespace Zenject
 
             shouldMakeActive = prefabWasActive;
 
-            var parent = GetTransformGroup(gameObjectBindInfo, context);
+            var parent = gameObjectBindInfo.ParentTransform;
 
             Transform initialParent;
 #if !UNITY_EDITOR
@@ -1427,13 +1389,10 @@ namespace Zenject
         public GameObject CreateEmptyGameObject(
             GameObjectCreationParameters gameObjectBindInfo, InjectContext context)
         {
-            Assert.That(!AssertOnNewGameObjects,
-                "Given DiContainer does not support creating new game objects");
-
             FlushBindings();
 
             var gameObj = new GameObject(gameObjectBindInfo.Name ?? "GameObject");
-            var parent = GetTransformGroup(gameObjectBindInfo, context);
+            var parent = gameObjectBindInfo.ParentTransform;
 
             if (parent == null)
             {
@@ -1446,80 +1405,6 @@ namespace Zenject
                 gameObj.transform.SetParent(parent, false);
             }
 
-            return gameObj;
-        }
-
-        Transform GetTransformGroup(
-            GameObjectCreationParameters gameObjectBindInfo, InjectContext context)
-        {
-            Assert.That(!AssertOnNewGameObjects,
-                "Given DiContainer does not support creating new game objects");
-
-            if (gameObjectBindInfo.ParentTransform != null)
-            {
-                Assert.IsNull(gameObjectBindInfo.GroupName);
-                Assert.IsNull(gameObjectBindInfo.ParentTransformGetter);
-
-                return gameObjectBindInfo.ParentTransform;
-            }
-
-            // Don't execute the ParentTransformGetter method during validation
-            // since it might do a resolve etc.
-            if (gameObjectBindInfo.ParentTransformGetter != null)
-            {
-                Assert.IsNull(gameObjectBindInfo.GroupName);
-
-                if (context == null)
-                {
-                    context = new InjectContext
-                    {
-                        // This is the only information we can supply in this case
-                        Container = this
-                    };
-                }
-
-                // NOTE: Null is fine here, will just be a root game object in that case
-                return gameObjectBindInfo.ParentTransformGetter(context);
-            }
-
-            var groupName = gameObjectBindInfo.GroupName;
-
-            // Only use the inherited parent if is not set locally
-            var defaultParent = _hasExplicitDefaultParent ? _explicitDefaultParent : _inheritedDefaultParent;
-
-            if (defaultParent == null)
-            {
-                if (groupName == null)
-                {
-                    return null;
-                }
-
-                return (GameObject.Find("/" + groupName) ?? CreateTransformGroup(groupName)).transform;
-            }
-
-            if (groupName == null)
-            {
-                return defaultParent;
-            }
-
-            foreach (Transform child in defaultParent)
-            {
-                if (child.name == groupName)
-                {
-                    return child;
-                }
-            }
-
-            var group = new GameObject(groupName).transform;
-            group.SetParent(defaultParent, false);
-            return group;
-        }
-
-        GameObject CreateTransformGroup(string groupName)
-        {
-            var gameObj = new GameObject(groupName);
-            gameObj.transform.SetParent(ContextTransform, false);
-            gameObj.transform.SetParent(null, false);
             return gameObj;
         }
 
@@ -2609,9 +2494,6 @@ namespace Zenject
             Type componentType, UnityEngine.Object prefab,
             List<TypeValuePair> extraArgs, InjectContext context, object concreteIdentifier, GameObjectCreationParameters gameObjectBindInfo)
         {
-            Assert.That(!AssertOnNewGameObjects,
-                "Given DiContainer does not support creating new game objects");
-
             FlushBindings();
 
             Assert.That(componentType.IsInterface() || componentType.DerivesFrom<Component>(),

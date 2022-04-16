@@ -19,10 +19,7 @@ namespace Zenject
 #if !ZEN_TESTS_OUTSIDE_UNITY
             var defaultParent = new GameObject(_name);
 
-            defaultParent.transform.SetParent(
-                Container.InheritedDefaultParent, false);
-
-            Container.DefaultParent = defaultParent.transform;
+            defaultParent.transform.SetParent(null, false);
 
             Container.Bind<IDisposable>()
                 .To<DefaultParentObjectDestroyer>().AsCached().WithArguments(defaultParent);

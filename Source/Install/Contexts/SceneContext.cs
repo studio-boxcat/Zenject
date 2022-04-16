@@ -27,12 +27,6 @@ namespace Zenject
         public static Action<DiContainer> ExtraBindingsInstallMethod;
         public static Action<DiContainer> ExtraBindingsLateInstallMethod;
 
-        [FormerlySerializedAs("ParentNewObjectsUnderRoot")]
-        [FormerlySerializedAs("_parentNewObjectsUnderRoot")]
-        [Tooltip("When true, objects that are created at runtime will be parented to the SceneContext")]
-        [SerializeField]
-        bool _parentNewObjectsUnderSceneContext;
-
         [Tooltip("Optional contract names for this SceneContext, allowing contexts in subsequently loaded scenes to depend on it and be parented to it, and also for previously loaded decorators to be included")]
         [SerializeField]
         List<string> _contractNames = new List<string>();
@@ -69,12 +63,6 @@ namespace Zenject
                 _contractNames.Clear();
                 _contractNames.AddRange(value);
             }
-        }
-
-        public bool ParentNewObjectsUnderSceneContext
-        {
-            get { return _parentNewObjectsUnderSceneContext; }
-            set { _parentNewObjectsUnderSceneContext = value; }
         }
 
         public void Awake()
@@ -125,15 +113,6 @@ namespace Zenject
             // Do this after creating DiContainer in case it's needed by the pre install logic
             PreInstall?.Invoke();
             OnPreInstall?.Invoke();
-
-            if (_parentNewObjectsUnderSceneContext)
-            {
-                _container.DefaultParent = transform;
-            }
-            else
-            {
-                _container.DefaultParent = null;
-            }
 
             // Record all the injectable components in the scene BEFORE installing the installers
             // This is nice for cases where the user calls InstantiatePrefab<>, etc. in their installer
