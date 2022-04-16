@@ -84,31 +84,6 @@ namespace Zenject.Internal
                 + "\n}");
         }
 
-        [MenuItem("Assets/Create/Zenject/Editor Window", false, 20)]
-        public static void CreateEditorWindow()
-        {
-            AddCSharpClassTemplate("Editor Window", "UntitledEditorWindow",
-                  "using UnityEngine;"
-                + "\nusing UnityEditor;"
-                + "\nusing Zenject;"
-                + "\n"
-                + "\npublic class CLASS_NAME : ZenjectEditorWindow"
-                + "\n{"
-                + "\n    [MenuItem(\"Window/CLASS_NAME\")]"
-                + "\n    public static CLASS_NAME GetOrCreateWindow()"
-                + "\n    {"
-                + "\n        var window = EditorWindow.GetWindow<CLASS_NAME>();"
-                + "\n        window.titleContent = new GUIContent(\"CLASS_NAME\");"
-                + "\n        return window;"
-                + "\n    }"
-                + "\n"
-                + "\n    public override void InstallBindings()"
-                + "\n    {"
-                + "\n        // TODO"
-                + "\n    }"
-                + "\n}");
-        }
-
         [MenuItem("Assets/Create/Zenject/Project Context", false, 40)]
         public static void CreateProjectContext()
         {
