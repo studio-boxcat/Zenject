@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using ModestTree;
 using Zenject.Internal;
 
@@ -113,7 +112,7 @@ namespace Zenject
                 return true;
             }
 
-            return type.GetCustomAttribute(typeof(PreventTypeAnalysisAttribute), false) != null;
+            return false;
         }
 
         static bool IsStaticType(Type type)
