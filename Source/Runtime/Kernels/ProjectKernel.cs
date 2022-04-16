@@ -9,9 +9,6 @@ namespace Zenject
 {
     public class ProjectKernel : MonoKernel
     {
-        [Inject]
-        SceneContextRegistry _contextRegistry = null;
-
         // One issue with relying on MonoKernel.OnDestroy to call IDisposable.Dispose
         // is that the order that OnDestroy is called in is difficult to predict
         // One good thing is that it does follow the heirarchy order (so root game objects
@@ -66,7 +63,7 @@ namespace Zenject
 
             // Destroy the scene contexts from bottom to top
             // Since this is the reverse order that they were loaded in
-            foreach (var sceneContext in _contextRegistry.SceneContexts.OrderByDescending(x => sceneOrder.IndexOf(x.gameObject.scene)).ToList())
+            foreach (var sceneContext in SceneContextRegistry.List.OrderByDescending(x => sceneOrder.IndexOf(x.gameObject.scene)).ToList())
             {
                 if (immediate)
                 {

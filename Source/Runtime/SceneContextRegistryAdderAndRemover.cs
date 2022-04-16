@@ -5,25 +5,22 @@ namespace Zenject
     [ExecutionPriority(-1)]
     public class SceneContextRegistryAdderAndRemover : IInitializable, IDisposable
     {
-        readonly SceneContextRegistry _registry;
         readonly SceneContext _sceneContext;
 
         public SceneContextRegistryAdderAndRemover(
-            SceneContext sceneContext,
-            SceneContextRegistry registry)
+            SceneContext sceneContext)
         {
-            _registry = registry;
             _sceneContext = sceneContext;
         }
 
         public void Initialize()
         {
-            _registry.Add(_sceneContext);
+            SceneContextRegistry.Add(_sceneContext);
         }
 
         public void Dispose()
         {
-            _registry.Remove(_sceneContext);
+            SceneContextRegistry.Remove(_sceneContext);
         }
     }
 }
