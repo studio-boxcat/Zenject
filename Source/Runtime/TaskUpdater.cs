@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using ModestTree;
 
 namespace Zenject
 {
@@ -9,139 +7,44 @@ namespace Zenject
     [DebuggerStepThrough]
     public abstract class TaskUpdater<TTask> where TTask : class
     {
-        readonly LinkedList<TaskInfo> _tasks = new LinkedList<TaskInfo>();
-        readonly List<TaskInfo> _queuedTasks = new List<TaskInfo>();
-
-        IEnumerable<TaskInfo> AllTasks
-        {
-            get { return ActiveTasks.Concat(_queuedTasks); }
-        }
-
-        IEnumerable<TaskInfo> ActiveTasks
-        {
-            get { return _tasks; }
-        }
+        readonly List<(TTask Task, int Priority)> _tasks = new();
+        bool _sorted = true;
+        int _priorityMax = 0;
 
         public void AddTask(TTask task, int priority)
         {
-            AddTaskInternal(task, priority);
-        }
+            _tasks.Add((task, priority));
 
-        void AddTaskInternal(TTask task, int priority)
-        {
-            Assert.That(!AllTasks.Select(x => x.Task).ContainsItem(task),
-                "Duplicate task added to DependencyRoot with name '" + task.GetType().FullName + "'");
+            if (_tasks.Count == 1)
+                _priorityMax = priority;
 
-            // Wait until next frame to add the task, otherwise whether it gets updated
-            // on the current frame depends on where in the update order it was added
-            // from, so you might get off by one frame issues
-            _queuedTasks.Add(new TaskInfo(task, priority));
-        }
-
-        public void RemoveTask(TTask task)
-        {
-            var info = AllTasks.SingleOrDefault(x => ReferenceEquals(x.Task, task));
-
-            Assert.IsNotNull(info, "Tried to remove a task not added to DependencyRoot, task = " + task.GetType().Name);
-
-            Assert.That(!info.IsRemoved, "Tried to remove task twice, task = " + task.GetType().Name);
-            info.IsRemoved = true;
-        }
-
-        public void OnFrameStart()
-        {
-            // See above comment
-            AddQueuedTasks();
+            // 정렬된 상태 + 재정렬이 필요없을 경우.
+            if (_sorted && priority >= _priorityMax)
+            {
+                _priorityMax = priority;
+            }
+            // 재정렬이 필요할 경우.
+            else
+            {
+                _sorted = false;
+            }
         }
 
         public void UpdateAll()
         {
-            UpdateRange(int.MinValue, int.MaxValue);
-        }
-
-        public void UpdateRange(int minPriority, int maxPriority)
-        {
-            var node = _tasks.First;
-
-            while (node != null)
+            if (_sorted == false)
             {
-                var next = node.Next;
-                var taskInfo = node.Value;
-
-                // Make sure that tasks with priority of int.MaxValue are updated when maxPriority is int.MaxValue
-                if (!taskInfo.IsRemoved && taskInfo.Priority >= minPriority
-                    && (maxPriority == int.MaxValue || taskInfo.Priority < maxPriority))
-                {
-                    UpdateItem(taskInfo.Task);
-                }
-
-                node = next;
+                _tasks.Sort((a, b) => a.Priority - b.Priority);
+                _sorted = true;
             }
 
-            ClearRemovedTasks(_tasks);
-        }
-
-        void ClearRemovedTasks(LinkedList<TaskInfo> tasks)
-        {
-            var node = tasks.First;
-
-            while (node != null)
-            {
-                var next = node.Next;
-                var info = node.Value;
-
-                if (info.IsRemoved)
-                {
-                    //ModestTree.Log.Debug("Removed task '" + info.Task.GetType().ToString() + "'");
-                    tasks.Remove(node);
-                }
-
-                node = next;
-            }
-        }
-
-        void AddQueuedTasks()
-        {
-            for (int i = 0; i < _queuedTasks.Count; i++)
-            {
-                var task = _queuedTasks[i];
-
-                if (!task.IsRemoved)
-                {
-                    InsertTaskSorted(task);
-                }
-            }
-            _queuedTasks.Clear();
-        }
-
-        void InsertTaskSorted(TaskInfo task)
-        {
-            for (var current = _tasks.First; current != null; current = current.Next)
-            {
-                if (current.Value.Priority > task.Priority)
-                {
-                    _tasks.AddBefore(current, task);
-                    return;
-                }
-            }
-
-            _tasks.AddLast(task);
+            // XXX: 재진입을 지원하기 위해서 Count 까지만 업데이트.
+            var count = _tasks.Count;
+            for (var i = 0; i < count; i++)
+                UpdateItem(_tasks[i].Task);
         }
 
         protected abstract void UpdateItem(TTask task);
-
-        class TaskInfo
-        {
-            public TTask Task;
-            public int Priority;
-            public bool IsRemoved;
-
-            public TaskInfo(TTask task, int priority)
-            {
-                Task = task;
-                Priority = priority;
-            }
-        }
     }
 
     public class TickablesTaskUpdater : TaskUpdater<ITickable>

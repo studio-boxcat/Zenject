@@ -45,13 +45,11 @@ namespace Zenject
 
         public void Update()
         {
-            _updater.OnFrameStart();
             _updater.UpdateAll();
         }
 
         public void LateUpdate()
         {
-            _lateUpdater.OnFrameStart();
             _lateUpdater.UpdateAll();
         }
     }
