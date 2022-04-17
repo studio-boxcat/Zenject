@@ -2,11 +2,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using JetBrains.Annotations;
 using ModestTree;
 using UnityEngine;
-using Zenject.Internal;
 
 namespace Zenject
 {
@@ -26,21 +24,6 @@ namespace Zenject
             _container = container;
         }
 
-        protected DiContainer Container
-        {
-            get { return _container; }
-        }
-
-        protected Type ComponentType
-        {
-            get { return _componentType; }
-        }
-
-        protected abstract bool ShouldToggleActive
-        {
-            get;
-        }
-
         public Type GetInstanceType(InjectableInfo context)
         {
             return _componentType;
@@ -54,15 +37,6 @@ namespace Zenject
 
             // We still want to make sure we can get the game object during validation
             var gameObj = GetGameObject(context);
-
-            var wasActive = gameObj.activeSelf;
-
-            if (wasActive && ShouldToggleActive)
-            {
-                // We need to do this in some cases to ensure that [Inject] always gets
-                // called before awake / start
-                gameObj.SetActive(false);
-            }
 
             if (_componentType == typeof(Transform))
                 // Treat transform as a special case because it's the one component that's always automatically added
@@ -81,17 +55,7 @@ namespace Zenject
 
             injectAction = () =>
             {
-                try
-                {
-                    _container.InjectExplicit(instance, _componentType, _extraArguments);
-                }
-                finally
-                {
-                    if (wasActive && ShouldToggleActive)
-                    {
-                        gameObj.SetActive(true);
-                    }
-                }
+                _container.InjectExplicit(instance, _componentType, _extraArguments);
             };
 
             buffer.Add(instance);

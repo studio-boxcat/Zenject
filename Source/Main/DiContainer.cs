@@ -889,7 +889,7 @@ namespace Zenject
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
-        public T Instantiate<T>(object[] extraArgs = null)
+        public T Instantiate<T>([CanBeNull] object[] extraArgs = null)
         {
             return (T)Instantiate(typeof(T), extraArgs);
         }

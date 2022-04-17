@@ -18,14 +18,6 @@ namespace Zenject
             _gameObject = gameObject;
         }
 
-        // This will cause [Inject] to be triggered after awake / start
-        // We could return true, but what if toggling active has other negative repercussions?
-        // For now let's just not do anything
-        protected override bool ShouldToggleActive
-        {
-            get { return false; }
-        }
-
         protected override GameObject GetGameObject(InjectableInfo context)
         {
             return _gameObject;
@@ -41,14 +33,6 @@ namespace Zenject
             : base(container, componentType, extraArguments)
         {
             _gameObjectGetter = gameObjectGetter;
-        }
-
-        // This will cause [Inject] to be triggered after awake / start
-        // We could return true, but what if toggling active has other negative repercussions?
-        // For now let's just not do anything
-        protected override bool ShouldToggleActive
-        {
-            get { return false; }
         }
 
         protected override GameObject GetGameObject(InjectableInfo context)
