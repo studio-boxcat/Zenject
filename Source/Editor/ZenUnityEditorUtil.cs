@@ -40,36 +40,6 @@ namespace Zenject.Internal
             return false;
         }
 
-        // Don't use this
-        public static void RunCurrentSceneSetup()
-        {
-            Assert.That(!ProjectContext.HasInstance);
-
-            foreach (var sceneContext in GetAllSceneContexts())
-            {
-                try
-                {
-                    sceneContext.Run();
-                }
-                catch (Exception e)
-                {
-                    // Add a bit more context
-                    throw new ZenjectException(
-                        "Scene '{0}' Failed To Start!".Fmt(sceneContext.gameObject.scene.name), e);
-                }
-            }
-        }
-
-        public static SceneContext GetSceneContextForScene(Scene scene)
-        {
-            var sceneContext = TryGetSceneContextForScene(scene);
-
-            Assert.IsNotNull(sceneContext,
-                "Could not find scene context for scene '{0}'", scene.name);
-
-            return sceneContext;
-        }
-
         public static SceneContext TryGetSceneContextForScene(Scene scene)
         {
             if (!scene.isLoaded)

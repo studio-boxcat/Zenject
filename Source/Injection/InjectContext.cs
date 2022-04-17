@@ -35,9 +35,6 @@ namespace Zenject
         //          public Foo([Inject(Id = "foo") Foo foo)
         public object Identifier;
 
-        // The constructor parameter name, or field name, or property name
-        public string MemberName;
-
         // The type of the constructor parameter, field or property
         public Type MemberType;
 
@@ -87,7 +84,6 @@ namespace Zenject
             ObjectType = null;
             ParentContext = null;
             ObjectInstance = null;
-            MemberName = "";
             Optional = false;
             SourceType = InjectSources.Any;
             Container = null;
@@ -136,7 +132,6 @@ namespace Zenject
 
             // Clear these
             subContext.ConcreteIdentifier = null;
-            subContext.MemberName = "";
 
             // Inherit these ones by default
             subContext.ObjectType = ObjectType;
@@ -158,7 +153,6 @@ namespace Zenject
             clone.ObjectInstance = ObjectInstance;
             clone.Identifier = Identifier;
             clone.MemberType = MemberType;
-            clone.MemberName = MemberName;
             clone.Optional = Optional;
             clone.SourceType = SourceType;
             clone.Container = Container;

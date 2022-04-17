@@ -35,7 +35,7 @@ namespace Zenject.Internal
 
                 if(Application.isPlaying)
                 {
-                    UnityEngine.Object.DontDestroyOnLoad(go);
+                    Object.DontDestroyOnLoad(go);
                 }
 
                 _disabledIndestructibleGameObject = go;

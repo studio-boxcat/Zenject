@@ -2,52 +2,28 @@
 
 using System;
 using ModestTree;
-using UnityEngine;
-using UnityEngine.Events;
 using Object = UnityEngine.Object;
 
 namespace Zenject
 {
-    public class SceneContext : RunnableContext
+    public class SceneContext : Context
     {
-        public event Action PreInstall;
-        public event Action PostInstall;
-        public event Action PreResolve;
-        public event Action PostResolve;
-
-        public UnityEvent OnPreInstall;
-        public UnityEvent OnPostInstall;
-        public UnityEvent OnPreResolve;
-        public UnityEvent OnPostResolve;
-
         public static Action<DiContainer> ExtraBindingsInstallMethod;
         public static Action<DiContainer> ExtraBindingsLateInstallMethod;
 
         DiContainer _container;
 
-        bool _hasInstalled;
-        bool _hasResolved;
+        public override DiContainer Container => _container;
 
-        public override DiContainer Container
-        {
-            get { return _container; }
-        }
-
-        public bool HasResolved
-        {
-            get { return _hasResolved; }
-        }
-
-        public bool HasInstalled
-        {
-            get { return _hasInstalled; }
-        }
+        public bool HasResolved { get; private set; }
+        public bool HasInstalled { get; private set; }
 
         public void Awake()
         {
             SceneContextRegistry.Add(this);
 
-            Initialize();
+            Install();
+            Resolve();
         }
 
         void OnDestroy()
@@ -55,28 +31,13 @@ namespace Zenject
             SceneContextRegistry.Remove(this);
         }
 
-        protected override void RunInternal()
+        void Install()
         {
-            // We always want to initialize ProjectContext as early as possible
-            ProjectContext.Instance.EnsureIsInitialized();
-
-            Install();
-
-            Resolve();
-        }
-
-        public void Install()
-        {
-            Assert.That(!_hasInstalled);
-            _hasInstalled = true;
-
+            Assert.That(!HasInstalled);
             Assert.IsNull(_container);
 
+            HasInstalled = true;
             _container = new DiContainer(ProjectContext.Instance.Container);
-
-            // Do this after creating DiContainer in case it's needed by the pre install logic
-            PreInstall?.Invoke();
-            OnPreInstall?.Invoke();
 
             // Record all the injectable components in the scene BEFORE installing the installers
             // This is nice for cases where the user calls InstantiatePrefab<>, etc. in their installer
@@ -84,11 +45,7 @@ namespace Zenject
             // InitialComponentsInjecter will also guarantee that any component that is injected into
             // another component has itself been injected
             var injectableMonoBehaviours = gameObject.GetComponent<InjectTargetCollection>().Targets;
-
-            foreach (var instance in injectableMonoBehaviours)
-            {
-                _container.QueueForInject(instance);
-            }
+            _container.QueueForInject(injectableMonoBehaviours);
 
             _container.IsInstalling = true;
 
@@ -100,36 +57,26 @@ namespace Zenject
             {
                 _container.IsInstalling = false;
             }
-
-            PostInstall?.Invoke();
-            OnPostInstall?.Invoke();
         }
 
-        public void Resolve()
+        void Resolve()
         {
-            PreResolve?.Invoke();
-            OnPreResolve?.Invoke();
-
-            Assert.That(_hasInstalled);
-            Assert.That(!_hasResolved);
-            _hasResolved = true;
-
+            Assert.That(HasInstalled);
+            Assert.That(!HasResolved);
+            HasResolved = true;
             _container.ResolveRoots();
-
-            PostResolve?.Invoke();
-            OnPostResolve?.Invoke();
         }
 
         void InstallBindings(Object[] injectableMonoBehaviours)
         {
-            ZenjectManagersInstaller.InstallBindings(_container);
+            ContextUtils.InstallBindings_Managers(_container);
 
             _container.Bind(typeof(Context), typeof(SceneContext)).To<SceneContext>().FromInstance(this);
 
-            InstallSceneBindings(injectableMonoBehaviours);
+            ContextUtils.InstallBindings_ZenjectBindings(this, injectableMonoBehaviours);
 
-            _container.Bind(typeof(SceneKernel), typeof(MonoKernel))
-                .To<SceneKernel>().FromNewComponentOn(gameObject).AsSingle().NonLazy();
+            _container.Bind(typeof(MonoKernel))
+                .To<MonoKernel>().FromNewComponentOn(gameObject).AsSingle().NonLazy();
 
             if (ExtraBindingsInstallMethod != null)
             {
@@ -146,16 +93,6 @@ namespace Zenject
                 // Reset extra bindings for next time we change scenes
                 ExtraBindingsLateInstallMethod = null;
             }
-        }
-
-        // These methods can be used for cases where you need to create the SceneContext entirely in code
-        // Note that if you use these methods that you have to call Run() yourself
-        // This is useful because it allows you to create a SceneContext and configure it how you want
-        // and add what installers you want before kicking off the Install/Resolve
-        public static SceneContext Create()
-        {
-            return CreateComponent<SceneContext>(
-                new GameObject("SceneContext"));
         }
     }
 }

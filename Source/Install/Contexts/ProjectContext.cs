@@ -3,70 +3,28 @@
 using System;
 using ModestTree;
 using UnityEngine;
-using Zenject.Internal;
 using Object = UnityEngine.Object;
 
 namespace Zenject
 {
     public class ProjectContext : Context
     {
-        public static event Action PreInstall;
-        public static event Action PostInstall;
-        public static event Action PreResolve;
-        public static event Action PostResolve;
-
-        public const string ProjectContextResourcePath = "ProjectContext";
-        public const string ProjectContextResourcePathOld = "ProjectCompositionRoot";
-
         static ProjectContext _instance;
 
         DiContainer _container;
 
-        public override DiContainer Container
-        {
-            get { return _container; }
-        }
+        public override DiContainer Container => _container;
 
-        public static bool HasInstance
-        {
-            get { return _instance != null; }
-        }
+        public static bool HasInstance => _instance != null;
 
         public static ProjectContext Instance
         {
             get
             {
                 if (_instance == null)
-                {
                     InstantiateAndInitialize();
-                    Assert.IsNotNull(_instance);
-                }
-
                 return _instance;
             }
-        }
-
-        public static GameObject TryGetPrefab()
-        {
-            var prefabs = Resources.LoadAll(ProjectContextResourcePath, typeof(GameObject));
-
-            if (prefabs.Length > 0)
-            {
-                Assert.That(prefabs.Length == 1,
-                    "Found multiple project context prefabs at resource path '{0}'", ProjectContextResourcePath);
-                return (GameObject)prefabs[0];
-            }
-
-            prefabs = Resources.LoadAll(ProjectContextResourcePathOld, typeof(GameObject));
-
-            if (prefabs.Length > 0)
-            {
-                Assert.That(prefabs.Length == 1,
-                    "Found multiple project context prefabs at resource path '{0}'", ProjectContextResourcePathOld);
-                return (GameObject)prefabs[0];
-            }
-
-            return null;
         }
 
         static void InstantiateAndInitialize()
@@ -74,65 +32,17 @@ namespace Zenject
             Assert.That(FindObjectsOfType<ProjectContext>().IsEmpty(),
                 "Tried to create multiple instances of ProjectContext!");
 
-            var prefab = TryGetPrefab();
-
-            var prefabWasActive = false;
-
-            if (prefab == null)
-            {
-                _instance = new GameObject("ProjectContext")
-                    .AddComponent<ProjectContext>();
-            }
-            else
-            {
-                prefabWasActive = prefab.activeSelf;
-
-                GameObject gameObjectInstance;
-#if UNITY_EDITOR
-                if (prefabWasActive)
-                {
-                    // This ensures the prefab's Awake() methods don't fire (and, if in the editor, that the prefab file doesn't get modified)
-                    gameObjectInstance = GameObject.Instantiate(prefab, ZenUtilInternal.GetOrCreateInactivePrefabParent());
-                    gameObjectInstance.SetActive(false);
-                    gameObjectInstance.transform.SetParent(null, false);
-                }
-                else
-                {
-                    gameObjectInstance = GameObject.Instantiate(prefab);
-                }
-#else
-                    if(prefabWasActive)
-                    {
-                        prefab.SetActive(false);
-                        gameObjectInstance = GameObject.Instantiate(prefab);
-                        prefab.SetActive(true);
-                    }
-                    else
-                    {
-                        gameObjectInstance = GameObject.Instantiate(prefab);
-                    }
-#endif
-
-                _instance = gameObjectInstance.GetComponent<ProjectContext>();
-
-                Assert.IsNotNull(_instance,
-                    "Could not find ProjectContext component on prefab 'Resources/{0}.prefab'", ProjectContextResourcePath);
-            }
+            var prefab = Resources.Load<GameObject>("ProjectContext");
+            prefab.SetActive(false);
+            _instance = Instantiate(prefab, null, false).GetComponent<ProjectContext>();
+            prefab.SetActive(true);
 
             // Note: We use Initialize instead of awake here in case someone calls
             // ProjectContext.Instance while ProjectContext is initializing
             _instance.Initialize();
 
-            if (prefabWasActive)
-            {
-                // We always instantiate it as disabled so that Awake and Start events are triggered after inject
-                _instance.gameObject.SetActive(true);
-            }
-        }
-
-        public void EnsureIsInitialized()
-        {
-            // Do nothing - Initialize occurs in Instance property
+            // We always instantiate it as disabled so that Awake and Start events are triggered after inject
+            _instance.gameObject.SetActive(true);
         }
 
         public void Awake()
@@ -153,19 +63,9 @@ namespace Zenject
 
             _container = new DiContainer();
 
-            // Do this after creating DiContainer in case it's needed by the pre install logic
-            if (PreInstall != null)
-            {
-                PreInstall();
-            }
-
             var injectableMonoBehaviours = gameObject.TryGetComponent(out InjectTargetCollection injectTargetCollection)
                 ? injectTargetCollection.Targets : Array.Empty<Object>();
-
-            foreach (var instance in injectableMonoBehaviours)
-            {
-                _container.QueueForInject(instance);
-            }
+            _container.QueueForInject(injectableMonoBehaviours);
 
             _container.IsInstalling = true;
 
@@ -178,37 +78,21 @@ namespace Zenject
                 _container.IsInstalling = false;
             }
 
-            if (PostInstall != null)
-            {
-                PostInstall();
-            }
-
-            if (PreResolve != null)
-            {
-                PreResolve();
-            }
-
             _container.ResolveRoots();
-
-            if (PostResolve != null)
-            {
-                PostResolve();
-            }
         }
 
         void InstallBindings(Object[] injectableMonoBehaviours)
         {
-            ZenjectManagersInstaller.InstallBindings(_container);
+            ContextUtils.InstallBindings_Managers(_container);
 
             _container.Bind<Context>().FromInstance(this).AsSingle();
 
-            _container.Bind(typeof(ProjectKernel), typeof(MonoKernel))
+            _container.Bind(typeof(ProjectKernel))
                 .To<ProjectKernel>().FromNewComponentOn(gameObject).AsSingle().NonLazy();
 
-            InstallSceneBindings(injectableMonoBehaviours);
+            ContextUtils.InstallBindings_ZenjectBindings(this, injectableMonoBehaviours);
 
             InstallInstallers();
-
         }
     }
 }

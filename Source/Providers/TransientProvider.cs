@@ -17,7 +17,7 @@ namespace Zenject
             [CanBeNull] object[] extraArguments,
             object concreteIdentifier)
         {
-            Assert.That(!concreteType.IsAbstract(),
+            Assert.That(!concreteType.IsAbstract,
                 "Expected non-abstract type for given binding but instead found type '{0}'",
                 concreteType);
 

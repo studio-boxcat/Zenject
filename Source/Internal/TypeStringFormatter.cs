@@ -42,7 +42,7 @@ namespace ModestTree
             {
                 var name = GetCSharpTypeName(type.Name);
 
-                if (type.IsGenericType())
+                if (type.IsGenericType)
                 {
                     var quoteIndex = name.IndexOf('`');
 
@@ -57,9 +57,9 @@ namespace ModestTree
 
                     sb.Append("<");
 
-                    if (type.IsGenericTypeDefinition())
+                    if (type.IsGenericTypeDefinition)
                     {
-                        var numArgs = type.GenericArguments().Count();
+                        var numArgs = type.GetGenericArguments().Count();
 
                         if (numArgs > 0)
                         {
@@ -68,7 +68,7 @@ namespace ModestTree
                     }
                     else
                     {
-                        sb.Append(string.Join(", ", type.GenericArguments().Select(t => t.PrettyName()).ToArray()));
+                        sb.Append(string.Join(", ", type.GetGenericArguments().Select(t => t.PrettyName()).ToArray()));
                     }
 
                     sb.Append(">");

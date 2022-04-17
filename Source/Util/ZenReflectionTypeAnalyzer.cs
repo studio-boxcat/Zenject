@@ -4,6 +4,7 @@ using System.Reflection;
 using ModestTree;
 using UnityEngine;
 using UnityEngine.Pool;
+using Object = UnityEngine.Object;
 
 namespace Zenject.Internal
 {
@@ -11,11 +12,7 @@ namespace Zenject.Internal
     {
         public static InjectTypeInfo GetReflectionInfo(Type type)
         {
-            Assert.That(!type.IsEnum(), "Tried to analyze enum type '{0}'.  This is not supported", type);
-            Assert.That(!type.IsArray, "Tried to analyze array type '{0}'.  This is not supported", type);
-
             return new InjectTypeInfo(
-                type,
                 GetConstructorInfo(type),
                 GetMethodInfos(type),
                 GetFieldInfos(type),
@@ -26,7 +23,7 @@ namespace Zenject.Internal
         {
             var list = ListPool<InjectTypeInfo.InjectPropertyInfo>.Get();
 
-            foreach (var property in type.DeclaredInstanceProperties())
+            foreach (var property in type.InstanceProperties())
             {
                 var injectAttr = property.GetCustomAttribute<InjectAttributeBase>();
                 if (injectAttr == null) continue;
@@ -43,12 +40,21 @@ namespace Zenject.Internal
         {
             var list = ListPool<InjectTypeInfo.InjectFieldInfo>.Get();
 
-            foreach (var field in type.DeclaredInstanceFields())
+            while (type != null
+                   && type != typeof(object)
+                   && type != typeof(Object)
+                   && type != typeof(MonoBehaviour)
+                   && type != typeof(ScriptableObject))
             {
-                var injectAttr = field.GetCustomAttribute<InjectAttributeBase>();
-                if (injectAttr == null) continue;
-                var propertyInfo = new InjectTypeInfo.InjectFieldInfo(field, GetInjectableInfoForMember(field, injectAttr));
-                list.Add(propertyInfo);
+                foreach (var field in type.InstanceFields())
+                {
+                    var injectAttr = field.GetCustomAttribute<InjectAttributeBase>();
+                    if (injectAttr == null) continue;
+                    var propertyInfo = new InjectTypeInfo.InjectFieldInfo(field, GetInjectableInfoForMember(field, injectAttr));
+                    list.Add(propertyInfo);
+                }
+
+                type = type.BaseType;
             }
 
             var arr = list.ToArray();
@@ -64,7 +70,7 @@ namespace Zenject.Internal
             // This is so that we can ignore inherited attributes, which is necessary
             // otherwise a base class method marked with [Inject] would cause all overridden
             // derived methods to be added as well
-            foreach (var methodInfo in type.DeclaredInstanceMethods())
+            foreach (var methodInfo in type.InstanceMethods())
             {
                 if (methodInfo.IsDefined(typeof(InjectAttributeBase)) == false) continue;
                 var injectMethodInfo = new InjectTypeInfo.InjectMethodInfo(methodInfo, BakeInjectParameterInfos(type, methodInfo));
@@ -86,7 +92,7 @@ namespace Zenject.Internal
 
         static InjectableInfo[] BakeInjectParameterInfos(Type type, MethodBase methodInfo)
         {
-            var paramInfos =  methodInfo.GetParameters();
+            var paramInfos = methodInfo.GetParameters();
             var injectParamInfos = new InjectableInfo[paramInfos.Length];
             for (var i = 0; i < paramInfos.Length; i++)
                 injectParamInfos[i] = CreateInjectableInfoForParam(type, paramInfos[i]);
@@ -104,8 +110,8 @@ namespace Zenject.Internal
             var injectAttr = injectAttributes.SingleOrDefault();
 
             object identifier = null;
-            bool isOptional = false;
-            InjectSources sourceType = InjectSources.Any;
+            var isOptional = false;
+            var sourceType = InjectSources.Any;
 
             if (injectAttr != null)
             {
@@ -114,12 +120,9 @@ namespace Zenject.Internal
                 sourceType = injectAttr.Source;
             }
 
-            bool isOptionalWithADefaultValue = (paramInfo.Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault;
-
             return new InjectableInfo(
-                isOptionalWithADefaultValue || isOptional,
+                isOptional,
                 identifier,
-                paramInfo.Name,
                 paramInfo.ParameterType,
                 sourceType);
         }
@@ -127,8 +130,8 @@ namespace Zenject.Internal
         static InjectableInfo GetInjectableInfoForMember(MemberInfo memInfo, InjectAttributeBase injectAttr)
         {
             object identifier = null;
-            bool isOptional = false;
-            InjectSources sourceType = InjectSources.Any;
+            var isOptional = false;
+            var sourceType = InjectSources.Any;
 
             if (injectAttr != null)
             {
@@ -137,24 +140,18 @@ namespace Zenject.Internal
                 sourceType = injectAttr.Source;
             }
 
-            Type memberType = memInfo is FieldInfo
-                ? ((FieldInfo)memInfo).FieldType : ((PropertyInfo)memInfo).PropertyType;
+            var memberType = memInfo is FieldInfo fieldInfo
+                ? fieldInfo.FieldType : ((PropertyInfo) memInfo).PropertyType;
 
             return new InjectableInfo(
                 isOptional,
                 identifier,
-                memInfo.Name,
                 memberType,
                 sourceType);
         }
 
         static ConstructorInfo TryGetInjectConstructor(Type type)
         {
-            if (type.DerivesFromOrEqual<Component>() || type.IsAbstract())
-            {
-                return null;
-            }
-
             var constructors = type.Constructors();
 
             if (constructors.Length == 0)

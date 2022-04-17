@@ -1,26 +1,15 @@
+using System;
 using JetBrains.Annotations;
+using UnityEngine.Scripting;
 
 namespace Zenject
 {
+    [Preserve]
     [MeansImplicitUse(ImplicitUseKindFlags.Assign)]
-    public abstract class InjectAttributeBase : Zenject.Internal.PreserveAttribute
+    public abstract class InjectAttributeBase : Attribute
     {
-        public bool Optional
-        {
-            get;
-            set;
-        }
-
-        public object Id
-        {
-            get;
-            set;
-        }
-
-        public InjectSources Source
-        {
-            get;
-            set;
-        }
+        public bool Optional;
+        public object Id;
+        public InjectSources Source;
     }
 }

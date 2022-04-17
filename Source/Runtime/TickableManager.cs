@@ -9,32 +9,16 @@ namespace Zenject
         readonly List<ITickable> _tickables = null;
 
         [Inject(Optional = true, Source = InjectSources.Local)]
-        readonly List<IFixedTickable> _fixedTickables = null;
-
-        [Inject(Optional = true, Source = InjectSources.Local)]
         readonly List<ILateTickable> _lateTickables = null;
 
         readonly TickablesTaskUpdater _updater = new();
-        readonly FixedTickablesTaskUpdater _fixedUpdater = new();
         readonly LateTickablesTaskUpdater _lateUpdater = new();
 
         [Inject]
         public void Initialize()
         {
             InitTickables();
-            InitFixedTickables();
             InitLateTickables();
-        }
-
-        void InitFixedTickables()
-        {
-            foreach (var tickable in _fixedTickables)
-            {
-                // Note that we use zero for unspecified priority
-                // This is nice because you can use negative or positive for before/after unspecified
-                var priority = tickable.GetType().GetCustomAttribute<ExecutionPriorityAttribute>()?.Priority ?? 0;
-                _fixedUpdater.AddTask(tickable, priority);
-            }
         }
 
         void InitTickables()
@@ -63,12 +47,6 @@ namespace Zenject
         {
             _updater.OnFrameStart();
             _updater.UpdateAll();
-        }
-
-        public void FixedUpdate()
-        {
-            _fixedUpdater.OnFrameStart();
-            _fixedUpdater.UpdateAll();
         }
 
         public void LateUpdate()

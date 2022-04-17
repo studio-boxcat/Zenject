@@ -92,11 +92,7 @@ namespace Zenject
             if (type == typeof(ZenjectBinding))
                 return true;
 
-            var typeInfo = TypeAnalyzer.TryGetInfo(type);
-            if (typeInfo == null)
-                return false;
-
-            return typeInfo.IsInjectionRequired();
+            return TypeAnalyzer.GetInfo(type, out _);
         }
 
         static IEnumerable<GameObject> GetRootGameObjects(Scene scene)

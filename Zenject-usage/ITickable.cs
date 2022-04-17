@@ -5,11 +5,6 @@ namespace Zenject
         void Tick();
     }
 
-    public interface IFixedTickable
-    {
-        void FixedTick();
-    }
-
     public interface ILateTickable
     {
         void LateTick();

@@ -1,9 +1,6 @@
 #if !NOT_UNITY3D
 
-using System.Collections.Generic;
-using System.Linq;
 using ModestTree;
-using UnityEngine.SceneManagement;
 
 namespace Zenject
 {
@@ -53,13 +50,6 @@ namespace Zenject
             // OnApplicationQuit should always be called before OnDestroy
             // (Unless it is destroyed manually)
             Assert.That(!IsDestroyed);
-
-            var sceneOrder = new List<Scene>();
-
-            for (int i = 0; i < SceneManager.sceneCount; i++)
-            {
-                sceneOrder.Add(SceneManager.GetSceneAt(i));
-            }
 
             // Destroy the scene contexts from bottom to top
             // Since this is the reverse order that they were loaded in

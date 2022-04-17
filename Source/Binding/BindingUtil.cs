@@ -127,7 +127,7 @@ namespace Zenject
         [Conditional("DEBUG")]
         public static void AssertIsInterfaceOrScriptableObject(Type type)
         {
-            Assert.That(type.DerivesFrom(typeof(ScriptableObject)) || type.IsInterface(),
+            Assert.That(type.DerivesFrom(typeof(ScriptableObject)) || type.IsInterface,
                 "Invalid type given during bind command.  Expected type '{0}' to either derive from UnityEngine.ScriptableObject or be an interface", type);
         }
 
@@ -149,7 +149,7 @@ namespace Zenject
         [Conditional("DEBUG")]
         public static void AssertIsInterfaceOrComponent(Type type)
         {
-            Assert.That(type.DerivesFrom(typeof(Component)) || type.IsInterface(),
+            Assert.That(type.DerivesFrom(typeof(Component)) || type.IsInterface,
                 "Invalid type given during bind command.  Expected type '{0}' to either derive from UnityEngine.Component or be an interface", type);
         }
 
@@ -219,7 +219,7 @@ namespace Zenject
         [Conditional("DEBUG")]
         public static void AssertIsNotAbstract(Type type)
         {
-            Assert.That(!type.IsAbstract(),
+            Assert.That(!type.IsAbstract,
                 "Invalid type given during bind command.  Expected type '{0}' to not be abstract.", type);
         }
 

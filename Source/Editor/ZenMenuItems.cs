@@ -1,7 +1,6 @@
 #if !NOT_UNITY3D
 
 using System.IO;
-using ModestTree;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -23,19 +22,6 @@ namespace Zenject.Internal
             Selection.activeGameObject = root.gameObject;
 
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-        }
-
-        [MenuItem("Edit/Zenject/Create Project Context")]
-        public static void CreateProjectContextInDefaultLocation()
-        {
-            var fullDirPath = Path.Combine(Application.dataPath, "Resources");
-
-            if (!Directory.Exists(fullDirPath))
-            {
-                Directory.CreateDirectory(fullDirPath);
-            }
-
-            CreateProjectContextInternal("Assets/Resources");
         }
 
         [MenuItem("Assets/Create/Zenject/Scriptable Object Installer", false, 1)]
@@ -82,59 +68,6 @@ namespace Zenject.Internal
                 + "\n    {"
                 + "\n    }"
                 + "\n}");
-        }
-
-        [MenuItem("Assets/Create/Zenject/Project Context", false, 40)]
-        public static void CreateProjectContext()
-        {
-            var absoluteDir = ZenUnityEditorUtil.TryGetSelectedFolderPathInProjectsTab();
-
-            if (absoluteDir == null)
-            {
-                EditorUtility.DisplayDialog("Error",
-                    "Could not find directory to place the '{0}.prefab' asset.  Please try again by right clicking in the desired folder within the projects pane."
-                    .Fmt(ProjectContext.ProjectContextResourcePath), "Ok");
-                return;
-            }
-
-            var parentFolderName = Path.GetFileName(absoluteDir);
-
-            if (parentFolderName != "Resources")
-            {
-                EditorUtility.DisplayDialog("Error",
-                    "'{0}.prefab' must be placed inside a directory named 'Resources'.  Please try again by right clicking within the Project pane in a valid Resources folder."
-                    .Fmt(ProjectContext.ProjectContextResourcePath), "Ok");
-                return;
-            }
-
-            CreateProjectContextInternal(absoluteDir);
-        }
-
-        static void CreateProjectContextInternal(string absoluteDir)
-        {
-            var assetPath = ZenUnityEditorUtil.ConvertFullAbsolutePathToAssetPath(absoluteDir);
-            var prefabPath = (Path.Combine(assetPath, ProjectContext.ProjectContextResourcePath) + ".prefab").Replace("\\", "/");
-
-            var gameObject = new GameObject();
-
-            try
-            {
-                gameObject.AddComponent<ProjectContext>();
-
-#if UNITY_2018_3_OR_NEWER
-                var prefabObj = PrefabUtility.SaveAsPrefabAsset(gameObject, prefabPath);
-#else
-                var prefabObj = PrefabUtility.ReplacePrefab(gameObject, PrefabUtility.CreateEmptyPrefab(prefabPath));
-#endif
-
-                Selection.activeObject = prefabObj;
-            }
-            finally
-            {
-                GameObject.DestroyImmediate(gameObject);
-            }
-
-            Debug.Log("Created new ProjectContext at '{0}'".Fmt(prefabPath));
         }
 
         public static string AddCSharpClassTemplate(

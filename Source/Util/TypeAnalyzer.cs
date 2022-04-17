@@ -1,124 +1,61 @@
 using System;
 using System.Collections.Generic;
-using ModestTree;
 using Zenject.Internal;
 
 namespace Zenject
 {
     public static class TypeAnalyzer
     {
-        static Dictionary<Type, InjectTypeInfo> _typeInfo = new();
-
-        public static bool HasInfo<T>()
-        {
-            return HasInfo(typeof(T));
-        }
+        static readonly Dictionary<Type, InjectTypeInfo?> _typeInfo = new();
 
         public static bool HasInfo(Type type)
         {
-            return TryGetInfo(type) != null;
+            return _typeInfo.ContainsKey(type);
         }
 
-        public static InjectTypeInfo GetInfo<T>()
+        public static bool GetInfo(Type type, out InjectTypeInfo info)
         {
-            return GetInfo(typeof(T));
-        }
-
-        public static InjectTypeInfo GetInfo(Type type)
-        {
-            var info = TryGetInfo(type);
-            Assert.IsNotNull(info, "Unable to get type info for type '{0}'", type);
-            return info;
-        }
-
-        public static InjectTypeInfo TryGetInfo<T>()
-        {
-            return TryGetInfo(typeof(T));
-        }
-
-        public static InjectTypeInfo TryGetInfo(Type type)
-        {
-            InjectTypeInfo info;
-
+            if (_typeInfo.TryGetValue(type, out var found))
             {
-                if (_typeInfo.TryGetValue(type, out info))
+                if (found.HasValue)
                 {
-                    return info;
+                    info = found.Value;
+                    return true;
+                }
+                else
+                {
+                    info = default;
+                    return false;
                 }
             }
 
-            info = GetInfoInternal(type);
+            var shouldSkipTypeAnalysis =
+                type.IsEnum
+                || type.IsArray
+                || type.IsInterface
+                || type.ContainsGenericParameters
+                || type.IsAbstract
+                || type == typeof(object);
 
-            if (info != null)
+            if (shouldSkipTypeAnalysis)
             {
-                Assert.IsEqual(info.Type, type);
-                Assert.IsNull(info.BaseTypeInfo);
-
-                var baseType = type.BaseType();
-
-                if (baseType != null)
-                {
-                    if (_typeInfo.TryGetValue(baseType, out var baseTypeInfo))
-                    {
-                        info.BaseTypeInfo = baseTypeInfo;
-                    }
-                    else if (!ShouldSkipTypeAnalysis(baseType))
-                    {
-                        info.BaseTypeInfo = TryGetInfo(baseType);
-                    }
-                }
+                _typeInfo.Add(type, null);
+                info = default;
+                return false;
             }
 
+            info = ReflectionTypeAnalyzer.GetReflectionInfo(type);
+            var injectionRequired = info.IsInjectionRequired();
+            if (injectionRequired)
             {
-                _typeInfo[type] = info;
-            }
-
-            return info;
-        }
-
-        static InjectTypeInfo GetInfoInternal(Type type)
-        {
-            if (ShouldSkipTypeAnalysis(type))
-            {
-                return null;
-            }
-
-            {
-                return ReflectionTypeAnalyzer.GetReflectionInfo(type);
-            }
-        }
-
-        public static bool ShouldSkipTypeAnalysis(Type type)
-        {
-            if (type == null || type.IsEnum() || type.IsArray || type.IsInterface()
-                || type.ContainsGenericParameters() || IsStaticType(type)
-                || type == typeof(object))
-            {
+                _typeInfo.Add(type, info);
                 return true;
             }
-
-            var @namespace = type.Namespace;
-            if (@namespace != null && (
-                @namespace.StartsWith("System", StringComparison.Ordinal)
-                || @namespace.StartsWith("Unity", StringComparison.Ordinal)
-                || @namespace.StartsWith("TouchScript", StringComparison.Ordinal)
-                || @namespace.StartsWith("Coffee", StringComparison.Ordinal)
-                || @namespace.StartsWith("DG.", StringComparison.Ordinal)
-                || @namespace.StartsWith("E7.", StringComparison.Ordinal)
-                || @namespace.StartsWith("RedBlueGames", StringComparison.Ordinal)
-                || @namespace.StartsWith("SuperScrollView", StringComparison.Ordinal)
-                ))
+            else
             {
-                return true;
+                _typeInfo.Add(type, null);
+                return false;
             }
-
-            return false;
-        }
-
-        static bool IsStaticType(Type type)
-        {
-            // Apparently this is unique to static classes
-            return type.IsAbstract() && type.IsSealed();
         }
     }
 }

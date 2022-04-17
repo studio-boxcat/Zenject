@@ -1,5 +1,5 @@
-
 using System.Collections.Generic;
+using System.Linq;
 using ModestTree;
 
 namespace Zenject
@@ -18,54 +18,37 @@ namespace Zenject
     public class LazyInstanceInjector
     {
         readonly DiContainer _container;
-        readonly HashSet<object> _instancesToInject = new HashSet<object>();
+        readonly List<object> _instancesToInject = new();
+
+        bool _isInjecting;
 
         public LazyInstanceInjector(DiContainer container)
         {
             _container = container;
         }
 
-        public IEnumerable<object> Instances
+        public void AddInstances(object[] instances)
         {
-            get { return _instancesToInject; }
-        }
-
-        public void AddInstance(object instance)
-        {
-            _instancesToInject.Add(instance);
-        }
-
-        public void AddInstances(IEnumerable<object> instances)
-        {
-            _instancesToInject.UnionWith(instances);
-        }
-
-        public void LazyInject(object instance)
-        {
-            if (_instancesToInject.Remove(instance))
-            {
-                _container.Inject(instance);
-            }
+            Assert.That(!_isInjecting);
+            _instancesToInject.AddRange(instances);
+            Assert.That(_instancesToInject.Distinct().Count() == _instancesToInject.Count);
         }
 
         public void LazyInjectAll()
         {
-            var tempList = new List<object>();
+            Assert.That(!_isInjecting);
+            _isInjecting = true;
 
-            while (!_instancesToInject.IsEmpty())
+            foreach (var instance in _instancesToInject)
             {
-                tempList.Clear();
-                tempList.AddRange(_instancesToInject);
-
-                foreach (var instance in tempList)
-                {
-                    // We use LazyInject instead of calling _container.inject directly
-                    // Because it might have already been lazily injected
-                    // as a result of a previous call to inject
-                    LazyInject(instance);
-                }
+                // We use LazyInject instead of calling _container.inject directly
+                // Because it might have already been lazily injected
+                // as a result of a previous call to inject
+                _container.Inject(instance);
             }
+
+            _instancesToInject.Clear();
+            _isInjecting = false;
         }
     }
 }
-

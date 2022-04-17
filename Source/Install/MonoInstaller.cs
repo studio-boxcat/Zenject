@@ -7,7 +7,7 @@ namespace Zenject
     public abstract class MonoInstaller : MonoBehaviour, IInstaller
     {
         [Inject]
-        public DiContainer Container;
+        public readonly DiContainer Container;
 
         public abstract void InstallBindings();
     }

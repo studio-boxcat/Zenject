@@ -1,13 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
-    public class InjectTypeInfo
+    public struct InjectTypeInfo
     {
-        public readonly Type Type;
         public readonly InjectConstructorInfo InjectConstructor;
         public readonly InjectMethodInfo[] InjectMethods;
         public readonly InjectFieldInfo[] InjectFields;
@@ -15,13 +11,11 @@ namespace Zenject
 
 
         public InjectTypeInfo(
-            Type type,
             InjectConstructorInfo injectConstructor,
             InjectMethodInfo[] injectMethods,
             InjectFieldInfo[] injectFields,
             InjectPropertyInfo[] injectProperties)
         {
-            Type = type;
             InjectConstructor = injectConstructor;
             InjectMethods = injectMethods;
             InjectFields = injectFields;
@@ -34,30 +28,6 @@ namespace Zenject
                    || InjectProperties.Length != 0
                    || InjectMethods.Length != 0
                    || InjectConstructor.ConstructorInfo != null;
-        }
-
-        // Filled in later
-        public InjectTypeInfo BaseTypeInfo { get; set; }
-
-        public IEnumerable<InjectableInfo> AllInjectables
-        {
-            get
-            {
-                foreach (var info in InjectConstructor.Parameters)
-                    yield return info;
-
-                foreach (var info in InjectFields)
-                    yield return info.Info;
-
-                foreach (var info in InjectProperties)
-                    yield return info.Info;
-
-                foreach (var info in InjectMethods)
-                foreach (var paramInfo in info.Parameters)
-                {
-                    yield return paramInfo;
-                }
-            }
         }
 
         public interface IInjectMemberSetter

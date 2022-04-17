@@ -83,7 +83,6 @@ namespace Zenject.Internal
             context.ParentContext = currentContext;
             context.ObjectInstance = targetInstance;
             context.Identifier = injectableInfo.Identifier;
-            context.MemberName = injectableInfo.MemberName;
             context.Optional = injectableInfo.Optional;
             context.SourceType = injectableInfo.SourceType;
             context.ConcreteIdentifier = concreteIdentifier;

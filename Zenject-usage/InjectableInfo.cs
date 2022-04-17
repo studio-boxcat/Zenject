@@ -11,18 +11,15 @@ namespace Zenject
 
         public readonly InjectSources SourceType;
 
-        // The field name or property name from source code
-        public readonly string MemberName;
         // The field type or property type from source code
         public readonly Type MemberType;
 
         public InjectableInfo(
-            bool optional, object identifier, string memberName, Type memberType,
+            bool optional, object identifier, Type memberType,
             InjectSources sourceType)
         {
             Optional = optional;
             MemberType = memberType;
-            MemberName = memberName;
             Identifier = identifier;
             SourceType = sourceType;
         }
