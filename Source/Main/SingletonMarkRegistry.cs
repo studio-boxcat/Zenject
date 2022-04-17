@@ -6,8 +6,9 @@ namespace Zenject.Internal
 {
     public class SingletonMarkRegistry
     {
-        readonly HashSet<Type> _boundSingletons = new HashSet<Type>();
-        readonly HashSet<Type> _boundNonSingletons = new HashSet<Type>();
+#if DEBUG
+        readonly HashSet<Type> _boundSingletons = new();
+        readonly HashSet<Type> _boundNonSingletons = new();
 
         public void MarkNonSingleton(Type type)
         {
@@ -24,6 +25,14 @@ namespace Zenject.Internal
             Assert.That(!_boundNonSingletons.Contains(type),
                 "Found multiple creation bindings for type '{0}' in addition to AsSingle.  The AsSingle binding must be the definitive creation binding.  If this is intentional, use AsCached instead of AsSingle.", type);
         }
+#else
+        public void MarkNonSingleton(Type type)
+        {
+        }
 
+        public void MarkSingleton(Type type)
+        {
+        }
+#endif
     }
 }
