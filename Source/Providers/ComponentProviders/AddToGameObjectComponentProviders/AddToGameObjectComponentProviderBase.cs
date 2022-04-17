@@ -15,17 +15,15 @@ namespace Zenject
         readonly Type _componentType;
         readonly DiContainer _container;
         [CanBeNull] readonly object[] _extraArguments;
-        readonly object _concreteIdentifier;
 
         public AddToGameObjectComponentProviderBase(DiContainer container, Type componentType,
-            [CanBeNull] object[] extraArguments, object concreteIdentifier)
+            [CanBeNull] object[] extraArguments)
         {
             Assert.That(componentType.DerivesFrom<Component>());
 
             _extraArguments = extraArguments;
             _componentType = componentType;
             _container = container;
-            _concreteIdentifier = concreteIdentifier;
         }
 
         protected DiContainer Container

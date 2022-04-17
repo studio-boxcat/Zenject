@@ -12,8 +12,8 @@ namespace Zenject
         readonly GameObject _gameObject;
 
         public AddToExistingGameObjectComponentProvider(GameObject gameObject, DiContainer container, Type componentType,
-            object[] extraArguments, object concreteIdentifier)
-            : base(container, componentType, extraArguments, concreteIdentifier)
+            object[] extraArguments)
+            : base(container, componentType, extraArguments)
         {
             _gameObject = gameObject;
         }
@@ -37,8 +37,8 @@ namespace Zenject
         readonly Func<InjectableInfo, GameObject> _gameObjectGetter;
 
         public AddToExistingGameObjectComponentProviderGetter(Func<InjectableInfo, GameObject> gameObjectGetter, DiContainer container, Type componentType,
-            object[] extraArguments, object concreteIdentifier)
-            : base(container, componentType, extraArguments, concreteIdentifier)
+            object[] extraArguments)
+            : base(container, componentType, extraArguments)
         {
             _gameObjectGetter = gameObjectGetter;
         }

@@ -10,11 +10,9 @@ namespace Zenject
         readonly DiContainer _container;
         readonly Type _concreteType;
         [CanBeNull] readonly object[] _extraArguments;
-        readonly object _concreteIdentifier;
 
         public TransientProvider(Type concreteType, DiContainer container,
-            [CanBeNull] object[] extraArguments,
-            object concreteIdentifier)
+            [CanBeNull] object[] extraArguments)
         {
             Assert.That(!concreteType.IsAbstract,
                 "Expected non-abstract type for given binding but instead found type '{0}'",
@@ -23,7 +21,6 @@ namespace Zenject
             _container = container;
             _concreteType = concreteType;
             _extraArguments = extraArguments;
-            _concreteIdentifier = concreteIdentifier;
         }
 
         public Type GetInstanceType(InjectableInfo context)

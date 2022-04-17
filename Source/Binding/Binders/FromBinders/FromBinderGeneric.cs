@@ -13,47 +13,47 @@ namespace Zenject
             BindingUtil.AssertIsDerivedFromTypes(typeof(TContract), BindInfo.ContractTypes);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromMethod(Func<TContract> method)
+        public ScopeArgNonLazyBinder FromMethod(Func<TContract> method)
         {
-            return FromMethodBase<TContract>(ctx => method());
+            return FromMethodBase(ctx => method());
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromMethod(Func<InjectableInfo, TContract> method)
+        public ScopeArgNonLazyBinder FromMethod(Func<InjectableInfo, TContract> method)
         {
-            return FromMethodBase<TContract>(method);
+            return FromMethodBase(method);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolveGetter<TObj>(Func<TObj, TContract> method)
+        public ScopeArgNonLazyBinder FromResolveGetter<TObj>(Func<TObj, TContract> method)
         {
-            return FromResolveGetter<TObj>(null, method);
+            return FromResolveGetter(null, method);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolveGetter<TObj>(object identifier, Func<TObj, TContract> method)
+        public ScopeArgNonLazyBinder FromResolveGetter<TObj>(object identifier, Func<TObj, TContract> method)
         {
-            return FromResolveGetter<TObj>(identifier, method, InjectSources.Any);
+            return FromResolveGetter(identifier, method, InjectSources.Any);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolveGetter<TObj>(object identifier, Func<TObj, TContract> method, InjectSources source)
+        public ScopeArgNonLazyBinder FromResolveGetter<TObj>(object identifier, Func<TObj, TContract> method, InjectSources source)
         {
-            return FromResolveGetterBase<TObj, TContract>(identifier, method, source, false);
+            return FromResolveGetterBase(identifier, method, source, false);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolveAllGetter<TObj>(Func<TObj, TContract> method)
+        public ScopeArgNonLazyBinder FromResolveAllGetter<TObj>(Func<TObj, TContract> method)
         {
-            return FromResolveAllGetter<TObj>(null, method);
+            return FromResolveAllGetter(null, method);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolveAllGetter<TObj>(object identifier, Func<TObj, TContract> method)
+        public ScopeArgNonLazyBinder FromResolveAllGetter<TObj>(object identifier, Func<TObj, TContract> method)
         {
-            return FromResolveAllGetter<TObj>(identifier, method, InjectSources.Any);
+            return FromResolveAllGetter(identifier, method, InjectSources.Any);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolveAllGetter<TObj>(object identifier, Func<TObj, TContract> method, InjectSources source)
+        public ScopeArgNonLazyBinder FromResolveAllGetter<TObj>(object identifier, Func<TObj, TContract> method, InjectSources source)
         {
-            return FromResolveGetterBase<TObj, TContract>(identifier, method, source, true);
+            return FromResolveGetterBase(identifier, method, source, true);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromInstance(TContract instance)
+        public ScopeArgNonLazyBinder FromInstance(TContract instance)
         {
             return FromInstanceBase(instance);
         }

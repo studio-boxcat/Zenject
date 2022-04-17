@@ -1,19 +1,19 @@
 namespace Zenject
 {
-    public class ScopeConcreteIdArgNonLazyBinder : ConcreteIdArgNonLazyBinder
+    public class ScopeArgNonLazyBinder : ArgNonLazyBinder
     {
-        public ScopeConcreteIdArgNonLazyBinder(BindInfo bindInfo)
+        public ScopeArgNonLazyBinder(BindInfo bindInfo)
             : base(bindInfo)
         {
         }
 
-        public ConcreteIdArgNonLazyBinder AsCached()
+        public ArgNonLazyBinder AsCached()
         {
             BindInfo.Scope = ScopeTypes.Singleton;
             return this;
         }
 
-        public ConcreteIdArgNonLazyBinder AsSingle()
+        public ArgNonLazyBinder AsSingle()
         {
             BindInfo.Scope = ScopeTypes.Singleton;
             BindInfo.MarkAsUniqueSingleton = true;
@@ -21,7 +21,7 @@ namespace Zenject
         }
 
         // Note that this is the default so it's not necessary to call this
-        public ConcreteIdArgNonLazyBinder AsTransient()
+        public ArgNonLazyBinder AsTransient()
         {
             BindInfo.Scope = ScopeTypes.Transient;
             return this;

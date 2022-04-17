@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Zenject
 {
-    public abstract class FromBinder : ScopeConcreteIdArgNonLazyBinder
+    public abstract class FromBinder : ScopeArgNonLazyBinder
     {
         public FromBinder(
             DiContainer bindContainer, BindInfo bindInfo,
@@ -54,7 +54,7 @@ namespace Zenject
         }
 
         // This is the default if nothing else is called
-        public ScopeConcreteIdArgNonLazyBinder FromNew()
+        public ScopeArgNonLazyBinder FromNew()
         {
             BindingUtil.AssertIsNotComponent(ConcreteType);
             BindingUtil.AssertIsNotAbstract(ConcreteType);
@@ -62,37 +62,37 @@ namespace Zenject
             return this;
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolve()
+        public ScopeArgNonLazyBinder FromResolve()
         {
             return FromResolve(null);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolve(object subIdentifier)
+        public ScopeArgNonLazyBinder FromResolve(object subIdentifier)
         {
             return FromResolve(subIdentifier, InjectSources.Any);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolve(object subIdentifier, InjectSources source)
+        public ScopeArgNonLazyBinder FromResolve(object subIdentifier, InjectSources source)
         {
             return FromResolveInternal(subIdentifier, false, source);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolveAll()
+        public ScopeArgNonLazyBinder FromResolveAll()
         {
             return FromResolveAll(null);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolveAll(object subIdentifier)
+        public ScopeArgNonLazyBinder FromResolveAll(object subIdentifier)
         {
             return FromResolveAll(subIdentifier, InjectSources.Any);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResolveAll(object subIdentifier, InjectSources source)
+        public ScopeArgNonLazyBinder FromResolveAll(object subIdentifier, InjectSources source)
         {
             return FromResolveInternal(subIdentifier, true, source);
         }
 
-        ScopeConcreteIdArgNonLazyBinder FromResolveInternal(object subIdentifier, bool matchAll, InjectSources source)
+        ScopeArgNonLazyBinder FromResolveInternal(object subIdentifier, bool matchAll, InjectSources source)
         {
             BindInfo.RequireExplicitScope = false;
             // Don't know how it's created so can't assume here that it violates AsSingle
@@ -103,12 +103,12 @@ namespace Zenject
                 (container, type) => new ResolveProvider(
                     type, container, subIdentifier, false, source, matchAll));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
 #if !NOT_UNITY3D
 
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsOn(GameObject gameObject)
+        public ScopeArgNonLazyBinder FromComponentsOn(GameObject gameObject)
         {
             BindingUtil.AssertIsValidGameObject(gameObject);
             BindingUtil.AssertIsComponent(ConcreteType);
@@ -120,10 +120,10 @@ namespace Zenject
                 (container, type) => new GetFromGameObjectComponentProvider(
                     type, gameObject, false));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromComponentOn(GameObject gameObject)
+        public ScopeArgNonLazyBinder FromComponentOn(GameObject gameObject)
         {
             BindingUtil.AssertIsValidGameObject(gameObject);
             BindingUtil.AssertIsComponent(ConcreteType);
@@ -135,10 +135,10 @@ namespace Zenject
                 (container, type) => new GetFromGameObjectComponentProvider(
                     type, gameObject, true));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsOn(Func<DiContainer, GameObject> gameObjectGetter)
+        public ScopeArgNonLazyBinder FromComponentsOn(Func<DiContainer, GameObject> gameObjectGetter)
         {
             BindingUtil.AssertIsComponent(ConcreteType);
             BindingUtil.AssertIsNotAbstract(ConcreteType);
@@ -149,10 +149,10 @@ namespace Zenject
                 (container, type) => new GetFromGameObjectGetterComponentProvider(
                     container, type, gameObjectGetter, false));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromComponentOn(Func<DiContainer, GameObject> gameObjectGetter)
+        public ScopeArgNonLazyBinder FromComponentOn(Func<DiContainer, GameObject> gameObjectGetter)
         {
             BindingUtil.AssertIsComponent(ConcreteType);
             BindingUtil.AssertIsNotAbstract(ConcreteType);
@@ -163,22 +163,22 @@ namespace Zenject
                 (container, type) => new GetFromGameObjectGetterComponentProvider(
                     container, type, gameObjectGetter, true));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromComponentsOnRoot()
+        public ScopeArgNonLazyBinder FromComponentsOnRoot()
         {
             return FromComponentsOn(
                 container => container.Resolve<Context>().gameObject);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromComponentOnRoot()
+        public ScopeArgNonLazyBinder FromComponentOnRoot()
         {
             return FromComponentOn(
                 container => container.Resolve<Context>().gameObject);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromNewComponentOn(GameObject gameObject)
+        public ScopeArgNonLazyBinder FromNewComponentOn(GameObject gameObject)
         {
             BindingUtil.AssertIsValidGameObject(gameObject);
             BindingUtil.AssertIsComponent(ConcreteType);
@@ -188,12 +188,12 @@ namespace Zenject
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
                 (container, type) => new AddToExistingGameObjectComponentProvider(
-                    gameObject, container, type, BindInfo.Arguments, BindInfo.ConcreteIdentifier));
+                    gameObject, container, type, BindInfo.Arguments));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromNewComponentOn(Func<InjectableInfo, GameObject> gameObjectGetter)
+        public ScopeArgNonLazyBinder FromNewComponentOn(Func<InjectableInfo, GameObject> gameObjectGetter)
         {
             BindingUtil.AssertIsComponent(ConcreteType);
             BindingUtil.AssertIsNotAbstract(ConcreteType);
@@ -202,12 +202,12 @@ namespace Zenject
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
                 (container, type) => new AddToExistingGameObjectComponentProviderGetter(
-                    gameObjectGetter, container, type, BindInfo.Arguments, BindInfo.ConcreteIdentifier));
+                    gameObjectGetter, container, type, BindInfo.Arguments));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResource(string resourcePath)
+        public ScopeArgNonLazyBinder FromResource(string resourcePath)
         {
             BindingUtil.AssertDerivesFromUnityObject(ConcreteType);
 
@@ -216,10 +216,10 @@ namespace Zenject
                 BindInfo,
                 (_, type) => new ResourceProvider(resourcePath, type, true));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromResources(string resourcePath)
+        public ScopeArgNonLazyBinder FromResources(string resourcePath)
         {
             BindingUtil.AssertDerivesFromUnityObject(ConcreteType);
 
@@ -228,12 +228,12 @@ namespace Zenject
                 BindInfo,
                 (_, type) => new ResourceProvider(resourcePath, type, false));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
 #endif
 
-        public ScopeConcreteIdArgNonLazyBinder FromMethodUntyped(Func<InjectableInfo, object> method)
+        public ScopeArgNonLazyBinder FromMethodUntyped(Func<InjectableInfo, object> method)
         {
             BindInfo.RequireExplicitScope = false;
             // Don't know how it's created so can't assume here that it violates AsSingle
@@ -245,7 +245,7 @@ namespace Zenject
             return this;
         }
 
-        protected ScopeConcreteIdArgNonLazyBinder FromMethodBase<TConcrete>(Func<InjectableInfo, TConcrete> method)
+        protected ScopeArgNonLazyBinder FromMethodBase<TConcrete>(Func<InjectableInfo, TConcrete> method)
         {
             BindingUtil.AssertIsDerivedFromTypes(typeof(TConcrete), AllParentTypes);
 
@@ -259,7 +259,7 @@ namespace Zenject
             return this;
         }
 
-        protected ScopeConcreteIdArgNonLazyBinder FromResolveGetterBase<TObj, TResult>(
+        protected ScopeArgNonLazyBinder FromResolveGetterBase<TObj, TResult>(
             object identifier, Func<TObj, TResult> method, InjectSources source, bool matchMultiple)
         {
             BindingUtil.AssertIsDerivedFromTypes(typeof(TResult), AllParentTypes);
@@ -271,10 +271,10 @@ namespace Zenject
                 BindInfo,
                 (container, type) => new GetterProvider<TObj, TResult>(identifier, method, container, source, matchMultiple));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
 
-        protected ScopeConcreteIdArgNonLazyBinder FromInstanceBase(object instance)
+        protected ScopeArgNonLazyBinder FromInstanceBase(object instance)
         {
             BindingUtil.AssertInstanceDerivesFromOrEqual(instance, AllParentTypes);
 
@@ -285,7 +285,7 @@ namespace Zenject
                 BindInfo,
                 (container, type) => new InstanceProvider(type, instance));
 
-            return new ScopeConcreteIdArgNonLazyBinder(BindInfo);
+            return new ScopeArgNonLazyBinder(BindInfo);
         }
     }
 }
