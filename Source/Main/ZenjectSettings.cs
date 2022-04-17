@@ -2,8 +2,6 @@ namespace Zenject
 {
     public static class ZenjectSettings
     {
-        public const bool DisplayWarningWhenResolvingDuringInstall = true;
-
         // When this is set to true and the application is exitted, all the scenes will be
         // destroyed in the reverse order in which they were loaded, and then the project context
         // will be destroyed last
