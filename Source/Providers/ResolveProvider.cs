@@ -1,19 +1,21 @@
 using System;
-using ModestTree;
 
 namespace Zenject
 {
     public class ResolveProvider : IProvider
     {
-        readonly object _identifier;
         readonly DiContainer _container;
         readonly Type _contractType;
-        readonly bool _isOptional;
+        readonly object _identifier;
         readonly InjectSources _source;
+        readonly bool _isOptional;
 
         public ResolveProvider(
-            Type contractType, DiContainer container, object identifier,
-            bool isOptional, InjectSources source)
+            DiContainer container,
+            Type contractType,
+            object identifier,
+            InjectSources source,
+            bool isOptional)
         {
             _contractType = contractType;
             _identifier = identifier;
@@ -22,14 +24,10 @@ namespace Zenject
             _source = source;
         }
 
-        public object GetInstance(InjectableInfo context)
+        public object GetInstance()
         {
-            Assert.That(_contractType.DerivesFromOrEqual(context.MemberType));
-
-            var subContext = new InjectableInfo(
-                _contractType, _identifier, _source, _isOptional);
-
-            return _container.Resolve(subContext);
+            return _container.Resolve(new InjectableInfo(
+                _contractType, _identifier, _source, _isOptional));
         }
     }
 }

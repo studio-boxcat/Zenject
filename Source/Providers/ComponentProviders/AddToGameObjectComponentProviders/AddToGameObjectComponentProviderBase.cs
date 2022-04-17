@@ -21,12 +21,12 @@ namespace Zenject
             _container = container;
         }
 
-        public object GetInstance(InjectableInfo context)
+        public object GetInstance()
         {
             object instance;
 
             // We still want to make sure we can get the game object during validation
-            var gameObj = GetGameObject(context);
+            var gameObj = GetGameObject();
 
             if (_componentType == typeof(Transform))
                 // Treat transform as a special case because it's the one component that's always automatically added
@@ -48,6 +48,6 @@ namespace Zenject
             return instance;
         }
 
-        protected abstract GameObject GetGameObject(InjectableInfo context);
+        protected abstract GameObject GetGameObject();
     }
 }

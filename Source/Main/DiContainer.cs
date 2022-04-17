@@ -151,9 +151,7 @@ namespace Zenject
 
             foreach (var (bindId, providerInfo) in rootBindings)
             {
-                var context = new InjectableInfo(bindId.Type, bindId.Identifier, InjectSources.Local);
-
-                var _ = SafeGetInstances(providerInfo, context);
+                var _ = SafeGetInstances(providerInfo, bindId);
 
                 // Zero matches might actually be valid in some cases
                 //Assert.That(matches.Any());
@@ -273,7 +271,7 @@ namespace Zenject
 
                 foreach (var provider in providers)
                 {
-                    var instance = SafeGetInstances(provider, context);
+                    var instance = SafeGetInstances(provider, context.BindingId);
                     if (instance != null)
                         list.Add(instance);
                 }
@@ -325,7 +323,7 @@ namespace Zenject
                 throw Assert.CreateException("Unable to resolve '{0}'.", context.BindingId);
             }
 
-            var instance = SafeGetInstances(providerInfo.Value, context);
+            var instance = SafeGetInstances(providerInfo.Value, context.BindingId);
 
             if (instance == null)
             {
@@ -340,11 +338,11 @@ namespace Zenject
         }
 
         [CanBeNull]
-        static object SafeGetInstances(ProviderInfo providerInfo, InjectableInfo context)
+        static object SafeGetInstances(ProviderInfo providerInfo, BindingId bindingId)
         {
             var provider = providerInfo.Provider;
 
-            var lookupId = new LookupId(provider, context.BindingId);
+            var lookupId = new LookupId(provider, bindingId);
 
             // Use the container associated with the provider to address some rare cases
             // which would otherwise result in an infinite loop.  Like this:
@@ -372,7 +370,7 @@ namespace Zenject
 
             try
             {
-                return provider.GetInstance(context);
+                return provider.GetInstance();
             }
             finally
             {
@@ -979,21 +977,6 @@ namespace Zenject
                     (container, type) => new InstanceProvider(instance)));
 
             return new NonLazyBinder(bindInfo);
-        }
-
-        // Unfortunately we can't support setting scope / condition / etc. here since all the
-        // bindings are finalized one at a time
-        public void BindInstances(params object[] instances)
-        {
-            for (int i = 0; i < instances.Length; i++)
-            {
-                var instance = instances[i];
-
-                Assert.That(!ZenUtilInternal.IsNull(instance),
-                    "Found null instance provided to BindInstances method");
-
-                Bind(instance.GetType()).FromInstance(instance);
-            }
         }
 
         public object InstantiateExplicit(Type concreteType, bool autoInject, [CanBeNull] object[] extraArgs)

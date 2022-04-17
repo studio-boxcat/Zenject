@@ -22,7 +22,7 @@ namespace Zenject
             _extraArguments = extraArguments;
         }
 
-        public object GetInstance(InjectableInfo context)
+        public object GetInstance()
         {
             var instance = _container.InstantiateExplicit(_concreteType, false, _extraArguments);
             _container.Inject(instance, _extraArguments);

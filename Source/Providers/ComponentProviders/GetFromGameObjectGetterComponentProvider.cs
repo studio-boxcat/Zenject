@@ -19,7 +19,7 @@ namespace Zenject
             _gameObjectGetter = gameObjectGetter;
         }
 
-        public object GetInstance(InjectableInfo context)
+        public object GetInstance()
         {
             var gameObject = _gameObjectGetter(_container);
 

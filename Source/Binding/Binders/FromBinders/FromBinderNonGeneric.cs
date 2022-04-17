@@ -11,22 +11,12 @@ namespace Zenject
         {
         }
 
-        public NonLazyBinder FromMethod<TConcrete>(Func<InjectableInfo, TConcrete> method)
+        public NonLazyBinder FromMethod<TConcrete>(Func<TConcrete> method)
         {
             return FromMethodBase(method);
         }
 
-        public NonLazyBinder FromResolveGetter<TObj, TContract>(Func<TObj, TContract> method)
-        {
-            return FromResolveGetter(null, method);
-        }
-
-        public NonLazyBinder FromResolveGetter<TObj, TContract>(object identifier, Func<TObj, TContract> method)
-        {
-            return FromResolveGetter(identifier, method, InjectSources.Any);
-        }
-
-        public NonLazyBinder FromResolveGetter<TObj, TContract>(object identifier, Func<TObj, TContract> method, InjectSources source)
+        public NonLazyBinder FromResolveGetter<TObj, TContract>(Func<TObj, TContract> method, object identifier = null, InjectSources source = InjectSources.Any)
         {
             return FromResolveGetterBase(identifier, method, source);
         }

@@ -15,11 +15,6 @@ namespace Zenject
 
         public NonLazyBinder FromMethod(Func<TContract> method)
         {
-            return FromMethodBase(ctx => method());
-        }
-
-        public NonLazyBinder FromMethod(Func<InjectableInfo, TContract> method)
-        {
             return FromMethodBase(method);
         }
 

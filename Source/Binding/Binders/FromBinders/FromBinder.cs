@@ -75,8 +75,7 @@ namespace Zenject
 
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
-                (container, type) => new ResolveProvider(
-                    type, container, subIdentifier, false, source));
+                (container, type) => new ResolveProvider(container, type, subIdentifier, source, false));
 
             return this;
         }
@@ -131,7 +130,7 @@ namespace Zenject
             return this;
         }
 
-        public NonLazyBinder FromNewComponentOn(Func<InjectableInfo, GameObject> gameObjectGetter)
+        public NonLazyBinder FromNewComponentOn(Func<GameObject> gameObjectGetter)
         {
             BindingUtil.AssertIsComponent(ConcreteType);
             BindingUtil.AssertIsNotAbstract(ConcreteType);
@@ -145,7 +144,7 @@ namespace Zenject
             return this;
         }
 
-        protected NonLazyBinder FromMethodBase<TConcrete>(Func<InjectableInfo, TConcrete> method)
+        protected NonLazyBinder FromMethodBase<TConcrete>(Func<TConcrete> method)
         {
             BindingUtil.AssertIsDerivedFromTypes(typeof(TConcrete), AllParentTypes);
 

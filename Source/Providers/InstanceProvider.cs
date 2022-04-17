@@ -9,7 +9,7 @@ namespace Zenject
             _instance = instance;
         }
 
-        public object GetInstance(InjectableInfo context)
+        public object GetInstance()
         {
             return _instance;
         }

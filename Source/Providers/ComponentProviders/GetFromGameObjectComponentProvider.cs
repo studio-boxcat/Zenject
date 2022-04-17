@@ -17,7 +17,7 @@ namespace Zenject
             _gameObject = gameObject;
         }
 
-        public object GetInstance(InjectableInfo context)
+        public object GetInstance()
         {
             var match = _gameObject.GetComponent(_componentType);
 

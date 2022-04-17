@@ -13,7 +13,7 @@ namespace Zenject
             _creator = creator;
         }
 
-        public object GetInstance(InjectableInfo context)
+        public object GetInstance()
         {
             if (_instance != null)
                 return _instance;
@@ -23,12 +23,12 @@ namespace Zenject
             if (_isCreatingInstance)
             {
                 throw Assert.CreateException(
-                    "Found circular dependency when creating type '{0}'. {1}\n",
-                    context);
+                    "Found circular dependency when creating type '{0}'.",
+                    _creator);
             }
 
             _isCreatingInstance = true;
-            _instance = _creator.GetInstance(context);
+            _instance = _creator.GetInstance();
             _isCreatingInstance = false;
             return _instance;
         }

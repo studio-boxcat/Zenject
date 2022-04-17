@@ -8,14 +8,17 @@ namespace Zenject
     {
         readonly GameObject _gameObject;
 
-        public AddToExistingGameObjectComponentProvider(GameObject gameObject, DiContainer container, Type componentType,
+        public AddToExistingGameObjectComponentProvider(
+            GameObject gameObject,
+            DiContainer container,
+            Type componentType,
             object[] extraArguments)
             : base(container, componentType, extraArguments)
         {
             _gameObject = gameObject;
         }
 
-        protected override GameObject GetGameObject(InjectableInfo context)
+        protected override GameObject GetGameObject()
         {
             return _gameObject;
         }
@@ -23,19 +26,22 @@ namespace Zenject
 
     public class AddToExistingGameObjectComponentProviderGetter : AddToGameObjectComponentProviderBase
     {
-        readonly Func<InjectableInfo, GameObject> _gameObjectGetter;
+        readonly Func<GameObject> _gameObjectGetter;
 
-        public AddToExistingGameObjectComponentProviderGetter(Func<InjectableInfo, GameObject> gameObjectGetter, DiContainer container, Type componentType,
+        public AddToExistingGameObjectComponentProviderGetter(
+            Func<GameObject> gameObjectGetter,
+            DiContainer container,
+            Type componentType,
             object[] extraArguments)
             : base(container, componentType, extraArguments)
         {
             _gameObjectGetter = gameObjectGetter;
         }
 
-        protected override GameObject GetGameObject(InjectableInfo context)
+        protected override GameObject GetGameObject()
         {
-            var gameObj = _gameObjectGetter(context);
-            Assert.IsNotNull(gameObj, "Provided Func<InjectableInfo, GameObject> returned null value for game object when using FromComponentOn");
+            var gameObj = _gameObjectGetter();
+            Assert.IsNotNull(gameObj, "Provided Func<GameObject> returned null value for game object when using FromComponentOn");
             return gameObj;
         }
     }
