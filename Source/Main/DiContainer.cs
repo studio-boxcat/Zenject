@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using JetBrains.Annotations;
 using ModestTree;
 using Zenject.Internal;
 using Object = UnityEngine.Object;
-#if !NOT_UNITY3D
 using UnityEngine;
-#endif
 
 namespace Zenject
 {
@@ -32,10 +29,8 @@ namespace Zenject
         readonly SingletonMarkRegistry _singletonMarkRegistry = new SingletonMarkRegistry();
         readonly Queue<BindStatement> _currentBindings = new Queue<BindStatement>();
 
-#if !NOT_UNITY3D
         Transform _contextTransform;
         bool _hasLookedUpContextTransform;
-#endif
 
         bool _hasResolvedRoots;
         bool _isFinalizingBinding;
@@ -173,7 +168,7 @@ namespace Zenject
         public void RegisterProvider(
             BindingId bindingId, IProvider provider, bool nonLazy)
         {
-            var info = new ProviderInfo(provider, nonLazy, this);
+            var info = new ProviderInfo(provider, this, nonLazy);
 
             List<ProviderInfo> providerInfos;
 
@@ -245,45 +240,27 @@ namespace Zenject
 
                 if (container._providers.TryGetValue(bindingId, out var localProviders))
                     buffer.AddRange(localProviders);
-
-                // If we are asking for a List<int>, we should also match for any localProviders that are bound to the open generic type List<>
-                // Currently it only matches one and not the other - not totally sure if this is better than returning both
-                if (bindingId.Type.IsGenericType
-                    && container._providers.TryGetValue(new BindingId(bindingId.Type.GetGenericTypeDefinition(), bindingId.Identifier), out localProviders))
-                    buffer.AddRange(localProviders);
             }
         }
 
         public IList ResolveAll(InjectableInfo context)
         {
-            var buffer = ZenPools.SpawnList<object>();
+            Assert.That(context.MemberType.IsGenericType && context.MemberType.GetGenericTypeDefinition() == typeof(List<>));
 
-            try
-            {
-                ResolveAll(context, buffer);
-                return ReflectionUtil.CreateGenericList(context.MemberType, buffer);
-            }
-            finally
-            {
-                ZenPools.DespawnList(buffer);
-            }
-        }
+            var list = (IList) Activator.CreateInstance(context.MemberType);
+            var elementType = context.MemberType.GetGenericArguments()[0];
 
-        public void ResolveAll(InjectableInfo context, List<object> buffer)
-        {
-            Assert.IsNotNull(context);
             // Note that different types can map to the same provider (eg. a base type to a concrete class and a concrete class to itself)
 
             FlushBindings();
 
-            var allInstances = ZenPools.SpawnList<object>();
-            var matches = ZenPools.SpawnList<ProviderInfo>();
+            var providers = ZenPools.SpawnList<ProviderInfo>();
 
             try
             {
-                GetProviderMatches(context, matches);
+                GetProviderMatches(context.MutateMemberType(elementType), providers);
 
-                if (matches.Count == 0)
+                if (providers.Count == 0)
                 {
                     if (!context.Optional)
                     {
@@ -291,28 +268,27 @@ namespace Zenject
                             "Could not find required dependency with type '{0}'", context.MemberType);
                     }
 
-                    return;
+                    return list;
                 }
 
-                foreach (var match in matches)
+                foreach (var provider in providers)
                 {
-                    var instance = SafeGetInstances(match, context);
+                    var instance = SafeGetInstances(provider, context);
                     if (instance != null)
-                        allInstances.Add(instance);
+                        list.Add(instance);
                 }
 
-                if (allInstances.Count == 0 && !context.Optional)
+                if (list.Count == 0 && !context.Optional)
                 {
                     throw Assert.CreateException(
                         "Could not find required dependency with type '{0}'.  Found providers but they returned zero results!", context.MemberType);
                 }
 
-                buffer.AddRange(allInstances);
+                return list;
             }
             finally
             {
-                ZenPools.DespawnList(allInstances);
-                ZenPools.DespawnList(matches);
+                ZenPools.DespawnList(providers);
             }
         }
 
@@ -325,6 +301,13 @@ namespace Zenject
         {
             var memberType = context.MemberType;
 
+            // If it's a generic list then try matching multiple instances to its generic type
+            if (memberType.IsGenericType
+                && memberType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                return ResolveAll(context);
+            }
+
             FlushBindings();
 
             var lookupContext = context;
@@ -333,47 +316,6 @@ namespace Zenject
 
             if (providerInfo == null)
             {
-                // If it's an array try matching to multiple values using its array type
-                if (memberType.IsArray && memberType.GetArrayRank() == 1)
-                {
-                    var subType = memberType.GetElementType();
-
-                    // By making this optional this means that all injected fields of type T[]
-                    // will pass validation, which could be error prone, but I think this is better
-                    // than always requiring that they explicitly mark their array types as optional
-                    var subContext = new InjectableInfo(subType, context.MemberType, context.SourceType, true);
-
-                    var results = ZenPools.SpawnList<object>();
-
-                    try
-                    {
-                        ResolveAll(subContext, results);
-                        return ReflectionUtil.CreateArray(subContext.MemberType, results);
-                    }
-                    finally
-                    {
-                        ZenPools.DespawnList(results);
-                    }
-                }
-
-                // If it's a generic list then try matching multiple instances to its generic type
-                if (memberType.IsGenericType
-                    && (memberType.GetGenericTypeDefinition() == typeof(List<>)
-                        || memberType.GetGenericTypeDefinition() == typeof(IList<>)
-#if NET_4_6
-                        || memberType.GetGenericTypeDefinition() == typeof(IReadOnlyList<>)
-#endif
-                        || memberType.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
-                {
-                    var subType = memberType.GetGenericArguments().Single();
-
-                    // By making this optional this means that all injected fields of type List<>
-                    // will pass validation, which could be error prone, but I think this is better
-                    // than always requiring that they explicitly mark their list types as optional
-                    var subContext = new InjectableInfo(subType, context.Identifier, context.SourceType, true);
-
-                    return ResolveAll(subContext);
-                }
 
                 if (context.Optional)
                 {
@@ -809,17 +751,6 @@ namespace Zenject
             return Resolve(new InjectableInfo(contractType, identifier, true));
         }
 
-        // Same as Resolve<> except it will return all bindings that are associated with the given type
-        public List<TContract> ResolveAll<TContract>(object identifier = null)
-        {
-            return (List<TContract>)ResolveAll(typeof(TContract), identifier);
-        }
-
-        public IList ResolveAll(Type contractType, object identifier = null)
-        {
-            return ResolveAll(new InjectableInfo(contractType, identifier, true));
-        }
-
         // Removes all bindings
         public void UnbindAll()
         {
@@ -1132,17 +1063,16 @@ namespace Zenject
 
         struct ProviderInfo
         {
-            public ProviderInfo(
-                IProvider provider, bool nonLazy, DiContainer container)
+            public ProviderInfo(IProvider provider, DiContainer container, bool nonLazy)
             {
                 Provider = provider;
-                NonLazy = nonLazy;
                 Container = container;
+                NonLazy = nonLazy;
             }
 
             public readonly DiContainer Container;
-            public readonly bool NonLazy;
             public readonly IProvider Provider;
+            public readonly bool NonLazy;
         }
     }
 }
