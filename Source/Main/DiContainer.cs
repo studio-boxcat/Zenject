@@ -50,7 +50,7 @@ namespace Zenject
 
             _lazyInjector = new LazyInstanceInjector(this);
 
-            InstallDefaultBindings();
+            Bind(typeof(DiContainer)).FromInstance(this);
             FlushBindings();
             Assert.That(_currentBindings.Count == 0);
 
@@ -88,24 +88,6 @@ namespace Zenject
         internal SingletonMarkRegistry SingletonMarkRegistry
         {
             get { return _singletonMarkRegistry; }
-        }
-
-        void InstallDefaultBindings()
-        {
-            Bind(typeof(DiContainer)).FromInstance(this);
-            Bind(typeof(LazyInject<>)).FromMethodUntyped(CreateLazyBinding).Lazy();
-        }
-
-        object CreateLazyBinding(InjectableInfo context)
-        {
-            // By cloning it this also means that Ids, optional, etc. are forwarded properly
-            var newContext = context.MutateMemberType(context.MemberType.GetGenericArguments().Single());
-
-            var result = Activator.CreateInstance(
-                typeof(LazyInject<>)
-                .MakeGenericType(newContext.MemberType), this, newContext);
-
-            return result;
         }
 
 #if !NOT_UNITY3D
@@ -236,12 +218,6 @@ namespace Zenject
                 if (container._providers.TryGetValue(bindingId, out var localProviders))
                     return localProviders[0];
 
-                // If we are asking for a List<int>, we should also match for any localProviders that are bound to the open generic type List<>
-                // Currently it only matches one and not the other - not totally sure if this is better than returning both
-                if (bindingId.Type.IsGenericType
-                    && container._providers.TryGetValue(new BindingId(bindingId.Type.GetGenericTypeDefinition(), bindingId.Identifier), out localProviders))
-                    return localProviders[0];
-
                 return null;
             }
         }
@@ -352,16 +328,6 @@ namespace Zenject
             FlushBindings();
 
             var lookupContext = context;
-
-            // The context used for lookups is always the same as the given context EXCEPT for LazyInject<>
-            // In CreateLazyBinding above, we forward the context to a new instance of LazyInject<>
-            // The problem is, we want the binding for Bind(typeof(LazyInject<>)) to always match even
-            // for members that are marked for a specific ID, so we need to discard the identifier
-            // for this one particular case
-            if (memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof(LazyInject<>))
-            {
-                lookupContext = new InjectableInfo(context.MemberType, null, InjectSources.Local);
-            }
 
             var providerInfo = TryGetUniqueProvider(lookupContext.BindingId, lookupContext.SourceType);
 
@@ -832,46 +798,24 @@ namespace Zenject
 
         // Same as Resolve<> except it will return null if a value for the given type cannot
         // be found.
-        public TContract TryResolve<TContract>()
+        public TContract TryResolve<TContract>(object identifier = null)
             where TContract : class
         {
-            return (TContract)TryResolve(typeof(TContract));
+            return (TContract)TryResolve(typeof(TContract), identifier);
         }
 
-        public object TryResolve(Type contractType)
-        {
-            return TryResolveId(contractType, null);
-        }
-
-        public TContract TryResolveId<TContract>(object identifier)
-            where TContract : class
-        {
-            return (TContract)TryResolveId(
-                typeof(TContract), identifier);
-        }
-
-        public object TryResolveId(Type contractType, object identifier)
+        public object TryResolve(Type contractType, object identifier = null)
         {
             return Resolve(new InjectableInfo(contractType, identifier, true));
         }
 
         // Same as Resolve<> except it will return all bindings that are associated with the given type
-        public List<TContract> ResolveAll<TContract>()
+        public List<TContract> ResolveAll<TContract>(object identifier = null)
         {
-            return (List<TContract>)ResolveAll(typeof(TContract));
+            return (List<TContract>)ResolveAll(typeof(TContract), identifier);
         }
 
-        public IList ResolveAll(Type contractType)
-        {
-            return ResolveIdAll(contractType, null);
-        }
-
-        public List<TContract> ResolveIdAll<TContract>(object identifier)
-        {
-            return (List<TContract>)ResolveIdAll(typeof(TContract), identifier);
-        }
-
-        public IList ResolveIdAll(Type contractType, object identifier)
+        public IList ResolveAll(Type contractType, object identifier = null)
         {
             return ResolveAll(new InjectableInfo(contractType, identifier, true));
         }
@@ -984,19 +928,19 @@ namespace Zenject
 
         // Map the given type to a way of obtaining it
         // Note that this can include open generic types as well such as List<>
-        public ConcreteIdBinderGeneric<TContract> Bind<TContract>()
+        public ConcreteBinderGeneric<TContract> Bind<TContract>()
         {
             return Bind<TContract>(StartBinding());
         }
 
         // This is only useful for complex cases where you want to add multiple bindings
         // at the same time and can be ignored by 99% of users
-        public ConcreteIdBinderGeneric<TContract> BindNoFlush<TContract>()
+        public ConcreteBinderGeneric<TContract> BindNoFlush<TContract>()
         {
             return Bind<TContract>(StartBinding(false));
         }
 
-        ConcreteIdBinderGeneric<TContract> Bind<TContract>(
+        ConcreteBinderGeneric<TContract> Bind<TContract>(
             BindStatement bindStatement)
         {
             var bindInfo = bindStatement.SpawnBindInfo();
@@ -1004,13 +948,13 @@ namespace Zenject
             Assert.That(!bindInfo.ContractTypes.Contains(typeof(TContract)));
             bindInfo.ContractTypes.Add(typeof(TContract));
 
-            return new ConcreteIdBinderGeneric<TContract>(
+            return new ConcreteBinderGeneric<TContract>(
                 this, bindInfo, bindStatement);
         }
 
         // Non-generic version of Bind<> for cases where you only have the runtime type
         // Note that this can include open generic types as well such as List<>
-        public ConcreteIdBinderNonGeneric Bind(Type contractType)
+        public ConcreteBinderNonGeneric Bind(Type contractType)
         {
             var statement = StartBinding();
             var bindInfo = statement.SpawnBindInfo();
@@ -1018,10 +962,10 @@ namespace Zenject
             return BindInternal(bindInfo, statement);
         }
 
-        ConcreteIdBinderNonGeneric BindInternal(
+        ConcreteBinderNonGeneric BindInternal(
             BindInfo bindInfo, BindStatement bindingFinalizer)
         {
-            return new ConcreteIdBinderNonGeneric(this, bindInfo, bindingFinalizer);
+            return new ConcreteBinderNonGeneric(this, bindInfo, bindingFinalizer);
         }
 
         // Bind all the interfaces for the given type to the same thing.

@@ -145,18 +145,6 @@ namespace Zenject
             return new NonLazyBinder(BindInfo);
         }
 
-        public NonLazyBinder FromMethodUntyped(Func<InjectableInfo, object> method)
-        {
-            BindInfo.RequireExplicitScope = false;
-            // Don't know how it's created so can't assume here that it violates AsSingle
-            BindInfo.MarkAsCreationBinding = false;
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (_, _) => new MethodProviderUntyped(method));
-
-            return this;
-        }
-
         protected NonLazyBinder FromMethodBase<TConcrete>(Func<InjectableInfo, TConcrete> method)
         {
             BindingUtil.AssertIsDerivedFromTypes(typeof(TConcrete), AllParentTypes);

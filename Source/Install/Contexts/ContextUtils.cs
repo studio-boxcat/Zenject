@@ -56,7 +56,7 @@ namespace Zenject
                 {
                     case ZenjectBinding.BindTypes.Self:
                     {
-                        container.Bind(componentType).WithId(identifier).FromInstance(component);
+                        container.Bind(componentType).FromInstance(component).WithId(identifier);
                         break;
                     }
                     case ZenjectBinding.BindTypes.AllInterfaces:
