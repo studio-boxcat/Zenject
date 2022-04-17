@@ -6,6 +6,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using ModestTree;
 using Zenject.Internal;
+using Object = UnityEngine.Object;
 #if !NOT_UNITY3D
 using UnityEngine;
 #endif
@@ -757,7 +758,7 @@ namespace Zenject
             return CreateAndParentPrefab(prefab, gameObjectBindInfo, out shouldMakeActive);
         }
 
-        GameObject GetPrefabAsGameObject(UnityEngine.Object prefab)
+        GameObject GetPrefabAsGameObject(Object prefab)
         {
             if (prefab is GameObject)
             {
@@ -772,7 +773,7 @@ namespace Zenject
         // You probably want to use InstantiatePrefab instead
         // This one will only create the prefab and will not inject into it
         internal GameObject CreateAndParentPrefab(
-            UnityEngine.Object prefab, GameObjectCreationParameters gameObjectBindInfo, out bool shouldMakeActive)
+            Object prefab, GameObjectCreationParameters gameObjectBindInfo, out bool shouldMakeActive)
         {
             Assert.That(prefab != null, "Null prefab found when instantiating game object");
 
@@ -816,25 +817,25 @@ namespace Zenject
 
             if (gameObjectBindInfo.Position.HasValue && gameObjectBindInfo.Rotation.HasValue)
             {
-                gameObj = GameObject.Instantiate(
+                gameObj = Object.Instantiate(
                     prefabAsGameObject, gameObjectBindInfo.Position.Value, gameObjectBindInfo.Rotation.Value, initialParent);
                 positionAndRotationWereSet = true;
             }
             else if (gameObjectBindInfo.Position.HasValue)
             {
-                gameObj = GameObject.Instantiate(
+                gameObj = Object.Instantiate(
                     prefabAsGameObject, gameObjectBindInfo.Position.Value, prefabAsGameObject.transform.rotation, initialParent);
                 positionAndRotationWereSet = true;
             }
             else if (gameObjectBindInfo.Rotation.HasValue)
             {
-                gameObj = GameObject.Instantiate(
+                gameObj = Object.Instantiate(
                     prefabAsGameObject, prefabAsGameObject.transform.position, gameObjectBindInfo.Rotation.Value, initialParent);
                 positionAndRotationWereSet = true;
             }
             else
             {
-                gameObj = GameObject.Instantiate(prefabAsGameObject, initialParent);
+                gameObj = Object.Instantiate(prefabAsGameObject, initialParent);
                 positionAndRotationWereSet = false;
             }
 
@@ -945,7 +946,7 @@ namespace Zenject
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(UnityEngine.Object prefab, Transform parentTransform)
+        public GameObject InstantiatePrefab(Object prefab, Transform parentTransform)
         {
             return InstantiatePrefab(
                 prefab, new GameObjectCreationParameters { ParentTransform = parentTransform });
@@ -953,7 +954,7 @@ namespace Zenject
 
         // Create a new game object from a prefab and fill in dependencies for all children
         public GameObject InstantiatePrefab(
-            UnityEngine.Object prefab, Vector3 position, Quaternion rotation, Transform parentTransform)
+            Object prefab, Vector3 position, Quaternion rotation, Transform parentTransform)
         {
             return InstantiatePrefab(
                 prefab, new GameObjectCreationParameters
@@ -966,7 +967,7 @@ namespace Zenject
 
         // Create a new game object from a prefab and fill in dependencies for all children
         public GameObject InstantiatePrefab(
-            UnityEngine.Object prefab, GameObjectCreationParameters gameObjectBindInfo = default)
+            Object prefab, GameObjectCreationParameters gameObjectBindInfo = default)
         {
             FlushBindings();
 
@@ -982,36 +983,6 @@ namespace Zenject
             }
 
             return gameObj;
-        }
-
-        // Create a new game object from a resource path and fill in dependencies for all children
-        public GameObject InstantiatePrefabResource(string resourcePath, Transform parentTransform)
-        {
-            return InstantiatePrefabResource(resourcePath, new GameObjectCreationParameters { ParentTransform = parentTransform });
-        }
-
-        public GameObject InstantiatePrefabResource(
-            string resourcePath, Vector3 position, Quaternion rotation, Transform parentTransform)
-        {
-            return InstantiatePrefabResource(
-                resourcePath, new GameObjectCreationParameters
-                {
-                    ParentTransform = parentTransform,
-                    Position = position,
-                    Rotation = rotation
-                });
-        }
-
-        // Create a new game object from a resource path and fill in dependencies for all children
-        public GameObject InstantiatePrefabResource(
-            string resourcePath, GameObjectCreationParameters creationInfo = default)
-        {
-            var prefab = (GameObject)Resources.Load(resourcePath);
-
-            Assert.IsNotNull(prefab,
-                "Could not find prefab at resource location '{0}'".Fmt(resourcePath));
-
-            return InstantiatePrefab(prefab, creationInfo);
         }
 
         // Inject dependencies into any and all child components on the given game object
