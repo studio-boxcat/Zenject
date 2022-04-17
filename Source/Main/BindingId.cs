@@ -33,30 +33,10 @@ namespace Zenject
             }
         }
 
-        public override bool Equals(object other)
-        {
-            if (other is BindingId)
-            {
-                BindingId otherId = (BindingId) other;
-                return otherId == this;
-            }
+        public override bool Equals(object other) => other is BindingId otherId && otherId == this;
+        public bool Equals(BindingId that) => this == that;
 
-            return false;
-        }
-
-        public bool Equals(BindingId that)
-        {
-            return this == that;
-        }
-
-        public static bool operator ==(BindingId left, BindingId right)
-        {
-            return left.Type == right.Type && Equals(left.Identifier, right.Identifier);
-        }
-
-        public static bool operator !=(BindingId left, BindingId right)
-        {
-            return !left.Equals(right);
-        }
+        public static bool operator ==(BindingId left, BindingId right) => left.Type == right.Type && Equals(left.Identifier, right.Identifier);
+        public static bool operator !=(BindingId left, BindingId right) => !left.Equals(right);
     }
 }

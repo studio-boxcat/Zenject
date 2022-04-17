@@ -71,7 +71,7 @@ namespace Zenject
         {
             ContextUtils.InstallBindings_Managers(_container);
 
-            _container.Bind(typeof(Context), typeof(SceneContext)).To<SceneContext>().FromInstance(this);
+            _container.Bind(typeof(SceneContext)).To<SceneContext>().FromInstance(this);
 
             ContextUtils.InstallBindings_ZenjectBindings(this, injectableMonoBehaviours);
 

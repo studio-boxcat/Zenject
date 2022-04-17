@@ -61,12 +61,12 @@ namespace Zenject
                     }
                     case ZenjectBinding.BindTypes.AllInterfaces:
                     {
-                        container.Bind(componentType.Interfaces()).WithId(identifier).FromInstance(component);
+                        container.BindInterfacesTo(componentType).FromInstance(component).WithId(identifier);
                         break;
                     }
                     case ZenjectBinding.BindTypes.AllInterfacesAndSelf:
                     {
-                        container.Bind(componentType.Interfaces().Concat(new[] {componentType}).ToArray()).WithId(identifier).FromInstance(component);
+                        container.BindInterfacesAndSelfTo(componentType).FromInstance(component).WithId(identifier);
                         break;
                     }
                     default:

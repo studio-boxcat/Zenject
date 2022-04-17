@@ -1203,11 +1203,11 @@ namespace Zenject
 
         // Non-generic version of Bind<> for cases where you only have the runtime type
         // Note that this can include open generic types as well such as List<>
-        public ConcreteIdBinderNonGeneric Bind(params Type[] contractTypes)
+        public ConcreteIdBinderNonGeneric Bind(Type contractType)
         {
             var statement = StartBinding();
             var bindInfo = statement.SpawnBindInfo();
-            bindInfo.ContractTypes.AllocFreeAddRange(contractTypes);
+            bindInfo.ContractTypes.Add(contractType);
             return BindInternal(bindInfo, statement);
         }
 

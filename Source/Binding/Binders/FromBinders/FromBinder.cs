@@ -62,32 +62,12 @@ namespace Zenject
             return this;
         }
 
-        public NonLazyBinder FromResolve()
-        {
-            return FromResolve(null);
-        }
-
-        public NonLazyBinder FromResolve(object subIdentifier)
-        {
-            return FromResolve(subIdentifier, InjectSources.Any);
-        }
-
-        public NonLazyBinder FromResolve(object subIdentifier, InjectSources source)
+        public NonLazyBinder FromResolve(object subIdentifier = null, InjectSources source = InjectSources.Any)
         {
             return FromResolveInternal(subIdentifier, false, source);
         }
 
-        public NonLazyBinder FromResolveAll()
-        {
-            return FromResolveAll(null);
-        }
-
-        public NonLazyBinder FromResolveAll(object subIdentifier)
-        {
-            return FromResolveAll(subIdentifier, InjectSources.Any);
-        }
-
-        public NonLazyBinder FromResolveAll(object subIdentifier, InjectSources source)
+        public NonLazyBinder FromResolveAll(object subIdentifier = null, InjectSources source = InjectSources.Any)
         {
             return FromResolveInternal(subIdentifier, true, source);
         }
