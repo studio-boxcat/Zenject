@@ -18,12 +18,12 @@ namespace Zenject
             _container = container;
         }
 
-        public Type GetInstanceType(InjectContext context)
+        public Type GetInstanceType(InjectableInfo context)
         {
             return typeof(GameObject);
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             injectAction = null;
 

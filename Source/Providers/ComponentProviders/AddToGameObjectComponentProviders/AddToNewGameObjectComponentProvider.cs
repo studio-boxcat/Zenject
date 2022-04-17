@@ -23,7 +23,7 @@ namespace Zenject
             get { return true; }
         }
 
-        protected override GameObject GetGameObject(InjectContext context)
+        protected override GameObject GetGameObject(InjectableInfo context)
         {
             return Container.CreateEmptyGameObject(_gameObjectBindInfo);
         }

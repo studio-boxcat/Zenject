@@ -114,11 +114,8 @@ namespace Zenject.Internal
                 sourceType = injectAttr.Source;
             }
 
-            return new InjectableInfo(
-                isOptional,
-                identifier,
-                paramInfo.ParameterType,
-                sourceType);
+            return new InjectableInfo(paramInfo.ParameterType,
+                identifier, sourceType, isOptional);
         }
 
         static InjectableInfo GetInjectableInfoForMember(MemberInfo memInfo, InjectAttributeBase injectAttr)
@@ -137,11 +134,8 @@ namespace Zenject.Internal
             var memberType = memInfo is FieldInfo fieldInfo
                 ? fieldInfo.FieldType : ((PropertyInfo) memInfo).PropertyType;
 
-            return new InjectableInfo(
-                isOptional,
-                identifier,
-                memberType,
-                sourceType);
+            return new InjectableInfo(memberType,
+                identifier, sourceType, isOptional);
         }
 
         static ConstructorInfo TryGetInjectConstructor(Type type)

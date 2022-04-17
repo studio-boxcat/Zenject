@@ -16,12 +16,12 @@ namespace Zenject
             _subInstantiator = subInstantiator;
         }
 
-        public UnityEngine.Object GetPrefab(InjectContext context)
+        public UnityEngine.Object GetPrefab(InjectableInfo context)
         {
             return _subInstantiator.GetPrefab(context);
         }
 
-        public GameObject Instantiate(InjectContext context, out Action injectAction)
+        public GameObject Instantiate(InjectableInfo context, out Action injectAction)
         {
             if (_gameObject != null)
             {

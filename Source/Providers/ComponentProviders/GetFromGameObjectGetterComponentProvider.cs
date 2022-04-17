@@ -9,31 +9,33 @@ namespace Zenject
 {
     public class GetFromGameObjectGetterComponentProvider : IProvider
     {
-        readonly Func<InjectContext, GameObject> _gameObjectGetter;
+        readonly DiContainer _container;
+        readonly Func<DiContainer, GameObject> _gameObjectGetter;
         readonly Type _componentType;
         readonly bool _matchSingle;
 
         // if concreteType is null we use the contract type from inject context
         public GetFromGameObjectGetterComponentProvider(
-            Type componentType, Func<InjectContext, GameObject> gameObjectGetter, bool matchSingle)
+            DiContainer container, Type componentType, Func<DiContainer, GameObject> gameObjectGetter, bool matchSingle)
         {
+            _container = container;
             _componentType = componentType;
             _matchSingle = matchSingle;
             _gameObjectGetter = gameObjectGetter;
         }
 
-        public Type GetInstanceType(InjectContext context)
+        public Type GetInstanceType(InjectableInfo context)
         {
             return _componentType;
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
             injectAction = null;
 
-            var gameObject = _gameObjectGetter(context);
+            var gameObject = _gameObjectGetter(_container);
 
             if (_matchSingle)
             {

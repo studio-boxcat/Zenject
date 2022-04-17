@@ -24,12 +24,12 @@ namespace Zenject
             _instances = null;
         }
 
-        public Type GetInstanceType(InjectContext context)
+        public Type GetInstanceType(InjectableInfo context)
         {
             return _creator.GetInstanceType(context);
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
@@ -46,8 +46,8 @@ namespace Zenject
             {
                 var instanceType = _creator.GetInstanceType(context);
                 throw Assert.CreateException(
-                    "Found circular dependency when creating type '{0}'. Object graph:\n {1}{2}\n",
-                    instanceType, context.GetObjectGraphString(), instanceType);
+                    "Found circular dependency when creating type '{0}'. {1}\n",
+                    instanceType, instanceType);
             }
 
             _isCreatingInstance = true;

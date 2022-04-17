@@ -11,7 +11,7 @@ namespace Zenject
         {
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromMethod<TConcrete>(Func<InjectContext, TConcrete> method)
+        public ScopeConcreteIdArgNonLazyBinder FromMethod<TConcrete>(Func<InjectableInfo, TConcrete> method)
         {
             return FromMethodBase<TConcrete>(method);
         }

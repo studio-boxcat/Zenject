@@ -26,7 +26,7 @@ namespace Zenject
             get { return false; }
         }
 
-        protected override GameObject GetGameObject(InjectContext context)
+        protected override GameObject GetGameObject(InjectableInfo context)
         {
             return _gameObject;
         }
@@ -34,9 +34,9 @@ namespace Zenject
 
     public class AddToExistingGameObjectComponentProviderGetter : AddToGameObjectComponentProviderBase
     {
-        readonly Func<InjectContext, GameObject> _gameObjectGetter;
+        readonly Func<InjectableInfo, GameObject> _gameObjectGetter;
 
-        public AddToExistingGameObjectComponentProviderGetter(Func<InjectContext, GameObject> gameObjectGetter, DiContainer container, Type componentType,
+        public AddToExistingGameObjectComponentProviderGetter(Func<InjectableInfo, GameObject> gameObjectGetter, DiContainer container, Type componentType,
             object[] extraArguments, object concreteIdentifier)
             : base(container, componentType, extraArguments, concreteIdentifier)
         {
@@ -51,10 +51,10 @@ namespace Zenject
             get { return false; }
         }
 
-        protected override GameObject GetGameObject(InjectContext context)
+        protected override GameObject GetGameObject(InjectableInfo context)
         {
             var gameObj = _gameObjectGetter(context);
-            Assert.IsNotNull(gameObj, "Provided Func<InjectContext, GameObject> returned null value for game object when using FromComponentOn");
+            Assert.IsNotNull(gameObj, "Provided Func<InjectableInfo, GameObject> returned null value for game object when using FromComponentOn");
             return gameObj;
         }
     }

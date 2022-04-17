@@ -80,11 +80,10 @@ namespace Zenject
             Bind(typeof(LazyInject<>)).FromMethodUntyped(CreateLazyBinding).Lazy();
         }
 
-        object CreateLazyBinding(InjectContext context)
+        object CreateLazyBinding(InjectableInfo context)
         {
             // By cloning it this also means that Ids, optional, etc. are forwarded properly
-            var newContext = context.Clone();
-            newContext.MemberType = context.MemberType.GetGenericArguments().Single();
+            var newContext = context.MutateMemberType(context.MemberType.GetGenericArguments().Single());
 
             var result = Activator.CreateInstance(
                 typeof(LazyInject<>)
@@ -169,14 +168,7 @@ namespace Zenject
             {
                 foreach (var (bindId, providerInfo) in rootBindings)
                 {
-                    using var context = ZenPools.SpawnInjectContext(this, bindId.Type);
-                    context.Identifier = bindId.Identifier;
-                    context.SourceType = InjectSources.Local;
-
-                    // Should this be true?  Are there cases where you are ok that NonLazy matches
-                    // zero providers?
-                    // Probably better to be false to catch mistakes
-                    context.Optional = false;
+                    var context = new InjectableInfo(bindId.Type, bindId.Identifier, InjectSources.Local);
 
                     instances.Clear();
 
@@ -214,7 +206,7 @@ namespace Zenject
         }
 
         void GetProviderMatches(
-            InjectContext context, List<ProviderInfo> buffer)
+            InjectableInfo context, List<ProviderInfo> buffer)
         {
             Assert.IsNotNull(context);
             Assert.That(buffer.Count == 0);
@@ -237,7 +229,7 @@ namespace Zenject
             }
         }
 
-        ProviderInfo? TryGetUniqueProvider(InjectContext context)
+        ProviderInfo? TryGetUniqueProvider(InjectableInfo context)
         {
             Assert.IsNotNull(context);
 
@@ -303,12 +295,8 @@ namespace Zenject
                 if (ambiguousSelection)
                 {
                     throw Assert.CreateException(
-                        "Found multiple matches when only one was expected for type '{0}'{1}. Object graph:\n {2}",
-                        context.MemberType,
-                        (context.ObjectType == null
-                            ? ""
-                            : " while building object with type '{0}'".Fmt(context.ObjectType)),
-                        context.GetObjectGraphString());
+                        "Found multiple matches when only one was expected for type '{0}'.",
+                        context.MemberType);
                 }
 
                 return selected;
@@ -355,7 +343,7 @@ namespace Zenject
             }
         }
 
-        public IList ResolveAll(InjectContext context)
+        public IList ResolveAll(InjectableInfo context)
         {
             var buffer = ZenPools.SpawnList<object>();
 
@@ -370,13 +358,12 @@ namespace Zenject
             }
         }
 
-        public void ResolveAll(InjectContext context, List<object> buffer)
+        public void ResolveAll(InjectableInfo context, List<object> buffer)
         {
             Assert.IsNotNull(context);
             // Note that different types can map to the same provider (eg. a base type to a concrete class and a concrete class to itself)
 
             FlushBindings();
-            CheckForInstallWarning(context);
 
             var matches = ZenPools.SpawnList<ProviderInfo>();
 
@@ -389,7 +376,7 @@ namespace Zenject
                     if (!context.Optional)
                     {
                         throw Assert.CreateException(
-                            "Could not find required dependency with type '{0}' Object graph:\n {1}", context.MemberType, context.GetObjectGraphString());
+                            "Could not find required dependency with type '{0}'", context.MemberType);
                     }
 
                     return;
@@ -433,40 +420,6 @@ namespace Zenject
             }
         }
 
-        [Conditional("DEBUG")]
-        void CheckForInstallWarning(InjectContext context)
-        {
-            Assert.IsNotNull(context);
-
-            if (!_isInstalling)
-            {
-                return;
-            }
-
-            if (context == null)
-            {
-                // No way to tell whether this is ok or not so just assume ok
-                return;
-            }
-
-            if (context.MemberType.DerivesFrom<Context>())
-            {
-                // This happens when getting default transform parent so ok
-                return;
-            }
-
-            var rootContext = context.ParentContextsAndSelf.Last();
-
-            if (rootContext.MemberType.DerivesFrom<IInstaller>())
-            {
-                // Resolving/instantiating/injecting installers is valid during install phase
-                return;
-            }
-
-            // Feel free to comment this out if you are comfortable with this practice
-            Log.Warn("Zenject Warning: It is bad practice to call Inject/Resolve/Instantiate before all the Installers have completed!  This is important to ensure that all bindings have properly been installed in case they are needed when injecting/instantiating/resolving.  Detected when operating on type '{0}'.  If you don't care about this, you can disable this warning by setting flag 'ZenjectSettings.DisplayWarningWhenResolvingDuringInstall' to false (see docs for details on ZenjectSettings).", rootContext.MemberType);
-        }
-
         // Returns the concrete type that would be returned with Resolve<T>
         // without actually instantiating it
         // This is safe to use within installers
@@ -480,16 +433,13 @@ namespace Zenject
         // This is safe to use within installers
         public Type ResolveType(Type type)
         {
-            using (var context = ZenPools.SpawnInjectContext(this, type))
-            {
-                return ResolveType(context);
-            }
+            return ResolveType(new InjectableInfo(type));
         }
 
         // Returns the concrete type that would be returned with Resolve(context)
         // without actually instantiating it
         // This is safe to use within installers
-        public Type ResolveType(InjectContext context)
+        public Type ResolveType(InjectableInfo context)
         {
             Assert.IsNotNull(context);
 
@@ -500,30 +450,19 @@ namespace Zenject
             if (providerInfo == null)
             {
                 throw Assert.CreateException(
-                    "Unable to resolve {0}{1}. Object graph:\n{2}", context.BindingId,
-                    (context.ObjectType == null ? "" : " while building object with type '{0}'".Fmt(context.ObjectType)),
-                    context.GetObjectGraphString());
+                    "Unable to resolve {0}.", context.BindingId);
             }
 
             return providerInfo.Value.Provider.GetInstanceType(context);
         }
 
-        public List<Type> ResolveTypeAll(Type type)
+        public List<Type> ResolveTypeAll(Type type, object identifier = null)
         {
-            return ResolveTypeAll(type, null);
-        }
-
-        public List<Type> ResolveTypeAll(Type type, object identifier)
-        {
-            using (var context = ZenPools.SpawnInjectContext(this, type))
-            {
-                context.Identifier = identifier;
-                return ResolveTypeAll(context);
-            }
+            return ResolveTypeAll(new InjectableInfo(type, identifier));
         }
 
         // Returns all the types that would be returned if ResolveAll was called with the given values
-        public List<Type> ResolveTypeAll(InjectContext context)
+        public List<Type> ResolveTypeAll(InjectableInfo context)
         {
             Assert.IsNotNull(context);
 
@@ -552,23 +491,14 @@ namespace Zenject
 
         public object Resolve(BindingId id)
         {
-            using (var context = ZenPools.SpawnInjectContext(this, id.Type))
-            {
-                context.Identifier = id.Identifier;
-                return Resolve(context);
-            }
+            return Resolve(new InjectableInfo(id.Type, id.Identifier));
         }
 
-        public object Resolve(InjectContext context)
+        public object Resolve(InjectableInfo context)
         {
-            // Note: context.Container is not necessarily equal to this, since
-            // you can have some lookups recurse to parent containers
-            Assert.IsNotNull(context);
-
             var memberType = context.MemberType;
 
             FlushBindings();
-            CheckForInstallWarning(context);
 
             var lookupContext = context;
 
@@ -579,10 +509,7 @@ namespace Zenject
             // for this one particular case
             if (memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof(LazyInject<>))
             {
-                lookupContext = context.Clone();
-                lookupContext.Identifier = null;
-                lookupContext.SourceType = InjectSources.Local;
-                lookupContext.Optional = false;
+                lookupContext = new InjectableInfo(context.MemberType, null, InjectSources.Local);
             }
 
             var providerInfo = TryGetUniqueProvider(lookupContext);
@@ -594,12 +521,10 @@ namespace Zenject
                 {
                     var subType = memberType.GetElementType();
 
-                    var subContext = context.Clone();
-                    subContext.MemberType = subType;
                     // By making this optional this means that all injected fields of type T[]
                     // will pass validation, which could be error prone, but I think this is better
                     // than always requiring that they explicitly mark their array types as optional
-                    subContext.Optional = true;
+                    var subContext = new InjectableInfo(subType, context.MemberType, context.SourceType, true);
 
                     var results = ZenPools.SpawnList<object>();
 
@@ -625,12 +550,10 @@ namespace Zenject
                 {
                     var subType = memberType.GetGenericArguments().Single();
 
-                    var subContext = context.Clone();
-                    subContext.MemberType = subType;
                     // By making this optional this means that all injected fields of type List<>
                     // will pass validation, which could be error prone, but I think this is better
                     // than always requiring that they explicitly mark their list types as optional
-                    subContext.Optional = true;
+                    var subContext = new InjectableInfo(subType, context.Identifier, context.SourceType, true);
 
                     return ResolveAll(subContext);
                 }
@@ -640,9 +563,7 @@ namespace Zenject
                     return null;
                 }
 
-                throw Assert.CreateException("Unable to resolve '{0}'{1}. Object graph:\n{2}", context.BindingId,
-                    (context.ObjectType == null ? "" : " while building object with type '{0}'".Fmt(context.ObjectType)),
-                    context.GetObjectGraphString());
+                throw Assert.CreateException("Unable to resolve '{0}'.", context.BindingId);
             }
 
             var instances = ZenPools.SpawnList<object>();
@@ -659,21 +580,13 @@ namespace Zenject
                     }
 
                     throw Assert.CreateException(
-                        "Unable to resolve '{0}'{1}. Object graph:\n{2}", context.BindingId,
-                        (context.ObjectType == null
-                            ? ""
-                            : " while building object with type '{0}'".Fmt(context.ObjectType)),
-                        context.GetObjectGraphString());
+                        "Unable to resolve '{0}'.", context.BindingId);
                 }
 
-                if (instances.Count() > 1)
+                if (instances.Count > 1)
                 {
                     throw Assert.CreateException(
-                        "Provider returned multiple instances when only one was expected!  While resolving '{0}'{1}. Object graph:\n{2}", context.BindingId,
-                        (context.ObjectType == null
-                            ? ""
-                            : " while building object with type '{0}'".Fmt(context.ObjectType)),
-                        context.GetObjectGraphString());
+                        "Provider returned multiple instances when only one was expected!  While resolving '{0}'.", context.BindingId);
                 }
 
                 return instances.First();
@@ -684,7 +597,7 @@ namespace Zenject
             }
         }
 
-        void SafeGetInstances(ProviderInfo providerInfo, InjectContext context, List<object> instances)
+        void SafeGetInstances(ProviderInfo providerInfo, InjectableInfo context, List<object> instances)
         {
             Assert.IsNotNull(context);
 
@@ -705,8 +618,7 @@ namespace Zenject
             if (providerContainer._resolvesTwiceInProgress.Contains(lookupId))
             {
                 // Allow one before giving up so that you can do circular dependencies via postinject or fields
-                throw Assert.CreateException(
-                    "Circular dependency detected! Object graph:\n {0}", context.GetObjectGraphString());
+                throw Assert.CreateException("Circular dependency detected!");
             }
 
             bool twice = false;
@@ -746,9 +658,8 @@ namespace Zenject
             return container == this ? depth : ParentContainer?.GetContainerHeirarchyDistance(container, depth + 1);
         }
 
-        public void InjectExplicit(
-            object injectable, Type injectableType,
-            object[] extraArgs, InjectContext context, object concreteIdentifier)
+        public void InjectExplicit(object injectable, Type injectableType,
+            object[] extraArgs)
         {
             Assert.That(injectable != null);
 
@@ -764,26 +675,21 @@ namespace Zenject
 
 #if !NOT_UNITY3D
             if (injectableType == typeof(GameObject))
-            {
-                Assert.CreateException(
-                    "Use InjectGameObject to Inject game objects instead of Inject method. Object graph: {0}", context.GetObjectGraphString());
-            }
+                Assert.CreateException("Use InjectGameObject to Inject game objects instead of Inject method.");
 #endif
 
             FlushBindings();
-            CheckForInstallWarning(context);
 
             foreach (var injectField in typeInfo.InjectFields)
-                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs, context, concreteIdentifier);
+                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs);
 
             CallInjectMethodsTopDown(
-                injectable, injectableType, typeInfo, extraArgs, context, concreteIdentifier);
+                injectable, injectableType, typeInfo, extraArgs);
         }
 
         void CallInjectMethodsTopDown(
             object injectable, Type injectableType,
-            InjectTypeInfo typeInfo, object[] extraArgs,
-            InjectContext context, object concreteIdentifier)
+            InjectTypeInfo typeInfo, object[] extraArgs)
         {
             var method = typeInfo.InjectMethod;
             if (method.MethodInfo == null)
@@ -799,9 +705,7 @@ namespace Zenject
 
                     if (!InjectUtil.TryGetValueWithType(extraArgs, injectInfo.MemberType, out var value))
                     {
-                        using var subContext = ZenPools.SpawnInjectContext(
-                            this, injectInfo, context, injectable, injectableType, concreteIdentifier);
-                        value = Resolve(subContext);
+                        value = Resolve(injectInfo);
                     }
 
                     paramValues[k] = value;
@@ -815,10 +719,8 @@ namespace Zenject
             }
         }
 
-        void InjectMember(
-            InjectableInfo injectInfo, InjectTypeInfo.InjectFieldInfo setter,
-            object injectable, Type injectableType,
-            object[] extraArgs, InjectContext context, object concreteIdentifier)
+        void InjectMember(InjectableInfo injectInfo, InjectTypeInfo.InjectFieldInfo setter,
+            object injectable, Type injectableType, object[] extraArgs)
         {
             if (InjectUtil.TryGetValueWithType(extraArgs, injectInfo.MemberType, out var value))
             {
@@ -826,11 +728,7 @@ namespace Zenject
                 return;
             }
 
-            using (var subContext = ZenPools.SpawnInjectContext(
-                       this, injectInfo, context, injectable, injectableType, concreteIdentifier))
-            {
-                value = Resolve(subContext);
-            }
+            value = Resolve(injectInfo);
 
             if (injectInfo.Optional && value == null)
             {
@@ -849,14 +747,14 @@ namespace Zenject
         // This one will only create the prefab and will not inject into it
         // Also, this will always return the new game object as disabled, so that injection can occur before Awake / OnEnable / Start
         internal GameObject CreateAndParentPrefabResource(
-            string resourcePath, GameObjectCreationParameters gameObjectBindInfo, InjectContext context, out bool shouldMakeActive)
+            string resourcePath, GameObjectCreationParameters gameObjectBindInfo, InjectableInfo context, out bool shouldMakeActive)
         {
             var prefab = (GameObject)Resources.Load(resourcePath);
 
             Assert.IsNotNull(prefab,
                 "Could not find prefab at resource location '{0}'".Fmt(resourcePath));
 
-            return CreateAndParentPrefab(prefab, gameObjectBindInfo, context, out shouldMakeActive);
+            return CreateAndParentPrefab(prefab, gameObjectBindInfo, out shouldMakeActive);
         }
 
         GameObject GetPrefabAsGameObject(UnityEngine.Object prefab)
@@ -874,8 +772,7 @@ namespace Zenject
         // You probably want to use InstantiatePrefab instead
         // This one will only create the prefab and will not inject into it
         internal GameObject CreateAndParentPrefab(
-            UnityEngine.Object prefab, GameObjectCreationParameters gameObjectBindInfo,
-            InjectContext context, out bool shouldMakeActive)
+            UnityEngine.Object prefab, GameObjectCreationParameters gameObjectBindInfo, out bool shouldMakeActive)
         {
             Assert.That(prefab != null, "Null prefab found when instantiating game object");
 
@@ -1001,9 +898,7 @@ namespace Zenject
             return InstantiateExplicit(
                 concreteType,
                 true,
-                extraArgs,
-                new InjectContext(this, concreteType, null),
-                null);
+                extraArgs);
         }
 
 #if !NOT_UNITY3D
@@ -1077,7 +972,7 @@ namespace Zenject
 
             bool shouldMakeActive;
             var gameObj = CreateAndParentPrefab(
-                prefab, gameObjectBindInfo, null, out shouldMakeActive);
+                prefab, gameObjectBindInfo, out shouldMakeActive);
 
             InjectGameObject(gameObj);
 
@@ -1140,9 +1035,7 @@ namespace Zenject
             InjectExplicit(
                 injectable,
                 injectableType,
-                extraArgs,
-                new InjectContext(this, injectableType, null),
-                null);
+                extraArgs);
         }
 
         // Resolve<> - Lookup a value in the container.
@@ -1169,11 +1062,7 @@ namespace Zenject
 
         public object ResolveId(Type contractType, object identifier)
         {
-            using (var context = ZenPools.SpawnInjectContext(this, contractType))
-            {
-                context.Identifier = identifier;
-                return Resolve(context);
-            }
+            return Resolve(new InjectableInfo(contractType, identifier));
         }
 
         // Same as Resolve<> except it will return null if a value for the given type cannot
@@ -1198,12 +1087,7 @@ namespace Zenject
 
         public object TryResolveId(Type contractType, object identifier)
         {
-            using (var context = ZenPools.SpawnInjectContext(this, contractType))
-            {
-                context.Identifier = identifier;
-                context.Optional = true;
-                return Resolve(context);
-            }
+            return Resolve(new InjectableInfo(contractType, identifier, true));
         }
 
         // Same as Resolve<> except it will return all bindings that are associated with the given type
@@ -1224,12 +1108,7 @@ namespace Zenject
 
         public IList ResolveIdAll(Type contractType, object identifier)
         {
-            using (var context = ZenPools.SpawnInjectContext(this, contractType))
-            {
-                context.Identifier = identifier;
-                context.Optional = true;
-                return ResolveAll(context);
-            }
+            return ResolveAll(new InjectableInfo(contractType, identifier, true));
         }
 
         // Removes all bindings
@@ -1305,7 +1184,7 @@ namespace Zenject
                 return false;
             }
 
-            var matches = providers.Where(x => x.Provider.GetInstanceType(new InjectContext(this, contractType, identifier)).DerivesFromOrEqual(concreteType)).ToList();
+            var matches = providers.Where(x => x.Provider.GetInstanceType(new InjectableInfo(contractType, identifier)).DerivesFromOrEqual(concreteType)).ToList();
 
             if (matches.Count == 0)
             {
@@ -1322,38 +1201,18 @@ namespace Zenject
         }
 
         // Returns true if the given type is bound to something in the container
-        public bool HasBinding<TContract>()
+        public bool HasBinding<TContract>(object identifier = null)
         {
-            return HasBinding(typeof(TContract));
+            return HasBinding(typeof(TContract), identifier);
         }
 
-        public bool HasBinding(Type contractType)
+        public bool HasBinding(Type contractType, object identifier = null, InjectSources sourceType = InjectSources.Any)
         {
-            return HasBindingId(contractType, null);
-        }
-
-        public bool HasBindingId<TContract>(object identifier)
-        {
-            return HasBindingId(typeof(TContract), identifier);
-        }
-
-        public bool HasBindingId(Type contractType, object identifier)
-        {
-            return HasBindingId(contractType, identifier, InjectSources.Any);
-        }
-
-        public bool HasBindingId(Type contractType, object identifier, InjectSources sourceType)
-        {
-            using (var ctx = ZenPools.SpawnInjectContext(this, contractType))
-            {
-                ctx.Identifier = identifier;
-                ctx.SourceType = sourceType;
-                return HasBinding(ctx);
-            }
+            return HasBinding(new InjectableInfo(contractType, identifier, sourceType));
         }
 
         // You shouldn't need to use this
-        public bool HasBinding(InjectContext context)
+        public bool HasBinding(InjectableInfo context)
         {
             Assert.IsNotNull(context);
 
@@ -1554,7 +1413,7 @@ namespace Zenject
             }
         }
 
-        public object InstantiateExplicit(Type concreteType, bool autoInject, [CanBeNull] object[] extraArgs, InjectContext context, object concreteIdentifier)
+        public object InstantiateExplicit(Type concreteType, bool autoInject, [CanBeNull] object[] extraArgs)
         {
 #if !NOT_UNITY3D
             Assert.That(!concreteType.DerivesFrom<Component>(),
@@ -1564,7 +1423,6 @@ namespace Zenject
             Assert.That(!concreteType.IsAbstract, "Expected type '{0}' to be non-abstract", concreteType);
 
             FlushBindings();
-            CheckForInstallWarning(context);
 
             if (TypeAnalyzer.GetInfo(concreteType, out var typeInfo) == false)
                 throw new Exception($"Tried to create type '{concreteType}' but could not find type information");
@@ -1580,18 +1438,14 @@ namespace Zenject
 
                 try
                 {
-                    for (int i = 0; i < typeInfo.InjectConstructor.Parameters.Length; i++)
+                    for (var i = 0; i < typeInfo.InjectConstructor.Parameters.Length; i++)
                     {
                         var injectInfo = typeInfo.InjectConstructor.Parameters[i];
 
-                        object value;
-
                         if (!InjectUtil.TryGetValueWithType(
-                            extraArgs, injectInfo.MemberType, out value))
+                                extraArgs, injectInfo.MemberType, out var value))
                         {
-                            using var subContext = ZenPools.SpawnInjectContext(
-                                this, injectInfo, context, null, concreteType, concreteIdentifier);
-                            value = Resolve(subContext);
+                            value = Resolve(injectInfo);
                         }
 
                         Assert.IsNotNull(value);
@@ -1616,7 +1470,7 @@ namespace Zenject
             }
 
             if (autoInject)
-                InjectExplicit(newObj, concreteType, extraArgs, context, concreteIdentifier);
+                InjectExplicit(newObj, concreteType, extraArgs);
 
             return newObj;
         }

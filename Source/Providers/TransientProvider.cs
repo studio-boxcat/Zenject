@@ -26,7 +26,7 @@ namespace Zenject
             _concreteIdentifier = concreteIdentifier;
         }
 
-        public Type GetInstanceType(InjectContext context)
+        public Type GetInstanceType(InjectableInfo context)
         {
             if (!_concreteType.DerivesFromOrEqual(context.MemberType))
             {
@@ -36,18 +36,18 @@ namespace Zenject
             return GetTypeToCreate(context.MemberType);
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
             var instanceType = GetTypeToCreate(context.MemberType);
 
-            var instance = _container.InstantiateExplicit(instanceType, false, _extraArguments, context, _concreteIdentifier);
+            var instance = _container.InstantiateExplicit(instanceType, false, _extraArguments);
 
             injectAction = () =>
             {
                 _container.InjectExplicit(
-                    instance, instanceType, _extraArguments, context, _concreteIdentifier);
+                    instance, instanceType, _extraArguments);
             };
 
             buffer.Add(instance);

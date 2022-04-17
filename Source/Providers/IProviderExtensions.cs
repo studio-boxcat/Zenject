@@ -8,21 +8,16 @@ namespace Zenject
     public static class IProviderExtensions
     {
         public static void GetAllInstances(
-            this IProvider creator, InjectContext context, List<object> buffer)
+            this IProvider creator, InjectableInfo context, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
-            Action injectAction;
-            creator.GetAllInstancesWithInjectSplit(context, out injectAction, buffer);
-
-            if (injectAction != null)
-            {
-                injectAction.Invoke();
-            }
+            creator.GetAllInstancesWithInjectSplit(context, out var injectAction, buffer);
+            injectAction?.Invoke();
         }
 
         public static object TryGetInstance(
-            this IProvider creator, InjectContext context)
+            this IProvider creator, InjectableInfo context)
         {
             var allInstances = ZenPools.SpawnList<object>();
 
@@ -47,7 +42,7 @@ namespace Zenject
         }
 
         public static object GetInstance(
-            this IProvider creator, InjectContext context)
+            this IProvider creator, InjectableInfo context)
         {
             var allInstances = ZenPools.SpawnList<object>();
 

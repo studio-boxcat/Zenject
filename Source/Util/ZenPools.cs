@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 
@@ -6,7 +5,6 @@ namespace Zenject.Internal
 {
     public static class ZenPools
     {
-        static readonly StaticMemoryPool<InjectContext> _contextPool = new();
         static readonly StaticMemoryPool<BindInfo> _bindInfoPool = new();
         static readonly StaticMemoryPool<BindStatement> _bindStatementPool = new();
 
@@ -42,11 +40,6 @@ namespace Zenject.Internal
             DictionaryPool<TKey, TValue>.Release(dictionary);
         }
 
-        public static void DespawnHashSet<T>(HashSet<T> set)
-        {
-            HashSetPool<T>.Release(set);
-        }
-
         public static List<T> SpawnList<T>()
         {
             return ListPool<T>.Get();
@@ -55,39 +48,6 @@ namespace Zenject.Internal
         public static void DespawnList<T>(List<T> list)
         {
             ListPool<T>.Release(list);
-        }
-
-        public static InjectContext SpawnInjectContext(DiContainer container, Type memberType)
-        {
-            var context = _contextPool.Spawn();
-
-            context.Container = container;
-            context.MemberType = memberType;
-
-            return context;
-        }
-
-        public static void DespawnInjectContext(InjectContext context)
-        {
-            context.Reset();
-            _contextPool.Despawn(context);
-        }
-
-        public static InjectContext SpawnInjectContext(
-            DiContainer container, InjectableInfo injectableInfo, InjectContext currentContext,
-            object targetInstance, Type targetType, object concreteIdentifier)
-        {
-            var context = SpawnInjectContext(container, injectableInfo.MemberType);
-
-            context.ObjectType = targetType;
-            context.ParentContext = currentContext;
-            context.ObjectInstance = targetInstance;
-            context.Identifier = injectableInfo.Identifier;
-            context.Optional = injectableInfo.Optional;
-            context.SourceType = injectableInfo.SourceType;
-            context.ConcreteIdentifier = concreteIdentifier;
-
-            return context;
         }
     }
 }

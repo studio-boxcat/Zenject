@@ -5,12 +5,12 @@ namespace Zenject
     public class LazyInject<T>
     {
         readonly DiContainer _container;
-        readonly InjectContext _context;
+        readonly InjectableInfo _context;
 
         bool _hasValue;
         T _value;
 
-        public LazyInject(DiContainer container, InjectContext context)
+        public LazyInject(DiContainer container, InjectableInfo context)
         {
             Assert.DerivesFromOrEqual<T>(context.MemberType);
 

@@ -16,12 +16,12 @@ namespace Zenject
             _prefabCreator = prefabCreator;
         }
 
-        public Type GetInstanceType(InjectContext context)
+        public Type GetInstanceType(InjectableInfo context)
         {
             return typeof(GameObject);
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             var instance = _prefabCreator.Instantiate(context, out injectAction);
 

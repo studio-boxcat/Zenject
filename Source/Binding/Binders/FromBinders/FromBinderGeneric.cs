@@ -18,7 +18,7 @@ namespace Zenject
             return FromMethodBase<TContract>(ctx => method());
         }
 
-        public ScopeConcreteIdArgNonLazyBinder FromMethod(Func<InjectContext, TContract> method)
+        public ScopeConcreteIdArgNonLazyBinder FromMethod(Func<InjectableInfo, TContract> method)
         {
             return FromMethodBase<TContract>(method);
         }

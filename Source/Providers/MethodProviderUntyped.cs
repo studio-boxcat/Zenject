@@ -7,22 +7,22 @@ namespace Zenject
     public class MethodProviderUntyped : IProvider
     {
         readonly DiContainer _container;
-        readonly Func<InjectContext, object> _method;
+        readonly Func<InjectableInfo, object> _method;
 
         public MethodProviderUntyped(
-            Func<InjectContext, object> method,
+            Func<InjectableInfo, object> method,
             DiContainer container)
         {
             _container = container;
             _method = method;
         }
 
-        public Type GetInstanceType(InjectContext context)
+        public Type GetInstanceType(InjectableInfo context)
         {
             return context.MemberType;
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 

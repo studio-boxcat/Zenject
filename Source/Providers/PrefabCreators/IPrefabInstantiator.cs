@@ -7,9 +7,9 @@ namespace Zenject
 {
     public interface IPrefabInstantiator
     {
-        GameObject Instantiate(InjectContext context, out Action injectAction);
+        GameObject Instantiate(InjectableInfo context, out Action injectAction);
 
-        UnityEngine.Object GetPrefab(InjectContext context);
+        UnityEngine.Object GetPrefab(InjectableInfo context);
     }
 }
 

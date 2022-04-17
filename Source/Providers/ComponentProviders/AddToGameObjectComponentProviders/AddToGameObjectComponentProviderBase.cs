@@ -43,12 +43,12 @@ namespace Zenject
             get;
         }
 
-        public Type GetInstanceType(InjectContext context)
+        public Type GetInstanceType(InjectableInfo context)
         {
             return _componentType;
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
@@ -85,7 +85,7 @@ namespace Zenject
             {
                 try
                 {
-                    _container.InjectExplicit(instance, _componentType, _extraArguments, context, _concreteIdentifier);
+                    _container.InjectExplicit(instance, _componentType, _extraArguments);
                 }
                 finally
                 {
@@ -99,7 +99,7 @@ namespace Zenject
             buffer.Add(instance);
         }
 
-        protected abstract GameObject GetGameObject(InjectContext context);
+        protected abstract GameObject GetGameObject(InjectableInfo context);
     }
 }
 

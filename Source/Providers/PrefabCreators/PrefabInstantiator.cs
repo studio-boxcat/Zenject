@@ -21,16 +21,16 @@ namespace Zenject
             _gameObjectBindInfo = gameObjectBindInfo;
         }
 
-        public UnityEngine.Object GetPrefab(InjectContext context)
+        public UnityEngine.Object GetPrefab(InjectableInfo context)
         {
             return _prefabProvider.GetPrefab(context);
         }
 
-        public GameObject Instantiate(InjectContext context, out Action injectAction)
+        public GameObject Instantiate(InjectableInfo context, out Action injectAction)
         {
             bool shouldMakeActive;
             var gameObject = _container.CreateAndParentPrefab(
-                GetPrefab(context), _gameObjectBindInfo, context, out shouldMakeActive);
+                GetPrefab(context), _gameObjectBindInfo, out shouldMakeActive);
             Assert.IsNotNull(gameObject);
 
             injectAction = () =>

@@ -25,36 +25,29 @@ namespace Zenject
             _matchAll = matchAll;
         }
 
-        public Type GetInstanceType(InjectContext context)
+        public Type GetInstanceType(InjectableInfo context)
         {
             return _contractType;
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectContext context, out Action injectAction, List<object> buffer)
+        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             Assert.IsNotNull(context);
 
             Assert.That(_contractType.DerivesFromOrEqual(context.MemberType));
 
+            var subContext = new InjectableInfo(
+                _contractType, _identifier, _source, _isOptional);
+
             injectAction = null;
             if (_matchAll)
             {
-                _container.ResolveAll(GetSubContext(context), buffer);
+                _container.ResolveAll(subContext, buffer);
             }
             else
             {
-                buffer.Add(_container.Resolve(GetSubContext(context)));
+                buffer.Add(_container.Resolve(subContext));
             }
-        }
-
-        InjectContext GetSubContext(InjectContext parent)
-        {
-            var subContext = parent.CreateSubContext(_contractType, _identifier);
-
-            subContext.SourceType = _source;
-            subContext.Optional = _isOptional;
-
-            return subContext;
         }
     }
 }
