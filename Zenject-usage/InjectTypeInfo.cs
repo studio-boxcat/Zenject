@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace Zenject
 {
-    public struct InjectTypeInfo
+    public readonly struct InjectTypeInfo
     {
         public readonly InjectConstructorInfo InjectConstructor;
         public readonly InjectMethodInfo[] InjectMethods;
@@ -35,7 +35,7 @@ namespace Zenject
             void Invoke(object injectable, object value);
         }
 
-        public struct InjectFieldInfo : IInjectMemberSetter
+        public readonly struct InjectFieldInfo : IInjectMemberSetter
         {
             public readonly FieldInfo FieldInfo;
             public readonly InjectableInfo Info;
@@ -52,8 +52,7 @@ namespace Zenject
             }
         }
 
-
-        public struct InjectPropertyInfo : IInjectMemberSetter
+        public readonly struct InjectPropertyInfo : IInjectMemberSetter
         {
             public readonly PropertyInfo PropertyInfo;
             public readonly InjectableInfo Info;
@@ -70,7 +69,7 @@ namespace Zenject
             }
         }
 
-        public struct InjectConstructorInfo
+        public readonly struct InjectConstructorInfo
         {
             // Null for abstract types
             public readonly ConstructorInfo ConstructorInfo;
@@ -83,7 +82,7 @@ namespace Zenject
             }
         }
 
-        public struct InjectMethodInfo
+        public readonly struct InjectMethodInfo
         {
             public readonly MethodInfo MethodInfo;
             public readonly InjectableInfo[] Parameters;
