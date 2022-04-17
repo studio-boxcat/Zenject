@@ -1,5 +1,3 @@
-#if !NOT_UNITY3D
-
 using System;
 using JetBrains.Annotations;
 using ModestTree;
@@ -53,5 +51,3 @@ namespace Zenject
         protected abstract GameObject GetGameObject(InjectableInfo context);
     }
 }
-
-#endif

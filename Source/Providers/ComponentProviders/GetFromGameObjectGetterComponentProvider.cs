@@ -1,5 +1,3 @@
-#if !NOT_UNITY3D
-
 using System;
 using ModestTree;
 using UnityEngine;
@@ -28,13 +26,9 @@ namespace Zenject
             var match = gameObject.GetComponent(_componentType);
 
             Assert.IsNotNull(match, "Could not find component with type '{0}' on game object '{1}'",
-            _componentType, gameObject.name);
+                _componentType, gameObject.name);
 
             return match;
         }
     }
 }
-
-#endif
-
-

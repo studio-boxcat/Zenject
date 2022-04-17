@@ -24,16 +24,9 @@ namespace Zenject
 
         public object GetInstance(InjectableInfo context)
         {
-            var instanceType = GetTypeToCreate(context.MemberType);
-
-            var instance = _container.InstantiateExplicit(instanceType, false, _extraArguments);
+            var instance = _container.InstantiateExplicit(_concreteType, false, _extraArguments);
             _container.Inject(instance, _extraArguments);
             return instance;
-        }
-
-        Type GetTypeToCreate(Type contractType)
-        {
-            return ProviderUtil.GetTypeToInstantiate(contractType, _concreteType);
         }
     }
 }

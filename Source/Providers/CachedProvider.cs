@@ -1,4 +1,3 @@
-using System;
 using ModestTree;
 
 namespace Zenject
@@ -12,13 +11,6 @@ namespace Zenject
         public CachedProvider(IProvider creator)
         {
             _creator = creator;
-        }
-
-        // This method can be called if you want to clear the memory for an AsSingle instance,
-        // See isssue https://github.com/svermeulen/Zenject/issues/441
-        public void ClearCache()
-        {
-            _instance = null;
         }
 
         public object GetInstance(InjectableInfo context)

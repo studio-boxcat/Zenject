@@ -1,5 +1,3 @@
-using System;
-
 namespace Zenject
 {
     // The given InjectableInfo values here should always be non-null
