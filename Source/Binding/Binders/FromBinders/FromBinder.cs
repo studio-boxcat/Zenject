@@ -78,7 +78,7 @@ namespace Zenject
                 (container, type) => new ResolveProvider(
                     type, container, subIdentifier, false, source));
 
-            return new NonLazyBinder(BindInfo);
+            return this;
         }
 
         public NonLazyBinder FromComponentOn(GameObject gameObject)
@@ -93,7 +93,7 @@ namespace Zenject
                 (container, type) => new GetFromGameObjectComponentProvider(
                     type, gameObject));
 
-            return new NonLazyBinder(BindInfo);
+            return this;
         }
 
         public NonLazyBinder FromComponentOn(Func<DiContainer, GameObject> gameObjectGetter)
@@ -107,7 +107,7 @@ namespace Zenject
                 (container, type) => new GetFromGameObjectGetterComponentProvider(
                     container, type, gameObjectGetter));
 
-            return new NonLazyBinder(BindInfo);
+            return this;
         }
 
         public NonLazyBinder FromComponentOnRoot()
@@ -128,7 +128,7 @@ namespace Zenject
                 (container, type) => new AddToExistingGameObjectComponentProvider(
                     gameObject, container, type, BindInfo.Arguments));
 
-            return new NonLazyBinder(BindInfo);
+            return this;
         }
 
         public NonLazyBinder FromNewComponentOn(Func<InjectableInfo, GameObject> gameObjectGetter)
@@ -142,7 +142,7 @@ namespace Zenject
                 (container, type) => new AddToExistingGameObjectComponentProviderGetter(
                     gameObjectGetter, container, type, BindInfo.Arguments));
 
-            return new NonLazyBinder(BindInfo);
+            return this;
         }
 
         protected NonLazyBinder FromMethodBase<TConcrete>(Func<InjectableInfo, TConcrete> method)
@@ -171,7 +171,7 @@ namespace Zenject
                 BindInfo,
                 (container, type) => new GetterProvider<TObj, TResult>(identifier, method, container, source));
 
-            return new NonLazyBinder(BindInfo);
+            return this;
         }
 
         protected NonLazyBinder FromInstanceBase(object instance)
@@ -185,7 +185,7 @@ namespace Zenject
                 BindInfo,
                 (container, type) => new InstanceProvider(instance));
 
-            return new NonLazyBinder(BindInfo);
+            return this;
         }
     }
 }
