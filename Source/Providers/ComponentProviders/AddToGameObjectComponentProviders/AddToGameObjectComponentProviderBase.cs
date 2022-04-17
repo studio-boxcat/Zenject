@@ -31,8 +31,6 @@ namespace Zenject
 
         public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
-            Assert.IsNotNull(context);
-
             object instance;
 
             // We still want to make sure we can get the game object during validation
@@ -55,7 +53,7 @@ namespace Zenject
 
             injectAction = () =>
             {
-                _container.InjectExplicit(instance, _componentType, _extraArguments);
+                _container.Inject(instance, _extraArguments);
             };
 
             buffer.Add(instance);

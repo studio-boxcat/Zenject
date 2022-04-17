@@ -18,9 +18,11 @@ namespace Zenject
     // - Instantiate new values via InstantiateX() methods
     public class DiContainer
     {
-        readonly Dictionary<BindingId, List<ProviderInfo>> _providers = new Dictionary<BindingId, List<ProviderInfo>>();
+        [CanBeNull] public readonly DiContainer ParentContainer;
 
-        readonly DiContainer[][] _containerLookups = new DiContainer[3][];
+        readonly DiContainer[] _containerChain;
+
+        readonly Dictionary<BindingId, List<ProviderInfo>> _providers = new Dictionary<BindingId, List<ProviderInfo>>();
 
         readonly HashSet<LookupId> _resolvesInProgress = new HashSet<LookupId>();
         readonly HashSet<LookupId> _resolvesTwiceInProgress = new HashSet<LookupId>();
@@ -42,24 +44,15 @@ namespace Zenject
         public DiContainer(
             [CanBeNull] DiContainer parentContainer = null)
         {
+            ParentContainer = parentContainer;
+
+            _containerChain = BuildContainerChain(this);
+
             _lazyInjector = new LazyInstanceInjector(this);
 
             InstallDefaultBindings();
             FlushBindings();
             Assert.That(_currentBindings.Count == 0);
-
-            _containerLookups[(int)InjectSources.Local] = new[] { this };
-            _containerLookups[(int)InjectSources.Parent] = parentContainer != null
-                ? new[] { parentContainer } : Array.Empty<DiContainer>();
-
-            var containerChain = new List<DiContainer> {this};
-            var current = this;
-            while (current.ParentContainer != null)
-            {
-                containerChain.Add(current.ParentContainer);
-                current = current.ParentContainer;
-            }
-            _containerLookups[(int)InjectSources.Any] = containerChain.ToArray();
 
             if (parentContainer != null)
             {
@@ -67,6 +60,29 @@ namespace Zenject
 
                 Assert.That(_currentBindings.Count == 0);
             }
+        }
+
+        static DiContainer[] BuildContainerChain(DiContainer root)
+        {
+            var containerCount = 1;
+            var targetContainer = root.ParentContainer;
+            while (targetContainer != null)
+            {
+                targetContainer = targetContainer.ParentContainer;
+                containerCount++;
+            }
+
+            var containerChain = new DiContainer[containerCount];
+            containerChain[0] = root;
+            var pointer = 1;
+            targetContainer = root.ParentContainer;
+            while (targetContainer != null)
+            {
+                containerChain[pointer++] = targetContainer;
+                targetContainer = targetContainer.ParentContainer;
+            }
+
+            return containerChain;
         }
 
         internal SingletonMarkRegistry SingletonMarkRegistry
@@ -114,12 +130,6 @@ namespace Zenject
             }
         }
 #endif
-
-        [CanBeNull]
-        public DiContainer ParentContainer
-        {
-            get { return _containerLookups[(int)InjectSources.Parent].FirstOrDefault(); }
-        }
 
         // When this is true, it will log warnings when Resolve or Instantiate
         // methods are called
@@ -208,138 +218,74 @@ namespace Zenject
         void GetProviderMatches(
             InjectableInfo context, List<ProviderInfo> buffer)
         {
-            Assert.IsNotNull(context);
             Assert.That(buffer.Count == 0);
 
-            var allMatches = ZenPools.SpawnList<ProviderInfo>();
+            GetProvidersForContract(
+                context.BindingId, context.SourceType, buffer);
+        }
 
-            try
+        ProviderInfo? TryGetUniqueProvider(BindingId bindingId, InjectSources sourceType)
+        {
+            if (sourceType == InjectSources.Local)
+                return Internal_TryGetUniqueProvider(this, bindingId);
+
+            if (sourceType == InjectSources.Parent)
+                return Internal_TryGetUniqueProvider(ParentContainer, bindingId);
+
+            foreach (var container in _containerChain)
             {
-                GetProvidersForContract(
-                    context.BindingId, context.SourceType, allMatches);
-
-                for (int i = 0; i < allMatches.Count; i++)
-                {
-                    buffer.Add(allMatches[i]);
-                }
+                var provider = Internal_TryGetUniqueProvider(container, bindingId);
+                if (provider != null) return provider.Value;
             }
-            finally
+
+            return null;
+
+            static ProviderInfo? Internal_TryGetUniqueProvider(DiContainer container, BindingId bindingId)
             {
-                ZenPools.DespawnList(allMatches);
+                container.FlushBindings();
+
+                if (container._providers.TryGetValue(bindingId, out var localProviders))
+                    return localProviders[0];
+
+                // If we are asking for a List<int>, we should also match for any localProviders that are bound to the open generic type List<>
+                // Currently it only matches one and not the other - not totally sure if this is better than returning both
+                if (bindingId.Type.IsGenericType
+                    && container._providers.TryGetValue(new BindingId(bindingId.Type.GetGenericTypeDefinition(), bindingId.Identifier), out localProviders))
+                    return localProviders[0];
+
+                return null;
             }
         }
 
-        ProviderInfo? TryGetUniqueProvider(InjectableInfo context)
+        void GetProvidersForContract(BindingId bindingId, InjectSources sourceType, List<ProviderInfo> buffer)
         {
-            Assert.IsNotNull(context);
-
-            var bindingId = context.BindingId;
-            var sourceType = context.SourceType;
-
-            var containerLookups = _containerLookups[(int)sourceType];
-
-            for (int i = 0; i < containerLookups.Length; i++)
+            if (sourceType == InjectSources.Local)
             {
-                containerLookups[i].FlushBindings();
-            }
-
-            var localProviders = ZenPools.SpawnList<ProviderInfo>();
-
-            try
-            {
-                ProviderInfo? selected = null;
-                int selectedDistance = int.MaxValue;
-                bool ambiguousSelection = false;
-
-                for (int i = 0; i < containerLookups.Length; i++)
-                {
-                    var container = containerLookups[i];
-
-                    int curDistance = GetContainerHeirarchyDistance(container);
-
-                    if (curDistance > selectedDistance)
-                    {
-                        // If matching provider was already found lower in the hierarchy => don't search for a new one,
-                        // because there can't be a better or equal provider in this container.
-                        continue;
-                    }
-
-                    localProviders.Clear();
-                    container.GetLocalProviders(bindingId, localProviders);
-
-                    for (int k = 0; k < localProviders.Count; k++)
-                    {
-                        var provider = localProviders[k];
-
-                        // The distance can't decrease becuase we are iterating over the containers with increasing distance.
-                        // The distance can't increase because  we skip the container if the distance is greater than selected.
-                        // So the distances are equal and only the condition can help resolving the amiguity.
-                        Assert.That(selected == null || selectedDistance == curDistance);
-
-                        if (selected != null)
-                        {
-                            // Both providers don't have a condition and are on equal depth.
-                            ambiguousSelection = true;
-                        }
-
-                        if (ambiguousSelection)
-                        {
-                            continue;
-                        }
-
-                        selectedDistance = curDistance;
-                        selected = provider;
-                    }
-                }
-
-                if (ambiguousSelection)
-                {
-                    throw Assert.CreateException(
-                        "Found multiple matches when only one was expected for type '{0}'.",
-                        context.MemberType);
-                }
-
-                return selected;
-            }
-            finally
-            {
-                ZenPools.DespawnList(localProviders);
-            }
-        }
-
-        void GetLocalProviders(BindingId bindingId, List<ProviderInfo> buffer)
-        {
-            List<ProviderInfo> localProviders;
-
-            if (_providers.TryGetValue(bindingId, out localProviders))
-            {
-                buffer.AllocFreeAddRange(localProviders);
+                Internal_GetProvidersForContract(this, bindingId, buffer);
                 return;
             }
 
-            // If we are asking for a List<int>, we should also match for any localProviders that are bound to the open generic type List<>
-            // Currently it only matches one and not the other - not totally sure if this is better than returning both
-            if (bindingId.Type.IsGenericType && _providers.TryGetValue(new BindingId(bindingId.Type.GetGenericTypeDefinition(), bindingId.Identifier), out localProviders))
+            if (sourceType == InjectSources.Parent)
             {
-                buffer.AllocFreeAddRange(localProviders);
+                Internal_GetProvidersForContract(ParentContainer, bindingId, buffer);
+                return;
             }
 
-            // None found
-        }
+            foreach (var container in _containerChain)
+                Internal_GetProvidersForContract(container, bindingId, buffer);
 
-        void GetProvidersForContract(
-            BindingId bindingId, InjectSources sourceType, List<ProviderInfo> buffer)
-        {
-            var containerLookups = _containerLookups[(int)sourceType];
-
-            for (int i = 0; i < containerLookups.Length; i++)
+            static void Internal_GetProvidersForContract(DiContainer container, BindingId bindingId, List<ProviderInfo> buffer)
             {
-                containerLookups[i].FlushBindings();
-            }
+                container.FlushBindings();
 
-            for (int i = 0; i < containerLookups.Length; i++)
-            {
-                containerLookups[i].GetLocalProviders(bindingId, buffer);
+                if (container._providers.TryGetValue(bindingId, out var localProviders))
+                    buffer.AddRange(localProviders);
+
+                // If we are asking for a List<int>, we should also match for any localProviders that are bound to the open generic type List<>
+                // Currently it only matches one and not the other - not totally sure if this is better than returning both
+                if (bindingId.Type.IsGenericType
+                    && container._providers.TryGetValue(new BindingId(bindingId.Type.GetGenericTypeDefinition(), bindingId.Identifier), out localProviders))
+                    buffer.AddRange(localProviders);
             }
         }
 
@@ -387,10 +333,8 @@ namespace Zenject
 
                 try
                 {
-                    for (int i = 0; i < matches.Count; i++)
+                    foreach (var match in matches)
                     {
-                        var match = matches[i];
-
                         instances.Clear();
                         SafeGetInstances(match, context, instances);
 
@@ -443,7 +387,7 @@ namespace Zenject
                 lookupContext = new InjectableInfo(context.MemberType, null, InjectSources.Local);
             }
 
-            var providerInfo = TryGetUniqueProvider(lookupContext);
+            var providerInfo = TryGetUniqueProvider(lookupContext.BindingId, lookupContext.SourceType);
 
             if (providerInfo == null)
             {
@@ -579,48 +523,7 @@ namespace Zenject
             }
         }
 
-        int GetContainerHeirarchyDistance(DiContainer container)
-        {
-            return GetContainerHeirarchyDistance(container, 0).Value;
-        }
-
-        int? GetContainerHeirarchyDistance(DiContainer container, int depth)
-        {
-            return container == this ? depth : ParentContainer?.GetContainerHeirarchyDistance(container, depth + 1);
-        }
-
-        public void InjectExplicit(object injectable, Type injectableType,
-            object[] extraArgs)
-        {
-            Assert.That(injectable != null);
-
-            if (TypeAnalyzer.GetInfo(injectableType, out var typeInfo) == false)
-            {
-                Assert.That(extraArgs == null);
-                return;
-            }
-
-            // Installers are the only things that we instantiate/inject on during validation
-
-            Assert.IsEqual(injectable.GetType(), injectableType);
-
-#if !NOT_UNITY3D
-            if (injectableType == typeof(GameObject))
-                Assert.CreateException("Use InjectGameObject to Inject game objects instead of Inject method.");
-#endif
-
-            FlushBindings();
-
-            foreach (var injectField in typeInfo.InjectFields)
-                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs);
-
-            CallInjectMethodsTopDown(
-                injectable, injectableType, typeInfo, extraArgs);
-        }
-
-        void CallInjectMethodsTopDown(
-            object injectable, Type injectableType,
-            InjectTypeInfo typeInfo, object[] extraArgs)
+        void CallInjectMethodsTopDown(object injectable, InjectTypeInfo typeInfo, object[] extraArgs)
         {
             var method = typeInfo.InjectMethod;
             if (method.MethodInfo == null)
@@ -651,7 +554,7 @@ namespace Zenject
         }
 
         void InjectMember(InjectableInfo injectInfo, InjectTypeInfo.InjectFieldInfo setter,
-            object injectable, Type injectableType, object[] extraArgs)
+            object injectable, object[] extraArgs)
         {
             if (InjectUtil.TryGetValueWithType(extraArgs, injectInfo.MemberType, out var value))
             {
@@ -931,12 +834,15 @@ namespace Zenject
         // the argument list to avoid errors converting to IEnumerable<object>
         public void Inject(object injectable, [CanBeNull] object[] extraArgs = null)
         {
-            var injectableType = injectable.GetType();
+            var hasTypeInfo = TypeAnalyzer.GetInfo(injectable.GetType(), out var typeInfo);
+            Assert.That(hasTypeInfo);
 
-            InjectExplicit(
-                injectable,
-                injectableType,
-                extraArgs);
+            FlushBindings();
+
+            foreach (var injectField in typeInfo.InjectFields)
+                InjectMember(injectField.Info, injectField, injectable, extraArgs);
+
+            CallInjectMethodsTopDown(injectable, typeInfo, extraArgs);
         }
 
         // Resolve<> - Lookup a value in the container.
@@ -1371,7 +1277,10 @@ namespace Zenject
             }
 
             if (autoInject)
-                InjectExplicit(newObj, concreteType, extraArgs);
+            {
+                Assert.That(newObj.GetType() == concreteType);
+                Inject(newObj, extraArgs);
+            }
 
             return newObj;
         }

@@ -35,17 +35,11 @@ namespace Zenject
 
         public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
-            Assert.IsNotNull(context);
-
             var instanceType = GetTypeToCreate(context.MemberType);
 
             var instance = _container.InstantiateExplicit(instanceType, false, _extraArguments);
 
-            injectAction = () =>
-            {
-                _container.InjectExplicit(
-                    instance, instanceType, _extraArguments);
-            };
+            injectAction = () => _container.Inject(instance, _extraArguments);
 
             buffer.Add(instance);
         }
