@@ -270,6 +270,19 @@ namespace Zenject
         }
 
         [Conditional("DEBUG")]
+        public static void AssertIsDerivedFromTypes(
+            Type concreteType, IEnumerable<Type> parentTypes, InvalidBindResponses invalidBindResponse)
+        {
+            if (invalidBindResponse == InvalidBindResponses.Skip)
+                return;
+
+            foreach (var parentType in parentTypes)
+            {
+                AssertIsDerivedFromType(concreteType, parentType);
+            }
+        }
+
+        [Conditional("DEBUG")]
         public static void AssertInstanceDerivesFromOrEqual(object instance, IEnumerable<Type> parentTypes)
         {
             if (!ZenUtilInternal.IsNull(instance))

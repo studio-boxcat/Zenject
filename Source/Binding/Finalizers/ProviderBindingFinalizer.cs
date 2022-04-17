@@ -159,39 +159,33 @@ namespace Zenject
         // (each concrete type will have its own provider though)
         protected void RegisterProvidersForAllContractsPerConcreteType(
             DiContainer container,
-            List<Type> concreteTypes,
+            Type concreteType,
             Func<DiContainer, Type, IProvider> providerFunc)
         {
             Assert.That(!BindInfo.ContractTypes.IsEmpty());
-            Assert.That(!concreteTypes.IsEmpty());
+            Assert.That(concreteType != null);
 
             var providerMap = ZenPools.SpawnDictionary<Type, IProvider>();
             try
             {
-                foreach (var concreteType in concreteTypes)
+                var provider = providerFunc(container, concreteType);
+
+                providerMap[concreteType] = provider;
+
+                if (BindInfo.MarkAsUniqueSingleton)
                 {
-                    var provider = providerFunc(container, concreteType);
-
-                    providerMap[concreteType] = provider;
-
-                    if (BindInfo.MarkAsUniqueSingleton)
-                    {
-                        container.SingletonMarkRegistry.MarkSingleton(concreteType);
-                    }
-                    else if (BindInfo.MarkAsCreationBinding)
-                    {
-                        container.SingletonMarkRegistry.MarkNonSingleton(concreteType);
-                    }
+                    container.SingletonMarkRegistry.MarkSingleton(concreteType);
+                }
+                else if (BindInfo.MarkAsCreationBinding)
+                {
+                    container.SingletonMarkRegistry.MarkNonSingleton(concreteType);
                 }
 
                 foreach (var contractType in BindInfo.ContractTypes)
                 {
-                    foreach (var concreteType in concreteTypes)
+                    if (ValidateBindTypes(concreteType, contractType))
                     {
-                        if (ValidateBindTypes(concreteType, contractType))
-                        {
-                            RegisterProvider(container, contractType, providerMap[concreteType]);
-                        }
+                        RegisterProvider(container, contractType, providerMap[concreteType]);
                     }
                 }
             }

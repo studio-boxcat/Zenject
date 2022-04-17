@@ -19,37 +19,31 @@ namespace Zenject
         {
             if (BindInfo.ToChoice == ToChoices.Self)
             {
-                Assert.IsEmpty(BindInfo.ToTypes);
+                Assert.IsNull(BindInfo.ToType);
                 FinalizeBindingSelf(container);
             }
             else
             {
-                FinalizeBindingConcrete(container, BindInfo.ToTypes);
+                FinalizeBindingConcrete(container, BindInfo.ToType);
             }
         }
 
-        void FinalizeBindingConcrete(DiContainer container, List<Type> concreteTypes)
+        void FinalizeBindingConcrete(DiContainer container, Type concreteType)
         {
-            if (concreteTypes.Count == 0)
-            {
-                // This can be common when using convention based bindings
-                return;
-            }
-
             var scope = GetScope();
             switch (scope)
             {
                 case ScopeTypes.Transient:
                 {
                     RegisterProvidersForAllContractsPerConcreteType(
-                        container, concreteTypes, _providerFactory);
+                        container, concreteType, _providerFactory);
                     break;
                 }
                 case ScopeTypes.Singleton:
                 {
                     RegisterProvidersForAllContractsPerConcreteType(
                         container,
-                        concreteTypes,
+                        concreteType,
                         (_, concreteType) =>
                             BindingUtil.CreateCachedProvider(
                                 _providerFactory(container, concreteType)));

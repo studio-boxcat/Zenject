@@ -28,16 +28,16 @@ namespace Zenject
         {
             if (BindInfo.ToChoice == ToChoices.Self)
             {
-                Assert.IsEmpty(BindInfo.ToTypes);
+                Assert.IsNull(BindInfo.ToType);
                 FinalizeBindingSelf(container);
             }
             else
             {
-                FinalizeBindingConcrete(container, BindInfo.ToTypes);
+                FinalizeBindingConcrete(container, BindInfo.ToType);
             }
         }
 
-        void FinalizeBindingConcrete(DiContainer container, List<Type> concreteTypes)
+        void FinalizeBindingConcrete(DiContainer container, Type concreteTypes)
         {
             Assert.That(BindInfo.Arguments == null,
                 "Cannot provide arguments to prefab instantiator when using more than one concrete type");

@@ -18,17 +18,17 @@ namespace Zenject
         {
             if (BindInfo.ToChoice == ToChoices.Self)
             {
-                Assert.IsEmpty(BindInfo.ToTypes);
+                Assert.IsNull(BindInfo.ToType);
 
                 RegisterProviderPerContract(container, _providerFactory);
             }
             else
             {
                 // Empty sometimes when using convention based bindings
-                if (!BindInfo.ToTypes.IsEmpty())
+                if (BindInfo.ToType != null)
                 {
                     RegisterProvidersForAllContractsPerConcreteType(
-                        container, BindInfo.ToTypes, _providerFactory);
+                        container, BindInfo.ToType, _providerFactory);
                 }
             }
         }

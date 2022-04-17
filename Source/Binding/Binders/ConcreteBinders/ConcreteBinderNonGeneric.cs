@@ -32,25 +32,19 @@ namespace Zenject
             return To(typeof(TConcrete));
         }
 
-        public FromBinderNonGeneric To(params Type[] concreteTypes)
-        {
-            return To((IEnumerable<Type>)concreteTypes);
-        }
-
-        public FromBinderNonGeneric To(IEnumerable<Type> concreteTypes)
+        public FromBinderNonGeneric To(Type concreteType)
         {
             BindInfo.ToChoice = ToChoices.Concrete;
-            BindInfo.ToTypes.Clear();
-            BindInfo.ToTypes.AddRange(concreteTypes);
+            BindInfo.ToType = concreteType;
 
-            if (BindInfo.ToTypes.Count > 1 && BindInfo.ContractTypes.Count > 1)
+            if (BindInfo.ToType != null && BindInfo.ContractTypes.Count > 1)
             {
                 // Be more lenient in this case to behave similar to convention based bindings
                 BindInfo.InvalidBindResponse = InvalidBindResponses.Skip;
             }
             else
             {
-                BindingUtil.AssertIsDerivedFromTypes(concreteTypes, BindInfo.ContractTypes, BindInfo.InvalidBindResponse);
+                BindingUtil.AssertIsDerivedFromTypes(concreteType, BindInfo.ContractTypes, BindInfo.InvalidBindResponse);
             }
 
             return this;

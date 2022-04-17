@@ -36,30 +36,28 @@ namespace Zenject
             set { BindStatement.SetFinalizer(value); }
         }
 
-        protected IEnumerable<Type> AllParentTypes
-        {
-            get { return BindInfo.ContractTypes.Concat(BindInfo.ToTypes); }
-        }
+        protected IEnumerable<Type> AllParentTypes => BindInfo.ToType != null
+            ? BindInfo.ContractTypes.Append(BindInfo.ToType) : BindInfo.ContractTypes;
 
-        protected IEnumerable<Type> ConcreteTypes
+        protected Type ConcreteType
         {
             get
             {
                 if (BindInfo.ToChoice == ToChoices.Self)
                 {
-                    return BindInfo.ContractTypes;
+                    return BindInfo.ContractTypes.Single();
                 }
 
-                Assert.IsNotEmpty(BindInfo.ToTypes);
-                return BindInfo.ToTypes;
+                Assert.IsNotNull(BindInfo.ToType);
+                return BindInfo.ToType;
             }
         }
 
         // This is the default if nothing else is called
         public ScopeConcreteIdArgNonLazyBinder FromNew()
         {
-            BindingUtil.AssertTypesAreNotComponents(ConcreteTypes);
-            BindingUtil.AssertTypesAreNotAbstract(ConcreteTypes);
+            BindingUtil.AssertIsNotComponent(ConcreteType);
+            BindingUtil.AssertIsNotAbstract(ConcreteType);
 
             return this;
         }
@@ -113,8 +111,8 @@ namespace Zenject
         public ScopeConcreteIdArgNonLazyBinder FromComponentsOn(GameObject gameObject)
         {
             BindingUtil.AssertIsValidGameObject(gameObject);
-            BindingUtil.AssertIsComponent(ConcreteTypes);
-            BindingUtil.AssertTypesAreNotAbstract(ConcreteTypes);
+            BindingUtil.AssertIsComponent(ConcreteType);
+            BindingUtil.AssertIsNotAbstract(ConcreteType);
 
             BindInfo.RequireExplicitScope = true;
             SubFinalizer = new ScopableBindingFinalizer(
@@ -128,8 +126,8 @@ namespace Zenject
         public ScopeConcreteIdArgNonLazyBinder FromComponentOn(GameObject gameObject)
         {
             BindingUtil.AssertIsValidGameObject(gameObject);
-            BindingUtil.AssertIsComponent(ConcreteTypes);
-            BindingUtil.AssertTypesAreNotAbstract(ConcreteTypes);
+            BindingUtil.AssertIsComponent(ConcreteType);
+            BindingUtil.AssertIsNotAbstract(ConcreteType);
 
             BindInfo.RequireExplicitScope = true;
             SubFinalizer = new ScopableBindingFinalizer(
@@ -142,8 +140,8 @@ namespace Zenject
 
         public ScopeConcreteIdArgNonLazyBinder FromComponentsOn(Func<InjectContext, GameObject> gameObjectGetter)
         {
-            BindingUtil.AssertIsComponent(ConcreteTypes);
-            BindingUtil.AssertTypesAreNotAbstract(ConcreteTypes);
+            BindingUtil.AssertIsComponent(ConcreteType);
+            BindingUtil.AssertIsNotAbstract(ConcreteType);
 
             BindInfo.RequireExplicitScope = false;
             SubFinalizer = new ScopableBindingFinalizer(
@@ -156,8 +154,8 @@ namespace Zenject
 
         public ScopeConcreteIdArgNonLazyBinder FromComponentOn(Func<InjectContext, GameObject> gameObjectGetter)
         {
-            BindingUtil.AssertIsComponent(ConcreteTypes);
-            BindingUtil.AssertTypesAreNotAbstract(ConcreteTypes);
+            BindingUtil.AssertIsComponent(ConcreteType);
+            BindingUtil.AssertIsNotAbstract(ConcreteType);
 
             BindInfo.RequireExplicitScope = false;
             SubFinalizer = new ScopableBindingFinalizer(
@@ -183,8 +181,8 @@ namespace Zenject
         public ScopeConcreteIdArgNonLazyBinder FromNewComponentOn(GameObject gameObject)
         {
             BindingUtil.AssertIsValidGameObject(gameObject);
-            BindingUtil.AssertIsComponent(ConcreteTypes);
-            BindingUtil.AssertTypesAreNotAbstract(ConcreteTypes);
+            BindingUtil.AssertIsComponent(ConcreteType);
+            BindingUtil.AssertIsNotAbstract(ConcreteType);
 
             BindInfo.RequireExplicitScope = true;
             SubFinalizer = new ScopableBindingFinalizer(
@@ -197,8 +195,8 @@ namespace Zenject
 
         public ScopeConcreteIdArgNonLazyBinder FromNewComponentOn(Func<InjectContext, GameObject> gameObjectGetter)
         {
-            BindingUtil.AssertIsComponent(ConcreteTypes);
-            BindingUtil.AssertTypesAreNotAbstract(ConcreteTypes);
+            BindingUtil.AssertIsComponent(ConcreteType);
+            BindingUtil.AssertIsNotAbstract(ConcreteType);
 
             BindInfo.RequireExplicitScope = true;
             SubFinalizer = new ScopableBindingFinalizer(
@@ -211,7 +209,7 @@ namespace Zenject
 
         public ScopeConcreteIdArgNonLazyBinder FromResource(string resourcePath)
         {
-            BindingUtil.AssertDerivesFromUnityObject(ConcreteTypes);
+            BindingUtil.AssertDerivesFromUnityObject(ConcreteType);
 
             BindInfo.RequireExplicitScope = false;
             SubFinalizer = new ScopableBindingFinalizer(
@@ -223,7 +221,7 @@ namespace Zenject
 
         public ScopeConcreteIdArgNonLazyBinder FromResources(string resourcePath)
         {
-            BindingUtil.AssertDerivesFromUnityObject(ConcreteTypes);
+            BindingUtil.AssertDerivesFromUnityObject(ConcreteType);
 
             BindInfo.RequireExplicitScope = false;
             SubFinalizer = new ScopableBindingFinalizer(

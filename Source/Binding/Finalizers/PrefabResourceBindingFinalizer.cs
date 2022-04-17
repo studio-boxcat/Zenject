@@ -27,16 +27,16 @@ namespace Zenject
         {
             if (BindInfo.ToChoice == ToChoices.Self)
             {
-                Assert.IsEmpty(BindInfo.ToTypes);
+                Assert.IsNull(BindInfo.ToType);
                 FinalizeBindingSelf(container);
             }
             else
             {
-                FinalizeBindingConcrete(container, BindInfo.ToTypes);
+                FinalizeBindingConcrete(container, BindInfo.ToType);
             }
         }
 
-        void FinalizeBindingConcrete(DiContainer container, List<Type> concreteTypes)
+        void FinalizeBindingConcrete(DiContainer container, Type concreteType)
         {
             Assert.That(BindInfo.Arguments == null,
                 "Cannot provide arguments to prefab instantiator when using more than one concrete type");
@@ -49,7 +49,7 @@ namespace Zenject
                 {
                     RegisterProvidersForAllContractsPerConcreteType(
                         container,
-                        concreteTypes,
+                        concreteType,
                         (_, concreteType) =>
                             _providerFactory(
                                 concreteType,
@@ -61,9 +61,7 @@ namespace Zenject
                 }
                 case ScopeTypes.Singleton:
                 {
-                    var argumentTarget = concreteTypes.OnlyOrDefault();
-
-                    if (argumentTarget == null)
+                    if (concreteType == null)
                     {
                         Assert.That(BindInfo.Arguments == null,
                             "Cannot provide arguments to prefab instantiator when using more than one concrete type");
@@ -77,7 +75,7 @@ namespace Zenject
 
                     RegisterProvidersForAllContractsPerConcreteType(
                         container,
-                        concreteTypes,
+                        concreteType,
                         (_, concreteType) => BindingUtil.CreateCachedProvider(
                             _providerFactory(concreteType, prefabCreator)));
                     break;

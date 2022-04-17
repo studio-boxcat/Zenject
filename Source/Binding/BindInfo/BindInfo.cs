@@ -35,7 +35,8 @@ namespace Zenject
         public InvalidBindResponses InvalidBindResponse;
         public bool NonLazy;
         public ToChoices ToChoice;
-        public readonly List<Type> ToTypes; // Only relevant with ToChoices.Concrete
+        [CanBeNull]
+        public Type ToType; // Only relevant with ToChoices.Concrete
         public ScopeTypes Scope;
         [CanBeNull]
         public object[] Arguments;
@@ -43,7 +44,7 @@ namespace Zenject
         public BindInfo()
         {
             ContractTypes = new List<Type>();
-            ToTypes = new List<Type>();
+            ToType = null;
             Arguments = null;
 
             Reset();
@@ -65,7 +66,7 @@ namespace Zenject
             InvalidBindResponse = InvalidBindResponses.Assert;
             NonLazy = false;
             ToChoice = ToChoices.Self;
-            ToTypes.Clear();
+            ToType = null;
             Scope = ScopeTypes.Unset;
             Arguments = null;
         }

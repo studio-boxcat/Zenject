@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using ModestTree;
 
 namespace Zenject
@@ -32,29 +30,15 @@ namespace Zenject
             where TConcrete : TContract
         {
             BindInfo.ToChoice = ToChoices.Concrete;
-            BindInfo.ToTypes.Clear();
-            BindInfo.ToTypes.Add(typeof(TConcrete));
+            BindInfo.ToType = typeof(TConcrete);
 
             return new FromBinderGeneric<TConcrete>(
                 BindContainer, BindInfo, BindStatement);
         }
 
-        public FromBinderNonGeneric To(params Type[] concreteTypes)
+        public FromBinderNonGeneric To(Type concreteType)
         {
-            return To((IEnumerable<Type>)concreteTypes);
-        }
-
-        public FromBinderNonGeneric To(IEnumerable<Type> concreteTypes)
-        {
-            BindingUtil.AssertIsDerivedFromTypes(
-                concreteTypes, BindInfo.ContractTypes, BindInfo.InvalidBindResponse);
-
-            BindInfo.ToChoice = ToChoices.Concrete;
-            BindInfo.ToTypes.Clear();
-            BindInfo.ToTypes.AddRange(concreteTypes);
-
-            return new FromBinderNonGeneric(
-                BindContainer, BindInfo, BindStatement);
+            return To(concreteType);
         }
     }
 }
