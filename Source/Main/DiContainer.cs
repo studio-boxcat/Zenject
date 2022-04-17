@@ -790,8 +790,8 @@ namespace Zenject
             FlushBindings();
             CheckForInstallWarning(context);
 
-            InjectMembersTopDown(
-                injectable, injectableType, typeInfo, extraArgs, context, concreteIdentifier);
+            foreach (var injectField in typeInfo.InjectFields)
+                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs, context, concreteIdentifier);
 
             CallInjectMethodsTopDown(
                 injectable, injectableType, typeInfo, extraArgs, context, concreteIdentifier);
@@ -802,71 +802,60 @@ namespace Zenject
             InjectTypeInfo typeInfo, object[] extraArgs,
             InjectContext context, object concreteIdentifier)
         {
-            foreach (var method in typeInfo.InjectMethods)
+            var method = typeInfo.InjectMethod;
+            if (method.MethodInfo == null)
+                return;
+
+            var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
+
+            try
             {
-                var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
-
-                try
+                for (int k = 0; k < method.Parameters.Length; k++)
                 {
-                    for (int k = 0; k < method.Parameters.Length; k++)
+                    var injectInfo = method.Parameters[k];
+
+                    if (!InjectUtil.TryGetValueWithType(extraArgs, injectInfo.MemberType, out var value))
                     {
-                        var injectInfo = method.Parameters[k];
-
-                        if (!InjectUtil.TryGetValueWithType(extraArgs, injectInfo.MemberType, out var value))
-                        {
-                            using var subContext = ZenPools.SpawnInjectContext(
-                                this, injectInfo, context, injectable, injectableType, concreteIdentifier);
-                            value = Resolve(subContext);
-                        }
-
-                        paramValues[k] = value;
+                        using var subContext = ZenPools.SpawnInjectContext(
+                            this, injectInfo, context, injectable, injectableType, concreteIdentifier);
+                        value = Resolve(subContext);
                     }
 
-                    method.MethodInfo.Invoke(injectable, paramValues);
+                    paramValues[k] = value;
                 }
-                finally
-                {
-                    ParamArrayPool.Release(paramValues);
-                }
+
+                method.MethodInfo.Invoke(injectable, paramValues);
+            }
+            finally
+            {
+                ParamArrayPool.Release(paramValues);
             }
         }
 
-        void InjectMembersTopDown(
+        void InjectMember(
+            InjectableInfo injectInfo, InjectTypeInfo.InjectFieldInfo setter,
             object injectable, Type injectableType,
-            InjectTypeInfo typeInfo, object[] extraArgs,
-            InjectContext context, object concreteIdentifier)
+            object[] extraArgs, InjectContext context, object concreteIdentifier)
         {
-            foreach (var injectField in typeInfo.InjectFields)
-                InjectMember(injectField.Info, injectField, injectable, injectableType, extraArgs, context, concreteIdentifier);
-            foreach (var injectProperty in typeInfo.InjectProperties)
-                InjectMember(injectProperty.Info, injectProperty, injectable, injectableType, extraArgs, context, concreteIdentifier);
-        }
-
-        void InjectMember<T>(InjectableInfo injectInfo, T setter,  object injectable, Type injectableType, object[] extraArgs, InjectContext context, object concreteIdentifier)
-            where T : InjectTypeInfo.IInjectMemberSetter
-        {
-            object value;
-
-            if (InjectUtil.TryGetValueWithType(extraArgs, injectInfo.MemberType, out value))
+            if (InjectUtil.TryGetValueWithType(extraArgs, injectInfo.MemberType, out var value))
             {
                 setter.Invoke(injectable, value);
+                return;
+            }
+
+            using (var subContext = ZenPools.SpawnInjectContext(
+                       this, injectInfo, context, injectable, injectableType, concreteIdentifier))
+            {
+                value = Resolve(subContext);
+            }
+
+            if (injectInfo.Optional && value == null)
+            {
+                // Do not override in this case so it retains the hard-coded value
             }
             else
             {
-                using (var subContext = ZenPools.SpawnInjectContext(
-                           this, injectInfo, context, injectable, injectableType, concreteIdentifier))
-                {
-                    value = Resolve(subContext);
-                }
-
-                if (injectInfo.Optional && value == null)
-                {
-                    // Do not override in this case so it retains the hard-coded value
-                }
-                else
-                {
-                    setter.Invoke(injectable, value);
-                }
+                setter.Invoke(injectable, value);
             }
         }
 

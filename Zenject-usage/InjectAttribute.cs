@@ -4,7 +4,7 @@ namespace Zenject
 {
     [AttributeUsage(AttributeTargets.Constructor
         | AttributeTargets.Method | AttributeTargets.Parameter
-        | AttributeTargets.Property | AttributeTargets.Field)]
+        | AttributeTargets.Field)]
     public class InjectAttribute : InjectAttributeBase
     {
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using ModestTree;
@@ -12,28 +13,23 @@ namespace Zenject.Internal
     {
         public static InjectTypeInfo GetReflectionInfo(Type type)
         {
+            AssertNoPropertyInjection(type);
+
             return new InjectTypeInfo(
                 GetConstructorInfo(type),
-                GetMethodInfos(type),
-                GetFieldInfos(type),
-                GetPropertyInfos(type));
+                GetMethodInfo(type),
+                GetFieldInfos(type));
         }
 
-        static InjectTypeInfo.InjectPropertyInfo[] GetPropertyInfos(Type type)
+        [Conditional("DEBUG")]
+        static void AssertNoPropertyInjection(Type type)
         {
-            var list = ListPool<InjectTypeInfo.InjectPropertyInfo>.Get();
-
             foreach (var property in type.InstanceProperties())
             {
                 var injectAttr = property.GetCustomAttribute<InjectAttributeBase>();
                 if (injectAttr == null) continue;
-                var propertyInfo = new InjectTypeInfo.InjectPropertyInfo(property, GetInjectableInfoForMember(property, injectAttr));
-                list.Add(propertyInfo);
+                throw new Exception("프로퍼티 인젝션이 사용되었습니다: " + type.PrettyName());
             }
-
-            var arr = list.ToArray();
-            ListPool<InjectTypeInfo.InjectPropertyInfo>.Release(list);
-            return arr;
         }
 
         static InjectTypeInfo.InjectFieldInfo[] GetFieldInfos(Type type)
@@ -62,9 +58,10 @@ namespace Zenject.Internal
             return arr;
         }
 
-        static InjectTypeInfo.InjectMethodInfo[] GetMethodInfos(Type type)
+        static InjectTypeInfo.InjectMethodInfo GetMethodInfo(Type type)
         {
-            var list = ListPool<InjectTypeInfo.InjectMethodInfo>.Get();
+            var methodInfos = type.InstanceMethods();
+            Assert.That(methodInfos.Count(x => x.IsDefined(typeof(InjectAttributeBase))) <= 1);
 
             // Note that unlike with fields and properties we use GetCustomAttributes
             // This is so that we can ignore inherited attributes, which is necessary
@@ -73,13 +70,10 @@ namespace Zenject.Internal
             foreach (var methodInfo in type.InstanceMethods())
             {
                 if (methodInfo.IsDefined(typeof(InjectAttributeBase)) == false) continue;
-                var injectMethodInfo = new InjectTypeInfo.InjectMethodInfo(methodInfo, BakeInjectParameterInfos(type, methodInfo));
-                list.Add(injectMethodInfo);
+                return new InjectTypeInfo.InjectMethodInfo(methodInfo, BakeInjectParameterInfos(type, methodInfo));
             }
 
-            var arr = list.ToArray();
-            ListPool<InjectTypeInfo.InjectMethodInfo>.Release(list);
-            return arr;
+            return default;
         }
 
         static InjectTypeInfo.InjectConstructorInfo GetConstructorInfo(Type type)

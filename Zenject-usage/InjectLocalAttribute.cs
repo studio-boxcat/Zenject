@@ -3,7 +3,7 @@ using System;
 namespace Zenject
 {
     [AttributeUsage(AttributeTargets.Parameter
-        | AttributeTargets.Property | AttributeTargets.Field)]
+        | AttributeTargets.Field)]
     public class InjectLocalAttribute : InjectAttributeBase
     {
         public InjectLocalAttribute()
