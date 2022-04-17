@@ -8,36 +8,31 @@ namespace Zenject
 {
     public abstract class ProviderBindingFinalizer : IBindingFinalizer
     {
-        public ProviderBindingFinalizer(BindInfo bindInfo)
+        protected readonly BindInfo BindInfo;
+
+        protected ProviderBindingFinalizer(BindInfo bindInfo)
         {
             BindInfo = bindInfo;
         }
 
-        protected BindInfo BindInfo
-        {
-            get;
-            private set;
-        }
-
         protected ScopeTypes GetScope()
         {
-            if (BindInfo.Scope == ScopeTypes.Unset)
-            {
-                // XXX: 너무 많은 힙할당이 발생해서 Assert.That 에서 예외를 직접 던지는 식으로 변경.
+            if (BindInfo.Scope != ScopeTypes.Unset)
+                return BindInfo.Scope;
+
+            // XXX: 너무 많은 힙할당이 발생해서 Assert.That 에서 예외를 직접 던지는 식으로 변경.
 #if DEBUG
-                // If condition is set then it's probably fine to allow the default of transient
-                if (BindInfo.RequireExplicitScope)
-                {
-                    throw Assert.CreateException(
-                        "Scope must be set for the previous binding!  Please either specify AsTransient, AsCached, or AsSingle. Last binding: Contract: {0}, Identifier: {1}",
-                        BindInfo.ContractTypes.Select(x => x.PrettyName()).Join(", "), BindInfo.Identifier);
-                }
+            // If condition is set then it's probably fine to allow the default of transient
+            if (BindInfo.RequireExplicitScope)
+            {
+                throw Assert.CreateException(
+                    "Scope must be set for the previous binding!  Please either specify AsTransient, AsCached, or AsSingle. Last binding: Contract: {0}, Identifier: {1}",
+                    BindInfo.ContractTypes.Select(x => x.PrettyName()).Join(", "), BindInfo.Identifier);
+            }
 #endif
 
-                return ScopeTypes.Transient;
-            }
+            return ScopeTypes.Transient;
 
-            return BindInfo.Scope;
         }
 
         public void FinalizeBinding(DiContainer container)
