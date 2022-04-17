@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using ModestTree;
@@ -414,75 +413,6 @@ namespace Zenject
                     ZenPools.DespawnList(instances);
                     ZenPools.DespawnList(allInstances);
                 }
-            }
-            finally
-            {
-                ZenPools.DespawnList(matches);
-            }
-        }
-
-        // Returns the concrete type that would be returned with Resolve<T>
-        // without actually instantiating it
-        // This is safe to use within installers
-        public Type ResolveType<T>()
-        {
-            return ResolveType(typeof(T));
-        }
-
-        // Returns the concrete type that would be returned with Resolve(type)
-        // without actually instantiating it
-        // This is safe to use within installers
-        public Type ResolveType(Type type)
-        {
-            return ResolveType(new InjectableInfo(type));
-        }
-
-        // Returns the concrete type that would be returned with Resolve(context)
-        // without actually instantiating it
-        // This is safe to use within installers
-        public Type ResolveType(InjectableInfo context)
-        {
-            Assert.IsNotNull(context);
-
-            FlushBindings();
-
-            var providerInfo = TryGetUniqueProvider(context);
-
-            if (providerInfo == null)
-            {
-                throw Assert.CreateException(
-                    "Unable to resolve {0}.", context.BindingId);
-            }
-
-            return providerInfo.Value.Provider.GetInstanceType(context);
-        }
-
-        public List<Type> ResolveTypeAll(Type type, object identifier = null)
-        {
-            return ResolveTypeAll(new InjectableInfo(type, identifier));
-        }
-
-        // Returns all the types that would be returned if ResolveAll was called with the given values
-        public List<Type> ResolveTypeAll(InjectableInfo context)
-        {
-            Assert.IsNotNull(context);
-
-            FlushBindings();
-
-            var matches = ZenPools.SpawnList<ProviderInfo>();
-
-            try
-            {
-                GetProviderMatches(context, matches);
-
-                if (matches.Count > 0 )
-                {
-                    return matches.Select(
-                        x => x.Provider.GetInstanceType(context))
-                        .Where(x => x != null).ToList();
-                }
-
-                return new List<Type>();
             }
             finally
             {
