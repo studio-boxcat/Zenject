@@ -22,14 +22,12 @@ namespace Zenject
             _extraArguments = extraArguments;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
             var instanceType = GetTypeToCreate(context.MemberType);
 
             var instance = _container.InstantiateExplicit(instanceType, false, _extraArguments);
-
-            injectAction = () => _container.Inject(instance, _extraArguments);
-
+            _container.Inject(instance, _extraArguments);
             return instance;
         }
 

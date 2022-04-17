@@ -21,13 +21,10 @@ namespace Zenject
             _instance = null;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
             if (_instance != null)
-            {
-                injectAction = null;
                 return _instance;
-            }
 
             // This should only happen with constructor injection
             // Field or property injection should allow circular dependencies
@@ -39,7 +36,7 @@ namespace Zenject
             }
 
             _isCreatingInstance = true;
-            _instance =_creator.GetInstanceWithInjectSplit(context, out injectAction);
+            _instance = _creator.GetInstance(context);
             _isCreatingInstance = false;
             return _instance;
         }

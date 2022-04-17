@@ -20,12 +20,11 @@ namespace Zenject
             _sourceType = sourceType;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
             Assert.That(typeof(TResult).DerivesFromOrEqual(context.MemberType));
 
             var subContext = new InjectableInfo(typeof(TObj), _identifier, _sourceType);
-            injectAction = null;
             return _method((TObj) _container.Resolve(subContext));
         }
     }

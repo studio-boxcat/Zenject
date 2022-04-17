@@ -23,7 +23,7 @@ namespace Zenject
             _container = container;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
             object instance;
 
@@ -45,7 +45,7 @@ namespace Zenject
 
             Assert.IsNotNull(instance);
 
-            injectAction = () => _container.Inject(instance, _extraArguments);
+            _container.Inject(instance, _extraArguments);
 
             return instance;
         }

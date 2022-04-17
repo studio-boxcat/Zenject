@@ -12,9 +12,8 @@ namespace Zenject
             _method = method;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
-            injectAction = null;
             var result = _method(context);
 
             if (result == null)

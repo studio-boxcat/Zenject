@@ -22,14 +22,13 @@ namespace Zenject
             _source = source;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
             Assert.That(_contractType.DerivesFromOrEqual(context.MemberType));
 
             var subContext = new InjectableInfo(
                 _contractType, _identifier, _source, _isOptional);
 
-            injectAction = null;
             return _container.Resolve(subContext);
         }
     }

@@ -17,10 +17,8 @@ namespace Zenject
             _gameObject = gameObject;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
-            injectAction = null;
-
             var match = _gameObject.GetComponent(_componentType);
 
             Assert.IsNotNull(match, "Could not find component with type '{0}' on prefab '{1}'",

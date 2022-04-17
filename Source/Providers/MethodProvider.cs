@@ -12,11 +12,10 @@ namespace Zenject
             _method = method;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
             Assert.That(typeof(TReturn).DerivesFromOrEqual(context.MemberType));
 
-            injectAction = null;
             // We cannot do a null assert here because in some cases they might intentionally
             // return null
             return _method(context);

@@ -21,10 +21,8 @@ namespace Zenject
             _gameObjectGetter = gameObjectGetter;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
-            injectAction = null;
-
             var gameObject = _gameObjectGetter(_container);
 
             var match = gameObject.GetComponent(_componentType);

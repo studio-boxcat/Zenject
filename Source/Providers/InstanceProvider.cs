@@ -1,5 +1,3 @@
-using System;
-
 namespace Zenject
 {
     public class InstanceProvider : IProvider
@@ -11,10 +9,8 @@ namespace Zenject
             _instance = instance;
         }
 
-        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
+        public object GetInstance(InjectableInfo context)
         {
-            injectAction = null;
-
             return _instance;
         }
     }
