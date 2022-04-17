@@ -5,7 +5,7 @@ using ModestTree;
 namespace Zenject
 {
     [DebuggerStepThrough]
-    public struct BindingId : IEquatable<BindingId>
+    public readonly struct BindingId : IEquatable<BindingId>
     {
         public readonly Type Type;
         public readonly object Identifier;
@@ -26,7 +26,7 @@ namespace Zenject
         {
             unchecked // Overflow is fine, just wrap
             {
-                int hash = 17;
+                var hash = 17;
                 hash = hash * 29 + Type.GetHashCode();
                 hash = hash * 29 + (Identifier == null ? 0 : Identifier.GetHashCode());
                 return hash;

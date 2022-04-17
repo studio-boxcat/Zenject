@@ -6,8 +6,6 @@ namespace Zenject
     // The given InjectableInfo values here should always be non-null
     public interface IProvider
     {
-        Type GetInstanceType(InjectableInfo context);
-
         // Return an instance which might be not yet injected to.
         // injectAction should handle the actual injection
         // This way, providers that call CreateInstance() can store the instance immediately,

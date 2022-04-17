@@ -24,15 +24,8 @@ namespace Zenject
             _gameObjectGetter = gameObjectGetter;
         }
 
-        public Type GetInstanceType(InjectableInfo context)
-        {
-            return _componentType;
-        }
-
         public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
-            Assert.IsNotNull(context);
-
             injectAction = null;
 
             var gameObject = _gameObjectGetter(_container);

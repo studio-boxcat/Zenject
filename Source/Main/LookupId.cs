@@ -2,7 +2,7 @@ using ModestTree;
 
 namespace Zenject.Internal
 {
-    public struct LookupId
+    public readonly struct LookupId
     {
         public readonly IProvider Provider;
         public readonly BindingId BindingId;

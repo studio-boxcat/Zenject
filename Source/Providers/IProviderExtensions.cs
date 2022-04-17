@@ -10,8 +10,6 @@ namespace Zenject
         public static void GetAllInstances(
             this IProvider creator, InjectableInfo context, List<object> buffer)
         {
-            Assert.IsNotNull(context);
-
             creator.GetAllInstancesWithInjectSplit(context, out var injectAction, buffer);
             injectAction?.Invoke();
         }

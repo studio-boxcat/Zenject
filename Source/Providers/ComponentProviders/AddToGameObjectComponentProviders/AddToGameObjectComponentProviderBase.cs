@@ -24,11 +24,6 @@ namespace Zenject
             _container = container;
         }
 
-        public Type GetInstanceType(InjectableInfo context)
-        {
-            return _componentType;
-        }
-
         public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             object instance;

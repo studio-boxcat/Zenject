@@ -60,6 +60,11 @@ namespace Zenject
             Identifier = bindingId.Identifier;
         }
 
+        public override string ToString()
+        {
+            return BindingId.ToString();
+        }
+
         public InjectableInfo MutateMemberType(Type memberType)
         {
             return new InjectableInfo(memberType, Identifier, SourceType, Optional);

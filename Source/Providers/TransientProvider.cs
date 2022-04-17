@@ -23,16 +23,6 @@ namespace Zenject
             _extraArguments = extraArguments;
         }
 
-        public Type GetInstanceType(InjectableInfo context)
-        {
-            if (!_concreteType.DerivesFromOrEqual(context.MemberType))
-            {
-                return null;
-            }
-
-            return GetTypeToCreate(context.MemberType);
-        }
-
         public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
             var instanceType = GetTypeToCreate(context.MemberType);

@@ -1,7 +1,4 @@
-#if !NOT_UNITY3D
-
 using System;
-using System.Collections.Generic;
 using ModestTree;
 using UnityEngine;
 
@@ -43,5 +40,3 @@ namespace Zenject
         }
     }
 }
-
-#endif

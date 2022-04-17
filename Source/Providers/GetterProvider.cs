@@ -23,15 +23,8 @@ namespace Zenject
             _sourceType = sourceType;
         }
 
-        public Type GetInstanceType(InjectableInfo context)
-        {
-            return typeof(TResult);
-        }
-
         public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
-            Assert.IsNotNull(context);
-
             Assert.That(typeof(TResult).DerivesFromOrEqual(context.MemberType));
 
             var subContext = new InjectableInfo(typeof(TObj), _identifier, _sourceType);
@@ -43,7 +36,7 @@ namespace Zenject
                 Assert.That(buffer.Count == 0);
                 _container.ResolveAll(subContext, buffer);
 
-                for (int i = 0; i < buffer.Count; i++)
+                for (var i = 0; i < buffer.Count; i++)
                 {
                     buffer[i] = _method((TObj) buffer[i]);
                 }

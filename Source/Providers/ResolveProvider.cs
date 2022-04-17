@@ -25,15 +25,8 @@ namespace Zenject
             _matchAll = matchAll;
         }
 
-        public Type GetInstanceType(InjectableInfo context)
-        {
-            return _contractType;
-        }
-
         public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
-            Assert.IsNotNull(context);
-
             Assert.That(_contractType.DerivesFromOrEqual(context.MemberType));
 
             var subContext = new InjectableInfo(

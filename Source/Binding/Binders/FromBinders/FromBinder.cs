@@ -187,30 +187,6 @@ namespace Zenject
             return new NonLazyBinder(BindInfo);
         }
 
-        public NonLazyBinder FromResource(string resourcePath)
-        {
-            BindingUtil.AssertDerivesFromUnityObject(ConcreteType);
-
-            BindInfo.RequireExplicitScope = false;
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (_, type) => new ResourceProvider(resourcePath, type, true));
-
-            return new NonLazyBinder(BindInfo);
-        }
-
-        public NonLazyBinder FromResources(string resourcePath)
-        {
-            BindingUtil.AssertDerivesFromUnityObject(ConcreteType);
-
-            BindInfo.RequireExplicitScope = false;
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (_, type) => new ResourceProvider(resourcePath, type, false));
-
-            return new NonLazyBinder(BindInfo);
-        }
-
 #endif
 
         public NonLazyBinder FromMethodUntyped(Func<InjectableInfo, object> method)
@@ -220,7 +196,7 @@ namespace Zenject
             BindInfo.MarkAsCreationBinding = false;
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
-                (container, type) => new MethodProviderUntyped(method, container));
+                (_, _) => new MethodProviderUntyped(method));
 
             return this;
         }
@@ -234,7 +210,7 @@ namespace Zenject
             BindInfo.MarkAsCreationBinding = false;
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
-                (container, type) => new MethodProvider<TConcrete>(method, container));
+                (_, _) => new MethodProvider<TConcrete>(method));
 
             return this;
         }

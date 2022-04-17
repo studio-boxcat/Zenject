@@ -13,15 +13,8 @@ namespace Zenject
             _method = method;
         }
 
-        public Type GetInstanceType(InjectableInfo context)
-        {
-            return typeof(TReturn);
-        }
-
         public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
         {
-            Assert.IsNotNull(context);
-
             Assert.That(typeof(TReturn).DerivesFromOrEqual(context.MemberType));
 
             injectAction = null;
