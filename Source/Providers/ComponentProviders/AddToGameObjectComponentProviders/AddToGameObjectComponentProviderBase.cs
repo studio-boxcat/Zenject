@@ -1,7 +1,6 @@
 #if !NOT_UNITY3D
 
 using System;
-using System.Collections.Generic;
 using JetBrains.Annotations;
 using ModestTree;
 using UnityEngine;
@@ -24,7 +23,7 @@ namespace Zenject
             _container = container;
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
+        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
         {
             object instance;
 
@@ -46,12 +45,9 @@ namespace Zenject
 
             Assert.IsNotNull(instance);
 
-            injectAction = () =>
-            {
-                _container.Inject(instance, _extraArguments);
-            };
+            injectAction = () => _container.Inject(instance, _extraArguments);
 
-            buffer.Add(instance);
+            return instance;
         }
 
         protected abstract GameObject GetGameObject(InjectableInfo context);

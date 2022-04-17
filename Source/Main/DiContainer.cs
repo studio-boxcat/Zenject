@@ -172,25 +172,14 @@ namespace Zenject
                 rootBindings.Add((bindingPair.Key, provider));
             }
 
-            var instances = ZenPools.SpawnList<object>();
-
-            try
+            foreach (var (bindId, providerInfo) in rootBindings)
             {
-                foreach (var (bindId, providerInfo) in rootBindings)
-                {
-                    var context = new InjectableInfo(bindId.Type, bindId.Identifier, InjectSources.Local);
+                var context = new InjectableInfo(bindId.Type, bindId.Identifier, InjectSources.Local);
 
-                    instances.Clear();
+                var _ = SafeGetInstances(providerInfo, context);
 
-                    SafeGetInstances(providerInfo, context, instances);
-
-                    // Zero matches might actually be valid in some cases
-                    //Assert.That(matches.Any());
-                }
-            }
-            finally
-            {
-                ZenPools.DespawnList(instances);
+                // Zero matches might actually be valid in some cases
+                //Assert.That(matches.Any());
             }
         }
 
@@ -311,6 +300,7 @@ namespace Zenject
 
             FlushBindings();
 
+            var allInstances = ZenPools.SpawnList<object>();
             var matches = ZenPools.SpawnList<ProviderInfo>();
 
             try
@@ -328,38 +318,24 @@ namespace Zenject
                     return;
                 }
 
-                var instances = ZenPools.SpawnList<object>();
-                var allInstances = ZenPools.SpawnList<object>();
-
-                try
+                foreach (var match in matches)
                 {
-                    foreach (var match in matches)
-                    {
-                        instances.Clear();
-                        SafeGetInstances(match, context, instances);
-
-                        for (int k = 0; k < instances.Count; k++)
-                        {
-                            allInstances.Add(instances[k]);
-                        }
-                    }
-
-                    if (allInstances.Count == 0 && !context.Optional)
-                    {
-                        throw Assert.CreateException(
-                            "Could not find required dependency with type '{0}'.  Found providers but they returned zero results!", context.MemberType);
-                    }
-
-                    buffer.AllocFreeAddRange(allInstances);
+                    var instance = SafeGetInstances(match, context);
+                    if (instance != null)
+                        allInstances.Add(instance);
                 }
-                finally
+
+                if (allInstances.Count == 0 && !context.Optional)
                 {
-                    ZenPools.DespawnList(instances);
-                    ZenPools.DespawnList(allInstances);
+                    throw Assert.CreateException(
+                        "Could not find required dependency with type '{0}'.  Found providers but they returned zero results!", context.MemberType);
                 }
+
+                buffer.AddRange(allInstances);
             }
             finally
             {
+                ZenPools.DespawnList(allInstances);
                 ZenPools.DespawnList(matches);
             }
         }
@@ -441,41 +417,23 @@ namespace Zenject
                 throw Assert.CreateException("Unable to resolve '{0}'.", context.BindingId);
             }
 
-            var instances = ZenPools.SpawnList<object>();
+            var instance = SafeGetInstances(providerInfo.Value, context);
 
-            try
+            if (instance == null)
             {
-                SafeGetInstances(providerInfo.Value, context, instances);
+                if (context.Optional)
+                    return null;
 
-                if (instances.Count == 0)
-                {
-                    if (context.Optional)
-                    {
-                        return null;
-                    }
-
-                    throw Assert.CreateException(
-                        "Unable to resolve '{0}'.", context.BindingId);
-                }
-
-                if (instances.Count > 1)
-                {
-                    throw Assert.CreateException(
-                        "Provider returned multiple instances when only one was expected!  While resolving '{0}'.", context.BindingId);
-                }
-
-                return instances.First();
+                throw Assert.CreateException(
+                    "Unable to resolve '{0}'.", context.BindingId);
             }
-            finally
-            {
-                ZenPools.DespawnList(instances);
-            }
+
+            return instance;
         }
 
-        void SafeGetInstances(ProviderInfo providerInfo, InjectableInfo context, List<object> instances)
+        [CanBeNull]
+        static object SafeGetInstances(ProviderInfo providerInfo, InjectableInfo context)
         {
-            Assert.IsNotNull(context);
-
             var provider = providerInfo.Provider;
 
             var lookupId = new LookupId(provider, context.BindingId);
@@ -496,28 +454,28 @@ namespace Zenject
                 throw Assert.CreateException("Circular dependency detected!");
             }
 
-            bool twice = false;
+            var twice = false;
             if (!providerContainer._resolvesInProgress.Add(lookupId))
             {
-                bool added = providerContainer._resolvesTwiceInProgress.Add(lookupId);
+                var added = providerContainer._resolvesTwiceInProgress.Add(lookupId);
                 Assert.That(added);
                 twice = true;
             }
 
             try
             {
-                provider.GetAllInstances(context, instances);
+                return provider.GetInstance(context);
             }
             finally
             {
                 if (twice)
                 {
-                    bool removed = providerContainer._resolvesTwiceInProgress.Remove(lookupId);
+                    var removed = providerContainer._resolvesTwiceInProgress.Remove(lookupId);
                     Assert.That(removed);
                 }
                 else
                 {
-                    bool removed = providerContainer._resolvesInProgress.Remove(lookupId);
+                    var removed = providerContainer._resolvesInProgress.Remove(lookupId);
                     Assert.That(removed);
                 }
             }
@@ -1099,7 +1057,7 @@ namespace Zenject
                 Log.Warn("Called BindInterfacesTo for type {0} but no interfaces were found", type);
             }
 
-            bindInfo.ContractTypes.AllocFreeAddRange(interfaces);
+            bindInfo.ContractTypes.AddRange(interfaces);
 
             // Almost always, you don't want to use the default AsTransient so make them type it
             bindInfo.RequireExplicitScope = true;
@@ -1117,7 +1075,7 @@ namespace Zenject
             var statement = StartBinding();
             var bindInfo = statement.SpawnBindInfo();
 
-            bindInfo.ContractTypes.AllocFreeAddRange(type.Interfaces());
+            bindInfo.ContractTypes.AddRange(type.Interfaces());
             bindInfo.ContractTypes.Add(type);
 
             // Almost always, you don't want to use the default AsTransient so make them type it
@@ -1143,7 +1101,7 @@ namespace Zenject
             statement.SetFinalizer(
                 new ScopableBindingFinalizer(
                     bindInfo,
-                    (container, type) => new InstanceProvider(type, instance)));
+                    (container, type) => new InstanceProvider(instance)));
 
             return new NonLazyBinder(bindInfo);
         }

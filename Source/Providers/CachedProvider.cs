@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using ModestTree;
 
 namespace Zenject
@@ -7,7 +6,7 @@ namespace Zenject
     public class CachedProvider : IProvider
     {
         readonly IProvider _creator;
-        List<object> _instances;
+        object _instance;
         bool _isCreatingInstance;
 
         public CachedProvider(IProvider creator)
@@ -19,16 +18,15 @@ namespace Zenject
         // See isssue https://github.com/svermeulen/Zenject/issues/441
         public void ClearCache()
         {
-            _instances = null;
+            _instance = null;
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
+        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
         {
-            if (_instances != null)
+            if (_instance != null)
             {
                 injectAction = null;
-                buffer.AllocFreeAddRange(_instances);
-                return;
+                return _instance;
             }
 
             // This should only happen with constructor injection
@@ -41,14 +39,9 @@ namespace Zenject
             }
 
             _isCreatingInstance = true;
-
-            var instances = new List<object>();
-            _creator.GetAllInstancesWithInjectSplit(context, out injectAction, instances);
-            Assert.IsNotNull(instances);
-
-            _instances = instances;
+            _instance =_creator.GetInstanceWithInjectSplit(context, out injectAction);
             _isCreatingInstance = false;
-            buffer.AllocFreeAddRange(instances);
+            return _instance;
         }
     }
 }

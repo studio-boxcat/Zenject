@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 
 namespace Zenject
 {
@@ -11,6 +10,6 @@ namespace Zenject
         // This way, providers that call CreateInstance() can store the instance immediately,
         // and then return that if something gets created during injection that refers back
         // to the newly created instance
-        void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> instances);
+        object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction);
     }
 }

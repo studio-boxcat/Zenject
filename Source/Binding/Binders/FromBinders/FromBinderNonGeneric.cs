@@ -28,22 +28,7 @@ namespace Zenject
 
         public NonLazyBinder FromResolveGetter<TObj, TContract>(object identifier, Func<TObj, TContract> method, InjectSources source)
         {
-            return FromResolveGetterBase(identifier, method, source, false);
-        }
-
-        public NonLazyBinder FromResolveAllGetter<TObj, TContract>(Func<TObj, TContract> method)
-        {
-            return FromResolveAllGetter(null, method);
-        }
-
-        public NonLazyBinder FromResolveAllGetter<TObj, TContract>(object identifier, Func<TObj, TContract> method)
-        {
-            return FromResolveAllGetter(identifier, method, InjectSources.Any);
-        }
-
-        public NonLazyBinder FromResolveAllGetter<TObj, TContract>(object identifier, Func<TObj, TContract> method, InjectSources source)
-        {
-            return FromResolveGetterBase(identifier, method, source, true);
+            return FromResolveGetterBase(identifier, method, source);
         }
 
         public NonLazyBinder FromInstance(object instance)

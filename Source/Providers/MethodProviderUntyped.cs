@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using ModestTree;
 
 namespace Zenject
@@ -13,7 +12,7 @@ namespace Zenject
             _method = method;
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
+        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
         {
             injectAction = null;
             var result = _method(context);
@@ -28,7 +27,7 @@ namespace Zenject
                 Assert.That(result.GetType().DerivesFromOrEqual(context.MemberType));
             }
 
-            buffer.Add(result);
+            return result;
         }
     }
 }

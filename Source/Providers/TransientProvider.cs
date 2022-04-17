@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using JetBrains.Annotations;
 using ModestTree;
 
@@ -23,7 +22,7 @@ namespace Zenject
             _extraArguments = extraArguments;
         }
 
-        public void GetAllInstancesWithInjectSplit(InjectableInfo context, out Action injectAction, List<object> buffer)
+        public object GetInstanceWithInjectSplit(InjectableInfo context, out Action injectAction)
         {
             var instanceType = GetTypeToCreate(context.MemberType);
 
@@ -31,7 +30,7 @@ namespace Zenject
 
             injectAction = () => _container.Inject(instance, _extraArguments);
 
-            buffer.Add(instance);
+            return instance;
         }
 
         Type GetTypeToCreate(Type contractType)

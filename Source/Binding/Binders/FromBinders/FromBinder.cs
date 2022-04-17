@@ -64,15 +64,10 @@ namespace Zenject
 
         public NonLazyBinder FromResolve(object subIdentifier = null, InjectSources source = InjectSources.Any)
         {
-            return FromResolveInternal(subIdentifier, false, source);
+            return FromResolveInternal(subIdentifier, source);
         }
 
-        public NonLazyBinder FromResolveAll(object subIdentifier = null, InjectSources source = InjectSources.Any)
-        {
-            return FromResolveInternal(subIdentifier, true, source);
-        }
-
-        NonLazyBinder FromResolveInternal(object subIdentifier, bool matchAll, InjectSources source)
+        NonLazyBinder FromResolveInternal(object subIdentifier, InjectSources source)
         {
             BindInfo.RequireExplicitScope = false;
             // Don't know how it's created so can't assume here that it violates AsSingle
@@ -81,24 +76,7 @@ namespace Zenject
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
                 (container, type) => new ResolveProvider(
-                    type, container, subIdentifier, false, source, matchAll));
-
-            return new NonLazyBinder(BindInfo);
-        }
-
-#if !NOT_UNITY3D
-
-        public NonLazyBinder FromComponentsOn(GameObject gameObject)
-        {
-            BindingUtil.AssertIsValidGameObject(gameObject);
-            BindingUtil.AssertIsComponent(ConcreteType);
-            BindingUtil.AssertIsNotAbstract(ConcreteType);
-
-            BindInfo.RequireExplicitScope = true;
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, type) => new GetFromGameObjectComponentProvider(
-                    type, gameObject, false));
+                    type, container, subIdentifier, false, source));
 
             return new NonLazyBinder(BindInfo);
         }
@@ -113,21 +91,7 @@ namespace Zenject
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
                 (container, type) => new GetFromGameObjectComponentProvider(
-                    type, gameObject, true));
-
-            return new NonLazyBinder(BindInfo);
-        }
-
-        public NonLazyBinder FromComponentsOn(Func<DiContainer, GameObject> gameObjectGetter)
-        {
-            BindingUtil.AssertIsComponent(ConcreteType);
-            BindingUtil.AssertIsNotAbstract(ConcreteType);
-
-            BindInfo.RequireExplicitScope = false;
-            SubFinalizer = new ScopableBindingFinalizer(
-                BindInfo,
-                (container, type) => new GetFromGameObjectGetterComponentProvider(
-                    container, type, gameObjectGetter, false));
+                    type, gameObject));
 
             return new NonLazyBinder(BindInfo);
         }
@@ -141,15 +105,9 @@ namespace Zenject
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
                 (container, type) => new GetFromGameObjectGetterComponentProvider(
-                    container, type, gameObjectGetter, true));
+                    container, type, gameObjectGetter));
 
             return new NonLazyBinder(BindInfo);
-        }
-
-        public NonLazyBinder FromComponentsOnRoot()
-        {
-            return FromComponentsOn(
-                container => container.Resolve<Context>().gameObject);
         }
 
         public NonLazyBinder FromComponentOnRoot()
@@ -187,8 +145,6 @@ namespace Zenject
             return new NonLazyBinder(BindInfo);
         }
 
-#endif
-
         public NonLazyBinder FromMethodUntyped(Func<InjectableInfo, object> method)
         {
             BindInfo.RequireExplicitScope = false;
@@ -216,7 +172,7 @@ namespace Zenject
         }
 
         protected NonLazyBinder FromResolveGetterBase<TObj, TResult>(
-            object identifier, Func<TObj, TResult> method, InjectSources source, bool matchMultiple)
+            object identifier, Func<TObj, TResult> method, InjectSources source)
         {
             BindingUtil.AssertIsDerivedFromTypes(typeof(TResult), AllParentTypes);
 
@@ -225,7 +181,7 @@ namespace Zenject
             BindInfo.MarkAsCreationBinding = false;
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
-                (container, type) => new GetterProvider<TObj, TResult>(identifier, method, container, source, matchMultiple));
+                (container, type) => new GetterProvider<TObj, TResult>(identifier, method, container, source));
 
             return new NonLazyBinder(BindInfo);
         }
@@ -239,7 +195,7 @@ namespace Zenject
             BindInfo.MarkAsCreationBinding = false;
             SubFinalizer = new ScopableBindingFinalizer(
                 BindInfo,
-                (container, type) => new InstanceProvider(type, instance));
+                (container, type) => new InstanceProvider(instance));
 
             return new NonLazyBinder(BindInfo);
         }
