@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class ResourceProvider : IProvider
     {
         readonly Type _resourceType;

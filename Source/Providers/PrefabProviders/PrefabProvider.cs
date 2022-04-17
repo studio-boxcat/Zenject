@@ -4,7 +4,6 @@ using ModestTree;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class PrefabProvider : IPrefabProvider
     {
         readonly UnityEngine.Object _prefab;

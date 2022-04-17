@@ -9,7 +9,6 @@ using Zenject.Internal;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class AddToCurrentGameObjectComponentProvider : IProvider
     {
         readonly Type _componentType;

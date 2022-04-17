@@ -4,7 +4,6 @@ using ModestTree;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public abstract class StaticMemoryPoolBaseBase<TValue> : IDespawnableMemoryPool<TValue>
         where TValue : class
     {
@@ -111,7 +110,6 @@ namespace Zenject
         protected abstract TValue Alloc();
     }
 
-    [NoReflectionBaking]
     public abstract class StaticMemoryPoolBase<TValue> : StaticMemoryPoolBaseBase<TValue>
         where TValue : class, new()
     {
@@ -128,7 +126,6 @@ namespace Zenject
 
     // Zero parameters
 
-    [NoReflectionBaking]
     public class StaticMemoryPool<TValue> : StaticMemoryPoolBase<TValue>, IMemoryPool<TValue>
         where TValue : class, new()
     {

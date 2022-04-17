@@ -2,7 +2,6 @@ using System;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class FromBinderGeneric<TContract> : FromBinder
     {
         public FromBinderGeneric(

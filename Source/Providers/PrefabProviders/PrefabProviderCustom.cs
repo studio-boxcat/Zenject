@@ -6,7 +6,6 @@ using System;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class PrefabProviderCustom : IPrefabProvider
     {
         readonly Func<InjectContext, UnityEngine.Object> _getter;

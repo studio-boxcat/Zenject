@@ -24,7 +24,6 @@ namespace Zenject
         Skip
     }
 
-    [NoReflectionBaking]
     public class BindInfo : IDisposable
     {
         public bool MarkAsCreationBinding;

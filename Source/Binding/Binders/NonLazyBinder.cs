@@ -1,6 +1,5 @@
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class NonLazyBinder
     {
         public readonly BindInfo BindInfo;

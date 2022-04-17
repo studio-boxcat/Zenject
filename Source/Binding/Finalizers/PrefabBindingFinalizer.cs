@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class PrefabBindingFinalizer : ProviderBindingFinalizer
     {
         readonly GameObjectCreationParameters _gameObjectBindInfo;

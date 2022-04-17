@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class GetFromGameObjectGetterComponentProvider : IProvider
     {
         readonly Func<InjectContext, GameObject> _gameObjectGetter;

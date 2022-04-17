@@ -5,7 +5,6 @@ using ModestTree;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class ConcreteBinderGeneric<TContract> : FromBinderGeneric<TContract>
     {
         public ConcreteBinderGeneric(

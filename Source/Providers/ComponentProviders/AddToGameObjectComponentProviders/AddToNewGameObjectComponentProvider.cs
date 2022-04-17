@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class AddToNewGameObjectComponentProvider : AddToGameObjectComponentProviderBase
     {
         readonly GameObjectCreationParameters _gameObjectBindInfo;

@@ -6,7 +6,6 @@ using Zenject.Internal;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public abstract class ProviderBindingFinalizer : IBindingFinalizer
     {
         public ProviderBindingFinalizer(BindInfo bindInfo)

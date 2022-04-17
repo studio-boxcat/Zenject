@@ -2,7 +2,6 @@ using ModestTree;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class LazyInject<T>
     {
         readonly DiContainer _container;

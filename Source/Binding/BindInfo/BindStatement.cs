@@ -5,7 +5,6 @@ using Zenject.Internal;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class BindStatement : IDisposable
     {
         readonly List<IDisposable> _disposables;

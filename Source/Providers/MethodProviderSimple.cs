@@ -4,7 +4,6 @@ using ModestTree;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class MethodProviderSimple<TReturn> : IProvider
     {
         readonly Func<TReturn> _method;

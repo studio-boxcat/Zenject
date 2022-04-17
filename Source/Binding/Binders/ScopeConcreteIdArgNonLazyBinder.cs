@@ -1,6 +1,5 @@
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class ScopeConcreteIdArgNonLazyBinder : ConcreteIdArgNonLazyBinder
     {
         public ScopeConcreteIdArgNonLazyBinder(BindInfo bindInfo)

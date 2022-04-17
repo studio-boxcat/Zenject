@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace Zenject
 {
-    [NoReflectionBaking]
     public class AddToExistingGameObjectComponentProvider : AddToGameObjectComponentProviderBase
     {
         readonly GameObject _gameObject;
@@ -33,7 +32,6 @@ namespace Zenject
         }
     }
 
-    [NoReflectionBaking]
     public class AddToExistingGameObjectComponentProviderGetter : AddToGameObjectComponentProviderBase
     {
         readonly Func<InjectContext, GameObject> _gameObjectGetter;
