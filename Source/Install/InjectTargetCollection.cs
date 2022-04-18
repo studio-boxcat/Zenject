@@ -7,6 +7,7 @@ namespace Zenject
     public partial class InjectTargetCollection : MonoBehaviour
     {
         [ListDrawerSettings(IsReadOnly = true)]
+        [ValidateInput("Validate_Targets")]
         public Object[] Targets;
 
         public static void TryInject(GameObject gameObject, DiContainer diContainer)

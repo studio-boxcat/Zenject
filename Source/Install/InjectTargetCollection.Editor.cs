@@ -5,6 +5,7 @@ using System.Linq;
 using ModestTree;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.SceneManagement;
 using Zenject.Internal;
 using Object = UnityEngine.Object;
@@ -16,18 +17,40 @@ namespace Zenject
         [Button("Collect In Scene", ButtonSizes.Medium)]
         void Editor_CollectInScene()
         {
-            var output = new List<MonoBehaviour>();
-            foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
-                GetInjectableMonoBehavioursUnderGameObject(rootObj, output);
-            Targets = output.Cast<Object>().ToArray();
+            Targets = Internal_CollectInScene();
         }
 
         [Button("Collect Under GameObject", ButtonSizes.Medium)]
         void Editor_CollectUnderGameObject()
         {
+            Targets = Internal_CollectUnderGameObject(gameObject);
+        }
+
+        void Validate_Targets()
+        {
+            if (name == "SceneContext")
+            {
+                Assert.IsTrue(Targets.SequenceEqual(Internal_CollectInScene()));
+            }
+            else
+            {
+                Assert.IsTrue(Targets.SequenceEqual(Internal_CollectUnderGameObject(gameObject)));
+            }
+        }
+
+        static Object[] Internal_CollectInScene()
+        {
+            var output = new List<MonoBehaviour>();
+            foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
+                GetInjectableMonoBehavioursUnderGameObject(rootObj, output);
+            return output.Cast<Object>().ToArray();
+        }
+
+        static Object[] Internal_CollectUnderGameObject(GameObject gameObject)
+        {
             var output = new List<MonoBehaviour>();
             GetInjectableMonoBehavioursUnderGameObject(gameObject, output);
-            Targets = output.Cast<Object>().ToArray();
+            return output.Cast<Object>().ToArray();
         }
 
         static readonly Dictionary<Type, bool> _requiresInjection = new();
