@@ -1,55 +1,28 @@
-#if !NOT_UNITY3D
-
-using ModestTree;
 using UnityEngine;
 
 namespace Zenject
 {
     public class MonoKernel : MonoBehaviour
     {
-        [InjectLocal]
-        TickableManager _tickableManager = null;
+        [InjectLocal] TickableManager _tickableManager;
+        [InjectLocal] DisposableManager _disposablesManager;
 
-        [InjectLocal]
-        DisposableManager _disposablesManager = null;
-
-        bool _isDestroyed;
-
-        protected bool IsDestroyed
-        {
-            get { return _isDestroyed; }
-        }
-
-        public virtual void Update()
+        public void Update()
         {
             // Don't spam the log every frame if initialization fails and leaves it as null
-            if (_tickableManager != null)
-            {
-                _tickableManager.Update();
-            }
+            _tickableManager.Update();
         }
 
-        public virtual void LateUpdate()
+        public void LateUpdate()
         {
             // Don't spam the log every frame if initialization fails and leaves it as null
-            if (_tickableManager != null)
-            {
-                _tickableManager.LateUpdate();
-            }
+            _tickableManager.LateUpdate();
         }
 
         public virtual void OnDestroy()
         {
             // _disposablesManager can be null if we get destroyed before the Start event
-            if (_disposablesManager != null)
-            {
-                Assert.That(!_isDestroyed);
-                _isDestroyed = true;
-
-                _disposablesManager.Dispose();
-            }
+            _disposablesManager.Dispose();
         }
     }
 }
-
-#endif

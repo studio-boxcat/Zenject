@@ -7,7 +7,9 @@ namespace Zenject
         readonly List<ITickable> _tickables;
         readonly List<ILateTickable> _lateTickables;
 
-        public TickableManager(List<ITickable> tickables, List<ILateTickable> lateTickables)
+        public TickableManager(
+            [InjectLocal] List<ITickable> tickables,
+            [InjectLocal] List<ILateTickable> lateTickables)
         {
             _tickables = tickables;
             _lateTickables = lateTickables;

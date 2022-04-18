@@ -60,10 +60,13 @@ namespace Zenject
             Assert.IsNull(_container);
 
             _container = new DiContainer();
+
             _container.Bind(typeof(TickableManager));
             _container.Bind(typeof(DisposableManager));
             _container.Bind(typeof(ProjectKernel)).FromNewComponentOn(gameObject).NonLazy();
+
             InstallInstallers();
+
             _container.ResolveRoots();
         }
     }
