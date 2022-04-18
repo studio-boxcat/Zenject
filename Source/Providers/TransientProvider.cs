@@ -26,9 +26,7 @@ namespace Zenject
 
         public object GetInstance()
         {
-            var instance = _container.Instantiate(_concreteType, _extraArguments);
-            _container.Inject(instance, _extraArguments);
-            return instance;
+            return _container.Instantiate(_concreteType, _extraArguments);
         }
     }
 }
