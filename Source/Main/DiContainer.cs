@@ -458,8 +458,7 @@ namespace Zenject
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(
-            Object prefab, Vector3 position, Quaternion rotation, Transform parentTransform)
+        public GameObject InstantiatePrefab(Object prefab, Vector3 position, Quaternion rotation, Transform parentTransform)
         {
             return InstantiatePrefab(
                 prefab, new GameObjectCreationParameters
@@ -471,8 +470,7 @@ namespace Zenject
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(
-            Object prefab, GameObjectCreationParameters gameObjectBindInfo = default)
+        public GameObject InstantiatePrefab(Object prefab, GameObjectCreationParameters gameObjectBindInfo = default)
         {
             FlushBindings();
 
