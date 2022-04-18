@@ -1,7 +1,7 @@
 #if !NOT_UNITY3D
 
-using ModestTree;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -27,8 +27,7 @@ namespace Zenject
 
         static void InstantiateAndInitialize()
         {
-            Assert.That(FindObjectsOfType<ProjectContext>().IsEmpty(),
-                "Tried to create multiple instances of ProjectContext!");
+            Assert.IsTrue(FindObjectsOfType<ProjectContext>().Length == 0, "Tried to create multiple instances of ProjectContext!");
 
             var prefab = Resources.Load<GameObject>("ProjectContext");
             prefab.SetActive(false);

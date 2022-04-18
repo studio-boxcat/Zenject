@@ -1,25 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 
 namespace ModestTree
 {
     public static class TypeStringFormatter
     {
-        static readonly Dictionary<Type, string> _prettyNameCache = new Dictionary<Type, string>();
+        static readonly Dictionary<Type, string> _prettyNameCache = new();
 
         public static string PrettyName(this Type type)
         {
-            string prettyName;
+            if (_prettyNameCache.TryGetValue(type, out var prettyName))
+                return prettyName;
 
-            if (!_prettyNameCache.TryGetValue(type, out prettyName))
-            {
-                prettyName = PrettyNameInternal(type);
-                _prettyNameCache.Add(type, prettyName);
-            }
-
+            prettyName = PrettyNameInternal(type);
+            _prettyNameCache.Add(type, prettyName);
             return prettyName;
         }
 
@@ -109,4 +105,3 @@ namespace ModestTree
         }
     }
 }
-

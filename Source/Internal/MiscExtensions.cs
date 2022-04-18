@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using Sirenix.Utilities;
 
 namespace ModestTree
 {
@@ -14,74 +11,21 @@ namespace ModestTree
             // Do in-place change to avoid the memory alloc
             // This should be fine because the params is always used instead of directly
             // passing an array
-            for (int i = 0; i < args.Length; i++)
+            for (var i = 0; i < args.Length; i++)
             {
                 var arg = args[i];
 
-                if (arg == null)
+                args[i] = arg switch
                 {
                     // This is much more understandable than just the empty string
-                    args[i] = "NULL";
-                }
-                else if (arg is Type)
-                {
+                    null => "NULL",
                     // This often reads much better sometimes
-                    args[i] = ((Type)arg).PrettyName();
-                }
+                    Type type => type.PrettyName(),
+                    _ => args[i]
+                };
             }
 
-            return String.Format(s, args);
-        }
-
-        public static int IndexOf<T>(this IList<T> list, T item)
-        {
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (object.Equals(list[i], item))
-                {
-                    return i;
-                }
-            }
-
-            return -1;
-        }
-
-        public static string Join(this IEnumerable<string> values, string separator)
-        {
-            return string.Join(separator, values.ToArray());
-        }
-
-        // Most of the time when you call remove you always intend on removing something
-        // so assert in that case
-        public static void RemoveWithConfirm<T>(this IList<T> list, T item)
-        {
-            bool removed = list.Remove(item);
-            Assert.That(removed);
-        }
-
-        public static void RemoveWithConfirm<T>(this LinkedList<T> list, T item)
-        {
-            bool removed = list.Remove(item);
-            Assert.That(removed);
-        }
-
-        public static void RemoveWithConfirm<TKey, TVal>(this IDictionary<TKey, TVal> dictionary, TKey key)
-        {
-            bool removed = dictionary.Remove(key);
-            Assert.That(removed);
-        }
-
-        public static void RemoveWithConfirm<T>(this HashSet<T> set, T item)
-        {
-            bool removed = set.Remove(item);
-            Assert.That(removed);
-        }
-
-        public static TVal GetValueAndRemove<TKey, TVal>(this IDictionary<TKey, TVal> dictionary, TKey key)
-        {
-            TVal val = dictionary[key];
-            dictionary.RemoveWithConfirm(key);
-            return val;
+            return string.Format(s, args);
         }
     }
 }

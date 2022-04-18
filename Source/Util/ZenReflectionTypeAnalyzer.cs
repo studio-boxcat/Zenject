@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using ModestTree;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
@@ -47,7 +48,7 @@ namespace Zenject.Internal
         static InjectTypeInfo.InjectMethodInfo GetMethodInfo(Type type)
         {
             var methodInfos = type.InstanceMethods();
-            Assert.That(methodInfos.Count(x => x.IsDefined(typeof(InjectAttributeBase))) <= 1);
+            Assert.IsTrue(methodInfos.Count(x => x.IsDefined(typeof(InjectAttributeBase))) <= 1);
 
             // Note that unlike with fields and properties we use GetCustomAttributes
             // This is so that we can ignore inherited attributes, which is necessary

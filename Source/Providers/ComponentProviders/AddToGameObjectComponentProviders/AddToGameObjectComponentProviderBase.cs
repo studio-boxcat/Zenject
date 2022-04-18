@@ -2,6 +2,7 @@ using System;
 using JetBrains.Annotations;
 using ModestTree;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -14,7 +15,7 @@ namespace Zenject
         public AddToGameObjectComponentProviderBase(DiContainer container, Type componentType,
             [CanBeNull] object[] extraArguments)
         {
-            Assert.That(componentType.DerivesFrom<Component>());
+            Assert.IsTrue(componentType.DerivesFrom<Component>());
 
             _extraArguments = extraArguments;
             _componentType = componentType;

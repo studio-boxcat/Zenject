@@ -6,6 +6,7 @@ using ModestTree;
 using Zenject.Internal;
 using Object = UnityEngine.Object;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Pool;
 
 namespace Zenject
@@ -40,18 +41,18 @@ namespace Zenject
 
             Bind(typeof(DiContainer)).FromInstance(this);
             FlushBindings();
-            Assert.That(_currentBindings.Count == 0);
+            Assert.IsTrue(_currentBindings.Count == 0);
 
             if (parentContainer != null)
             {
                 parentContainer.FlushBindings();
-                Assert.That(_currentBindings.Count == 0);
+                Assert.IsTrue(_currentBindings.Count == 0);
             }
         }
 
         public void ResolveRoots()
         {
-            Assert.That(!_hasResolvedRoots);
+            Assert.IsFalse(_hasResolvedRoots);
 
             FlushBindings();
 
@@ -59,7 +60,7 @@ namespace Zenject
 
             _lazyInjector.LazyInjectAll();
 
-            Assert.That(!_hasResolvedRoots);
+            Assert.IsFalse(_hasResolvedRoots);
             _hasResolvedRoots = true;
         }
 
@@ -96,7 +97,7 @@ namespace Zenject
 
         public IList ResolveAll(Type type, int identifier, InjectSources sourceType)
         {
-            Assert.That(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>));
+            Assert.IsTrue(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>));
 
             var list = (IList) Activator.CreateInstance(type);
             var elementType = type.GetGenericArguments()[0];
@@ -201,120 +202,45 @@ namespace Zenject
         // Don't use this unless you know what you're doing
         // You probably want to use InstantiatePrefab instead
         // This one will only create the prefab and will not inject into it
-        // Also, this will always return the new game object as disabled, so that injection can occur before Awake / OnEnable / Start
-        internal GameObject CreateAndParentPrefabResource(
-            string resourcePath, GameObjectCreationParameters gameObjectBindInfo, InjectableInfo context, out bool shouldMakeActive)
+        GameObject InstantiateGameObjectInactive(GameObject prefab, GameObjectCreationParameters creationParameters)
         {
-            var prefab = (GameObject) Resources.Load(resourcePath);
-
-            Assert.IsNotNull(prefab,
-                "Could not find prefab at resource location '{0}'".Fmt(resourcePath));
-
-            return CreateAndParentPrefab(prefab, gameObjectBindInfo, out shouldMakeActive);
-        }
-
-        GameObject GetPrefabAsGameObject(Object prefab)
-        {
-            if (prefab is GameObject)
-            {
-                return (GameObject) prefab;
-            }
-
-            Assert.That(prefab is Component, "Invalid type given for prefab. Given object name: '{0}'", prefab.name);
-            return ((Component) prefab).gameObject;
-        }
-
-        // Don't use this unless you know what you're doing
-        // You probably want to use InstantiatePrefab instead
-        // This one will only create the prefab and will not inject into it
-        internal GameObject CreateAndParentPrefab(
-            Object prefab, GameObjectCreationParameters gameObjectBindInfo, out bool shouldMakeActive)
-        {
-            Assert.That(prefab != null, "Null prefab found when instantiating game object");
+            Assert.IsTrue(prefab != null, "Null prefab found when instantiating game object");
 
             FlushBindings();
 
-            var prefabAsGameObject = GetPrefabAsGameObject(prefab);
+            prefab.SetActive(false);
 
-            var prefabWasActive = prefabAsGameObject.activeSelf;
+            var parent = creationParameters.ParentTransform;
+            var initialParent = parent ?? ContextTransform;
 
-            shouldMakeActive = prefabWasActive;
-
-            var parent = gameObjectBindInfo.ParentTransform;
-
-            Transform initialParent;
-#if !UNITY_EDITOR
-            if (prefabWasActive)
-            {
-                prefabAsGameObject.SetActive(false);
-            }
-#else
-            if (prefabWasActive)
-            {
-                initialParent = ZenUtilInternal.GetOrCreateInactivePrefabParent();
-            }
-            else
-#endif
-            {
-                if (parent != null)
-                {
-                    initialParent = parent;
-                }
-                else
-                {
-                    // This ensures it gets added to the right scene instead of just the active scene
-                    initialParent = ContextTransform;
-                }
-            }
-
-            bool positionAndRotationWereSet;
             GameObject gameObj;
+            bool positionOrRotationWereSet;
 
-            if (gameObjectBindInfo.Position.HasValue && gameObjectBindInfo.Rotation.HasValue)
+            if (creationParameters.Position.HasValue && creationParameters.Rotation.HasValue)
             {
-                gameObj = Object.Instantiate(
-                    prefabAsGameObject, gameObjectBindInfo.Position.Value, gameObjectBindInfo.Rotation.Value, initialParent);
-                positionAndRotationWereSet = true;
+                gameObj = Object.Instantiate(prefab, creationParameters.Position.Value, creationParameters.Rotation.Value, initialParent);
+                positionOrRotationWereSet = true;
             }
-            else if (gameObjectBindInfo.Position.HasValue)
+            else if (creationParameters.Position.HasValue)
             {
-                gameObj = Object.Instantiate(
-                    prefabAsGameObject, gameObjectBindInfo.Position.Value, prefabAsGameObject.transform.rotation, initialParent);
-                positionAndRotationWereSet = true;
+                gameObj = Object.Instantiate(prefab, creationParameters.Position.Value, prefab.transform.rotation, initialParent);
+                positionOrRotationWereSet = true;
             }
-            else if (gameObjectBindInfo.Rotation.HasValue)
+            else if (creationParameters.Rotation.HasValue)
             {
-                gameObj = Object.Instantiate(
-                    prefabAsGameObject, prefabAsGameObject.transform.position, gameObjectBindInfo.Rotation.Value, initialParent);
-                positionAndRotationWereSet = true;
+                gameObj = Object.Instantiate(prefab, prefab.transform.position, creationParameters.Rotation.Value, initialParent);
+                positionOrRotationWereSet = true;
             }
             else
             {
-                gameObj = Object.Instantiate(prefabAsGameObject, initialParent);
-                positionAndRotationWereSet = false;
+                gameObj = Object.Instantiate(prefab, initialParent);
+                positionOrRotationWereSet = false;
             }
 
-#if !UNITY_EDITOR
-            if (prefabWasActive)
-            {
-                prefabAsGameObject.SetActive(true);
-            }
-#else
-            if (prefabWasActive)
-            {
-                gameObj.SetActive(false);
-
-                if (parent == null)
-                {
-                    gameObj.transform.SetParent(ContextTransform, positionAndRotationWereSet);
-                }
-            }
-#endif
+            prefab.SetActive(true);
 
             if (gameObj.transform.parent != parent)
-            {
-                gameObj.transform.SetParent(parent, positionAndRotationWereSet);
-            }
+                gameObj.transform.SetParent(parent, positionOrRotationWereSet);
 
             return gameObj;
         }
@@ -351,11 +277,11 @@ namespace Zenject
 
         public object Instantiate(Type concreteType, [CanBeNull] object[] extraArgs = null)
         {
-            Assert.That(!concreteType.DerivesFrom<Component>(),
-                "Error occurred while instantiating object of type '{0}'. Instantiator should not be used to create new mono behaviours.  Must use InstantiatePrefabForComponent, InstantiatePrefab, or InstantiateComponent.",
-                concreteType);
+            Assert.IsFalse(concreteType.DerivesFrom<Component>(),
+                "Error occurred while instantiating object of type '{0}'. Instantiator should not be used to create new mono behaviours.  Must use InstantiatePrefabForComponent, InstantiatePrefab, or InstantiateComponent."
+                    .Fmt(concreteType));
 
-            Assert.That(!concreteType.IsAbstract, "Expected type '{0}' to be non-abstract", concreteType);
+            Assert.IsFalse(concreteType.IsAbstract, "Expected type '{0}' to be non-abstract".Fmt(concreteType));
 
             FlushBindings();
 
@@ -364,7 +290,7 @@ namespace Zenject
             object newObj;
 
             Assert.IsNotNull(typeInfo.InjectConstructor.ConstructorInfo,
-                "More than one (or zero) constructors found for type '{0}' when creating dependencies.  Use one [Inject] attribute to specify which to use.", concreteType);
+                "More than one (or zero) constructors found for type '{0}' when creating dependencies.  Use one [Inject] attribute to specify which to use.".Fmt(concreteType));
 
             // Make a copy since we remove from it below
             var paramValues = ParamArrayPool.Rent(typeInfo.InjectConstructor.Parameters.Length);
@@ -392,8 +318,7 @@ namespace Zenject
                 }
                 catch (Exception e)
                 {
-                    throw Assert.CreateException(
-                        e, "Error occurred while instantiating object with type '{0}'", concreteType);
+                    throw new Exception("Error occurred while instantiating object with type '{0}'".Fmt(concreteType), e);
                 }
             }
             finally
@@ -401,7 +326,7 @@ namespace Zenject
                 ParamArrayPool.Release(paramValues);
             }
 
-            Assert.That(newObj.GetType() == concreteType);
+            Assert.IsTrue(newObj.GetType() == concreteType);
             Inject(newObj, extraArgs);
 
             return newObj;
@@ -428,7 +353,7 @@ namespace Zenject
         public Component InstantiateComponent(
             Type componentType, GameObject gameObject, [CanBeNull] object[] extraArgs = null)
         {
-            Assert.That(componentType.DerivesFrom<Component>());
+            Assert.IsTrue(componentType.DerivesFrom<Component>());
 
             FlushBindings();
 
@@ -451,14 +376,14 @@ namespace Zenject
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(Object prefab, Transform parentTransform)
+        public GameObject InstantiatePrefab(GameObject prefab, Transform parentTransform)
         {
             return InstantiatePrefab(
                 prefab, new GameObjectCreationParameters {ParentTransform = parentTransform});
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(Object prefab, Vector3 position, Quaternion rotation, Transform parentTransform)
+        public GameObject InstantiatePrefab(GameObject prefab, Vector3 position, Quaternion rotation, Transform parentTransform)
         {
             return InstantiatePrefab(
                 prefab, new GameObjectCreationParameters
@@ -470,33 +395,16 @@ namespace Zenject
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(Object prefab, GameObjectCreationParameters gameObjectBindInfo = default)
+        public GameObject InstantiatePrefab(GameObject prefab, GameObjectCreationParameters gameObjectBindInfo = default)
         {
             FlushBindings();
-
-            bool shouldMakeActive;
-            var gameObj = CreateAndParentPrefab(
-                prefab, gameObjectBindInfo, out shouldMakeActive);
-
-            InjectGameObject(gameObj);
-
-            if (shouldMakeActive)
-            {
-                gameObj.SetActive(true);
-            }
-
+            var gameObj = InstantiateGameObjectInactive(prefab, gameObjectBindInfo);
+            gameObj.GetComponent<InjectTargetCollection>().Inject(this);
+            gameObj.SetActive(true);
             return gameObj;
         }
 
         // Inject dependencies into any and all child components on the given game object
-        public void InjectGameObject(GameObject gameObject)
-        {
-            FlushBindings();
-
-            var injectTargetCollection = gameObject.GetComponent<InjectTargetCollection>();
-            foreach (var target in injectTargetCollection.Targets)
-                Inject(target);
-        }
 #endif
 
         // Same as Inject(injectable) except allows adding extra values to be injected
@@ -599,7 +507,6 @@ namespace Zenject
         // You shouldn't need to use this
         public bool HasBinding(InjectableInfo context)
         {
-            Assert.IsNotNull(context);
             FlushBindings();
             return _containerChain.TryGetFirstProvider(context.BindingId, context.SourceType, out _);
         }
@@ -624,7 +531,7 @@ namespace Zenject
         // Don't use this method
         public BindInfoBuilder StartBinding(bool flush = true)
         {
-            Assert.That(!_isFinalizingBinding,
+            Assert.IsFalse(_isFinalizingBinding,
                 "Attempted to start a binding during a binding finalizer.  This is not allowed, since binding finalizers should directly use AddProvider instead, to allow for bindings to be inherited properly without duplicates");
 
             if (flush) FlushBindings();

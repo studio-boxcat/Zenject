@@ -82,7 +82,7 @@ namespace Zenject
 
         public BindInfoBuilder FromComponentOn(GameObject gameObject)
         {
-            BindingUtil.AssertIsValidGameObject(gameObject);
+            Assert.IsNotNull(gameObject, "Received null game object during bind command");
             _bindInfo.ProviderFactory = (_, bindInfo) => new GetFromGameObjectComponentProvider(
                 bindInfo.ConcreteType, gameObject);
             return this;
@@ -102,7 +102,7 @@ namespace Zenject
 
         public BindInfoBuilder FromNewComponentOn(GameObject gameObject)
         {
-            BindingUtil.AssertIsValidGameObject(gameObject);
+            Assert.IsNotNull(gameObject, "Received null game object during bind command");
             _bindInfo.ProviderFactory = (container, bindInfo) => new AddToExistingGameObjectComponentProvider(
                 gameObject, container, bindInfo.ConcreteType, bindInfo.Arguments);
             return this;

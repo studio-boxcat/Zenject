@@ -1,6 +1,7 @@
 using System;
 using ModestTree;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -22,12 +23,8 @@ namespace Zenject
         public object GetInstance()
         {
             var gameObject = _gameObjectGetter(_container);
-
             var match = gameObject.GetComponent(_componentType);
-
-            Assert.IsNotNull(match, "Could not find component with type '{0}' on game object '{1}'",
-                _componentType, gameObject.name);
-
+            Assert.IsNotNull(match, "Could not find component with type '{0}' on game object '{1}'".Fmt(_componentType, gameObject.name));
             return match;
         }
     }

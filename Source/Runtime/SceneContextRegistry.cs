@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ModestTree;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -9,7 +10,7 @@ namespace Zenject
 
         public static void Add(SceneContext context)
         {
-            Assert.That(!List.Contains(context));
+            Assert.IsFalse(List.Contains(context));
             List.Add(context);
         }
 

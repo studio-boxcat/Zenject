@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ModestTree;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -17,7 +18,7 @@ namespace Zenject
 
         public void Dispose()
         {
-            Assert.That(!_disposed, "Tried to dispose DisposableManager twice!");
+            Assert.IsFalse(_disposed, "Tried to dispose DisposableManager twice!");
             _disposed = true;
 
             foreach (var disposable in _disposables)
@@ -28,8 +29,7 @@ namespace Zenject
                 }
                 catch (Exception e)
                 {
-                    throw Assert.CreateException(
-                        e, "Error occurred while disposing IDisposable with type '{0}'", disposable.GetType());
+                    throw new Exception("Error occurred while disposing IDisposable with type '{0}'".Fmt(disposable.GetType()), e);
                 }
             }
         }

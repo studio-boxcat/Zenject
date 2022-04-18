@@ -1,6 +1,7 @@
 using System;
 using JetBrains.Annotations;
 using ModestTree;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -15,9 +16,7 @@ namespace Zenject
             DiContainer container,
             [CanBeNull] object[] extraArguments)
         {
-            Assert.That(!concreteType.IsAbstract,
-                "Expected non-abstract type for given binding but instead found type '{0}'",
-                concreteType);
+            Assert.IsFalse(concreteType.IsAbstract, "Expected non-abstract type for given binding but instead found type '{0}'".Fmt(concreteType));
 
             _concreteType = concreteType;
             _container = container;
