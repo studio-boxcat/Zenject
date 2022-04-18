@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using ModestTree;
@@ -13,23 +12,10 @@ namespace Zenject.Internal
     {
         public static InjectTypeInfo GetReflectionInfo(Type type)
         {
-            AssertNoPropertyInjection(type);
-
             return new InjectTypeInfo(
                 GetConstructorInfo(type),
                 GetMethodInfo(type),
                 GetFieldInfos(type));
-        }
-
-        [Conditional("DEBUG")]
-        static void AssertNoPropertyInjection(Type type)
-        {
-            foreach (var property in type.InstanceProperties())
-            {
-                var injectAttr = property.GetCustomAttribute<InjectAttributeBase>();
-                if (injectAttr == null) continue;
-                throw new Exception("프로퍼티 인젝션이 사용되었습니다: " + type.PrettyName());
-            }
         }
 
         static InjectTypeInfo.InjectFieldInfo[] GetFieldInfos(Type type)
@@ -67,10 +53,10 @@ namespace Zenject.Internal
             // This is so that we can ignore inherited attributes, which is necessary
             // otherwise a base class method marked with [Inject] would cause all overridden
             // derived methods to be added as well
-            foreach (var methodInfo in type.InstanceMethods())
+            foreach (var methodInfo in methodInfos)
             {
                 if (methodInfo.IsDefined(typeof(InjectAttributeBase)) == false) continue;
-                return new InjectTypeInfo.InjectMethodInfo(methodInfo, BakeInjectParameterInfos(type, methodInfo));
+                return new InjectTypeInfo.InjectMethodInfo(methodInfo, BakeInjectParameterInfos(methodInfo));
             }
 
             return default;
@@ -80,62 +66,32 @@ namespace Zenject.Internal
         {
             var constructor = TryGetInjectConstructor(type);
             return constructor != null
-                ? new InjectTypeInfo.InjectConstructorInfo(constructor, BakeInjectParameterInfos(type, constructor))
+                ? new InjectTypeInfo.InjectConstructorInfo(constructor, BakeInjectParameterInfos(constructor))
                 : new InjectTypeInfo.InjectConstructorInfo(null, Array.Empty<InjectableInfo>());
         }
 
-        static InjectableInfo[] BakeInjectParameterInfos(Type type, MethodBase methodInfo)
+        static InjectableInfo[] BakeInjectParameterInfos(MethodBase methodInfo)
         {
             var paramInfos = methodInfo.GetParameters();
             var injectParamInfos = new InjectableInfo[paramInfos.Length];
             for (var i = 0; i < paramInfos.Length; i++)
-                injectParamInfos[i] = CreateInjectableInfoForParam(type, paramInfos[i]);
+                injectParamInfos[i] = CreateInjectableInfoForParam(paramInfos[i]);
             return injectParamInfos;
         }
 
-        static InjectableInfo CreateInjectableInfoForParam(
-            Type parentType, ParameterInfo paramInfo)
+        static InjectableInfo CreateInjectableInfoForParam(ParameterInfo paramInfo)
         {
-            var injectAttributes = paramInfo.GetCustomAttributes<InjectAttributeBase>().ToList();
-
-            Assert.That(injectAttributes.Count <= 1,
-                "Found multiple 'Inject' attributes on type parameter '{0}' of type '{1}'.  Parameter should only have one", paramInfo.Name, parentType);
-
-            var injectAttr = injectAttributes.SingleOrDefault();
-
-            object identifier = null;
-            var isOptional = false;
-            var sourceType = InjectSources.Any;
-
-            if (injectAttr != null)
-            {
-                identifier = injectAttr.Id;
-                isOptional = injectAttr.Optional;
-                sourceType = injectAttr.Source;
-            }
-
-            return new InjectableInfo(paramInfo.ParameterType,
-                identifier, sourceType, isOptional);
+            var injectAttr = paramInfo.GetCustomAttribute<InjectAttributeBase>();
+            return injectAttr != null
+                ? new InjectableInfo(paramInfo.ParameterType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
+                : new InjectableInfo(paramInfo.ParameterType, 0, InjectSources.Any);
         }
 
-        static InjectableInfo GetInjectableInfoForMember(MemberInfo memInfo, InjectAttributeBase injectAttr)
+        static InjectableInfo GetInjectableInfoForMember(FieldInfo fieldInfo, InjectAttributeBase injectAttr)
         {
-            object identifier = null;
-            var isOptional = false;
-            var sourceType = InjectSources.Any;
-
-            if (injectAttr != null)
-            {
-                identifier = injectAttr.Id;
-                isOptional = injectAttr.Optional;
-                sourceType = injectAttr.Source;
-            }
-
-            var memberType = memInfo is FieldInfo fieldInfo
-                ? fieldInfo.FieldType : ((PropertyInfo) memInfo).PropertyType;
-
-            return new InjectableInfo(memberType,
-                identifier, sourceType, isOptional);
+            return injectAttr != null
+                ? new InjectableInfo(fieldInfo.FieldType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
+                : new InjectableInfo(fieldInfo.FieldType, 0, InjectSources.Any);
         }
 
         static ConstructorInfo TryGetInjectConstructor(Type type)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using ModestTree;
 
@@ -8,35 +9,29 @@ namespace Zenject
     public readonly struct BindingId : IEquatable<BindingId>
     {
         public readonly Type Type;
-        public readonly object Identifier;
+        public readonly int Identifier;
 
-        public BindingId(Type type, object identifier)
+        public BindingId(Type type, int identifier)
         {
             Type = type;
             Identifier = identifier;
         }
 
-        public override string ToString()
+        public override string ToString() => $"{Type.PrettyName()} ({Identifier})";
+
+        public bool Equals(BindingId other) => Type == other.Type && Identifier == other.Identifier;
+        public override bool Equals(object obj) => obj is BindingId other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(Type, Identifier);
+
+        public static bool operator ==(BindingId a, BindingId b) => a.Equals(b);
+        public static bool operator !=(BindingId a, BindingId b) => !a.Equals(b);
+
+        public static IEqualityComparer<BindingId> Comparer = new TypeIdentifierEqualityComparer();
+
+        sealed class TypeIdentifierEqualityComparer : IEqualityComparer<BindingId>
         {
-            if (Identifier == null) return Type.PrettyName();
-            return "{0} (ID: {1})".Fmt(Type, Identifier);
+            public bool Equals(BindingId x, BindingId y) => x.Equals(y);
+            public int GetHashCode(BindingId obj) => obj.GetHashCode();
         }
-
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                var hash = 17;
-                hash = hash * 29 + Type.GetHashCode();
-                hash = hash * 29 + (Identifier == null ? 0 : Identifier.GetHashCode());
-                return hash;
-            }
-        }
-
-        public override bool Equals(object other) => other is BindingId otherId && otherId == this;
-        public bool Equals(BindingId that) => this == that;
-
-        public static bool operator ==(BindingId left, BindingId right) => left.Type == right.Type && Equals(left.Identifier, right.Identifier);
-        public static bool operator !=(BindingId left, BindingId right) => !left.Equals(right);
     }
 }

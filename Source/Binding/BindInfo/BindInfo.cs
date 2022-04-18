@@ -1,72 +1,41 @@
 using System;
-using System.Collections.Generic;
 using JetBrains.Annotations;
-using Zenject.Internal;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public enum ScopeTypes
-    {
-        Unset,
-        Transient,
-        Singleton
-    }
+    public delegate IProvider ProviderFactory(DiContainer container, BindInfo bindInfo);
 
-    public enum ToChoices
+    public struct BindInfo
     {
-        Self,
-        Concrete
-    }
-
-    public enum InvalidBindResponses
-    {
-        Assert,
-        Skip
-    }
-
-    public class BindInfo : IDisposable
-    {
-        public bool MarkAsCreationBinding;
-        public bool MarkAsUniqueSingleton;
-        public bool RequireExplicitScope;
-        public object Identifier;
-        public readonly List<Type> ContractTypes;
-        public InvalidBindResponses InvalidBindResponse;
-        public bool NonLazy;
-        public ToChoices ToChoice;
-        [CanBeNull]
-        public Type ToType; // Only relevant with ToChoices.Concrete
-        public ScopeTypes Scope;
-        [CanBeNull]
+        public Type ConcreteType;
+        public int Identifier;
         public object[] Arguments;
+        public bool BindConcreteType;
+        public bool BindInterfaces;
+        public bool NonLazy;
 
-        public BindInfo()
+        [CanBeNull]
+        public ProviderFactory ProviderFactory;
+        [CanBeNull]
+        public object Instance;
+
+        // BindInfo.ProviderFactory = (container, type) => new TransientProvider(
+        //     type, container, BindInfo.Arguments));
+
+        public bool ContractTypeExists()
         {
-            ContractTypes = new List<Type>();
-            ToType = null;
-            Arguments = null;
-
-            Reset();
+            return (ConcreteType != null && BindConcreteType) || BindInterfaces;
         }
 
-        public void Dispose()
+        public TypeArray BakeContractTypes()
         {
-            ZenPools.DespawnBindInfo(this);
-        }
-
-        public void Reset()
-        {
-            MarkAsCreationBinding = true;
-            MarkAsUniqueSingleton = false;
-            RequireExplicitScope = false;
-            Identifier = null;
-            ContractTypes.Clear();
-            InvalidBindResponse = InvalidBindResponses.Assert;
-            NonLazy = false;
-            ToChoice = ToChoices.Self;
-            ToType = null;
-            Scope = ScopeTypes.Unset;
-            Arguments = null;
+            Assert.IsTrue(BindConcreteType || BindInterfaces);
+            if (!BindInterfaces)
+                return new TypeArray(ConcreteType);
+            if (!BindConcreteType)
+                return new TypeArray(ConcreteType.GetInterfaces());
+            return new TypeArray(ConcreteType, ConcreteType.GetInterfaces());
         }
     }
 }

@@ -1,9 +1,7 @@
 #if !NOT_UNITY3D
 
-using System;
 using ModestTree;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Zenject
 {
@@ -62,37 +60,11 @@ namespace Zenject
             Assert.IsNull(_container);
 
             _container = new DiContainer();
-
-            var injectableMonoBehaviours = gameObject.TryGetComponent(out InjectTargetCollection injectTargetCollection)
-                ? injectTargetCollection.Targets : Array.Empty<Object>();
-            _container.QueueForInject(injectableMonoBehaviours);
-
-            _container.IsInstalling = true;
-
-            try
-            {
-                InstallBindings(injectableMonoBehaviours);
-            }
-            finally
-            {
-                _container.IsInstalling = false;
-            }
-
-            _container.ResolveRoots();
-        }
-
-        void InstallBindings(Object[] injectableMonoBehaviours)
-        {
-            ContextUtils.InstallBindings_Managers(_container);
-
-            _container.Bind<Context>().FromInstance(this).AsSingle();
-
-            _container.Bind(typeof(ProjectKernel))
-                .To<ProjectKernel>().FromNewComponentOn(gameObject).AsSingle().NonLazy();
-
-            ContextUtils.InstallBindings_ZenjectBindings(this, injectableMonoBehaviours);
-
+            _container.Bind(typeof(TickableManager));
+            _container.Bind(typeof(DisposableManager));
+            _container.Bind(typeof(ProjectKernel)).FromNewComponentOn(gameObject).NonLazy();
             InstallInstallers();
+            _container.ResolveRoots();
         }
     }
 }

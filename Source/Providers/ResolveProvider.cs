@@ -6,14 +6,14 @@ namespace Zenject
     {
         readonly DiContainer _container;
         readonly Type _contractType;
-        readonly object _identifier;
+        readonly int _identifier;
         readonly InjectSources _source;
         readonly bool _isOptional;
 
         public ResolveProvider(
             DiContainer container,
             Type contractType,
-            object identifier,
+            int identifier,
             InjectSources source,
             bool isOptional)
         {

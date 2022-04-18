@@ -6,25 +6,27 @@ namespace Zenject
 {
     public class TransientProvider : IProvider
     {
-        readonly DiContainer _container;
         readonly Type _concreteType;
+        readonly DiContainer _container;
         [CanBeNull] readonly object[] _extraArguments;
 
-        public TransientProvider(Type concreteType, DiContainer container,
+        public TransientProvider(
+            Type concreteType,
+            DiContainer container,
             [CanBeNull] object[] extraArguments)
         {
             Assert.That(!concreteType.IsAbstract,
                 "Expected non-abstract type for given binding but instead found type '{0}'",
                 concreteType);
 
-            _container = container;
             _concreteType = concreteType;
+            _container = container;
             _extraArguments = extraArguments;
         }
 
         public object GetInstance()
         {
-            var instance = _container.InstantiateExplicit(_concreteType, false, _extraArguments);
+            var instance = _container.Instantiate(_concreteType, _extraArguments);
             _container.Inject(instance, _extraArguments);
             return instance;
         }

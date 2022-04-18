@@ -1,56 +1,32 @@
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Zenject
 {
     public class TickableManager
     {
-        [Inject(Optional = true, Source = InjectSources.Local)]
-        readonly List<ITickable> _tickables = null;
+        readonly List<ITickable> _tickables;
+        readonly List<ILateTickable> _lateTickables;
 
-        [Inject(Optional = true, Source = InjectSources.Local)]
-        readonly List<ILateTickable> _lateTickables = null;
-
-        readonly TickablesTaskUpdater _updater = new();
-        readonly LateTickablesTaskUpdater _lateUpdater = new();
-
-        [Inject]
-        public void Initialize()
+        public TickableManager(List<ITickable> tickables, List<ILateTickable> lateTickables)
         {
-            InitTickables();
-            InitLateTickables();
-        }
-
-        void InitTickables()
-        {
-            foreach (var tickable in _tickables)
-            {
-                // Note that we use zero for unspecified priority
-                // This is nice because you can use negative or positive for before/after unspecified
-                var priority = tickable.GetType().GetCustomAttribute<ExecutionPriorityAttribute>()?.Priority ?? 0;
-                _updater.AddTask(tickable, priority);
-            }
-        }
-
-        void InitLateTickables()
-        {
-            foreach (var tickable in _lateTickables)
-            {
-                // Note that we use zero for unspecified priority
-                // This is nice because you can use negative or positive for before/after unspecified
-                var priority = tickable.GetType().GetCustomAttribute<ExecutionPriorityAttribute>()?.Priority ?? 0;
-                _lateUpdater.AddTask(tickable, priority);
-            }
+            _tickables = tickables;
+            _lateTickables = lateTickables;
         }
 
         public void Update()
         {
-            _updater.UpdateAll();
+            // XXX: 재진입을 지원하기 위해서 Count 까지만 업데이트.
+            var count = _tickables.Count;
+            for (var i = 0; i < count; i++)
+                _tickables[i].Tick();
         }
 
         public void LateUpdate()
         {
-            _lateUpdater.UpdateAll();
+            // XXX: 재진입을 지원하기 위해서 Count 까지만 업데이트.
+            var count = _lateTickables.Count;
+            for (var i = 0; i < count; i++)
+                _lateTickables[i].LateTick();
         }
     }
 }

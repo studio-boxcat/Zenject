@@ -4,16 +4,7 @@ using System.Diagnostics;
 using ModestTree;
 using Zenject.Internal;
 using System.Linq;
-using TypeExtensions = ModestTree.TypeExtensions;
-
-#if !NOT_UNITY3D
 using UnityEngine;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
-#endif
 
 namespace Zenject
 {
@@ -30,7 +21,7 @@ namespace Zenject
             // Unfortunately we can't do this check because asset bundles return PrefabType.None here
             // as discussed here: https://github.com/svermeulen/Zenject/issues/269#issuecomment-323419408
             //Assert.That(PrefabUtility.GetPrefabType(prefab) == PrefabType.Prefab,
-                //"Expected prefab but found game object with name '{0}' during bind command", prefab.name);
+            //"Expected prefab but found game object with name '{0}' during bind command", prefab.name);
 #endif
         }
 
@@ -43,7 +34,7 @@ namespace Zenject
             // Unfortunately we can't do this check because asset bundles return PrefabType.None here
             // as discussed here: https://github.com/svermeulen/Zenject/issues/269#issuecomment-323419408
             //Assert.That(PrefabUtility.GetPrefabType(gameObject) != PrefabType.Prefab,
-                //"Expected game object but found prefab instead with name '{0}' during bind command", gameObject.name);
+            //"Expected game object but found prefab instead with name '{0}' during bind command", gameObject.name);
 #endif
         }
 
@@ -233,22 +224,8 @@ namespace Zenject
         [Conditional("DEBUG")]
         public static void AssertConcreteTypeListIsNotEmpty(IEnumerable<Type> concreteTypes)
         {
-            Assert.That(concreteTypes.Count() >= 1,
+            Assert.That(concreteTypes.Any(),
                 "Must supply at least one concrete type to the current binding");
-        }
-
-        [Conditional("DEBUG")]
-        public static void AssertIsDerivedFromTypes(
-            IEnumerable<Type> concreteTypes, IEnumerable<Type> parentTypes, InvalidBindResponses invalidBindResponse)
-        {
-            if (invalidBindResponse == InvalidBindResponses.Assert)
-            {
-                AssertIsDerivedFromTypes(concreteTypes, parentTypes);
-            }
-            else
-            {
-                Assert.IsEqual(invalidBindResponse, InvalidBindResponses.Skip);
-            }
         }
 
         [Conditional("DEBUG")]
@@ -263,19 +240,6 @@ namespace Zenject
         [Conditional("DEBUG")]
         public static void AssertIsDerivedFromTypes(Type concreteType, IEnumerable<Type> parentTypes)
         {
-            foreach (var parentType in parentTypes)
-            {
-                AssertIsDerivedFromType(concreteType, parentType);
-            }
-        }
-
-        [Conditional("DEBUG")]
-        public static void AssertIsDerivedFromTypes(
-            Type concreteType, IEnumerable<Type> parentTypes, InvalidBindResponses invalidBindResponse)
-        {
-            if (invalidBindResponse == InvalidBindResponses.Skip)
-                return;
-
             foreach (var parentType in parentTypes)
             {
                 AssertIsDerivedFromType(concreteType, parentType);
@@ -302,11 +266,6 @@ namespace Zenject
                 Assert.That(instance.GetType().DerivesFromOrEqual(baseType),
                     "Invalid type given during bind command.  Expected type '{0}' to derive from type '{1}'", instance.GetType(), baseType);
             }
-        }
-
-        public static IProvider CreateCachedProvider(IProvider creator)
-        {
-            return new CachedProvider(creator);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Zenject
     public readonly struct InjectableInfo
     {
         // The type of the constructor parameter, field or property
-        public readonly Type MemberType;
+        public readonly Type Type;
 
         // Identifier - most of the time this is null
         // It will match 'foo' in this example:
@@ -16,7 +16,7 @@ namespace Zenject
         //      ...
         //      ... In a constructor:
         //          public Foo([Inject(Id = "foo") Foo foo)
-        public readonly object Identifier;
+        public readonly int Identifier;
 
         // When set to true, this will only look up dependencies in the local container and will not
         // search in parent containers
@@ -25,39 +25,31 @@ namespace Zenject
         // When optional, null is a valid value to be returned
         public readonly bool Optional;
 
-        public BindingId BindingId => new(MemberType, Identifier);
+        public BindingId BindingId => new(Type, Identifier);
 
-        public InjectableInfo(Type memberType)
-            : this()
+
+        public InjectableInfo(Type type, int identifier = 0)
         {
-            MemberType = memberType;
+            Type = type;
+            Identifier = identifier;
+            SourceType = InjectSources.Any;
+            Optional = false;
         }
 
-        public InjectableInfo(Type memberType, object identifier)
-            : this(memberType)
+        public InjectableInfo(Type type, int identifier, bool optional = false)
         {
+            Type = type;
             Identifier = identifier;
-        }
-
-        public InjectableInfo(Type memberType, object identifier, bool optional) : this()
-        {
-            MemberType = memberType;
-            Identifier = identifier;
+            SourceType = InjectSources.Any;
             Optional = optional;
         }
 
-        public InjectableInfo(Type memberType, object identifier, InjectSources sourceType, bool optional = false)
+        public InjectableInfo(Type type, int identifier, InjectSources sourceType, bool optional = false)
         {
-            MemberType = memberType;
+            Type = type;
             Identifier = identifier;
             SourceType = sourceType;
             Optional = optional;
-        }
-
-        public InjectableInfo(BindingId bindingId) : this()
-        {
-            MemberType = bindingId.Type;
-            Identifier = bindingId.Identifier;
         }
 
         public override string ToString()

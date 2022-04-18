@@ -1,17 +1,16 @@
 using System;
-using ModestTree;
 
 namespace Zenject
 {
     public class GetterProvider<TObj, TResult> : IProvider
     {
         readonly DiContainer _container;
-        readonly object _identifier;
+        readonly int _identifier;
         readonly Func<TObj, TResult> _method;
         readonly InjectSources _sourceType;
 
         public GetterProvider(
-            object identifier, Func<TObj, TResult> method,
+            int identifier, Func<TObj, TResult> method,
             DiContainer container, InjectSources sourceType)
         {
             _container = container;

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using ModestTree;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -28,14 +28,14 @@ namespace Zenject
 
         public void AddInstances(object[] instances)
         {
-            Assert.That(!_isInjecting);
+            Assert.IsFalse(_isInjecting);
             _instancesToInject.AddRange(instances);
-            Assert.That(_instancesToInject.Distinct().Count() == _instancesToInject.Count);
+            Assert.AreEqual(_instancesToInject.Count, _instancesToInject.Distinct().Count());
         }
 
         public void LazyInjectAll()
         {
-            Assert.That(!_isInjecting);
+            Assert.IsFalse(_isInjecting);
             _isInjecting = true;
 
             foreach (var instance in _instancesToInject)
