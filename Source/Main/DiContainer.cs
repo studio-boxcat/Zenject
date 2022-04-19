@@ -7,7 +7,6 @@ using Zenject.Internal;
 using Object = UnityEngine.Object;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Pool;
 
 namespace Zenject
 {
@@ -112,18 +111,6 @@ namespace Zenject
             return list;
         }
 
-        public object Resolve(BindingId id)
-        {
-            if (TryResolve(id.Type, id.Identifier, InjectSources.Any, out var instance))
-            {
-                return instance;
-            }
-            else
-            {
-                throw new Exception("Failed to Resolve: " + id);
-            }
-        }
-
         public object Resolve(InjectableInfo context)
         {
             if (TryResolve(context.Type, context.Identifier, context.SourceType, out var instance))
@@ -136,7 +123,7 @@ namespace Zenject
             }
         }
 
-        void CallInjectMethodsTopDown(object injectable, InjectTypeInfo typeInfo, object[] extraArgs)
+        void CallInjectMethods(object injectable, InjectTypeInfo typeInfo, object[] extraArgs)
         {
             var method = typeInfo.InjectMethod;
             if (method.MethodInfo == null)
@@ -402,14 +389,12 @@ namespace Zenject
         // the argument list to avoid errors converting to IEnumerable<object>
         public void Inject(object injectable, [CanBeNull] object[] extraArgs = null)
         {
-            var typeInfo = TypeAnalyzer.GetInfo(injectable.GetType());
-
             FlushBindings();
 
+            var typeInfo = TypeAnalyzer.GetInfo(injectable.GetType());
             foreach (var injectField in typeInfo.InjectFields)
                 InjectMember(injectField.Info, injectField, injectable, extraArgs);
-
-            CallInjectMethodsTopDown(injectable, typeInfo, extraArgs);
+            CallInjectMethods(injectable, typeInfo, extraArgs);
         }
 
         public bool TryResolve(Type type, int identifier, InjectSources sourceType, out object instance)

@@ -1,39 +1,39 @@
-#if !NOT_UNITY3D
-
 using System;
+using Sirenix.OdinInspector;
+using UnityEngine;
 
 namespace Zenject
 {
-    public class SceneContext : Context
+    public class SceneContext : MonoBehaviour
     {
         public static Action<DiContainer> ExtraBindingsInstallMethod;
 
-        DiContainer _container;
+        public DiContainer Container;
 
-        public override DiContainer Container => _container;
+        [InlineProperty, HideLabel]
+        public InstallerCollection InstallerCollection;
 
         public void Awake()
         {
             SceneContextRegistry.Add(this);
 
-            _container = new DiContainer(ProjectContext.Instance.Container);
+            Container = new DiContainer(ProjectContext.Instance.Container);
 
-            _container.Bind(typeof(TickableManager));
-            _container.Bind(typeof(DisposableManager));
-            _container.Bind(typeof(MonoKernel)).FromNewComponentOn(gameObject).NonLazy();
+            Container.Bind(typeof(MonoKernel)).FromNewComponentOn(gameObject).NonLazy();
 
-            gameObject.GetComponent<ZenjectBindingCollection>().Bind(_container);
-            _container.QueueForInject(gameObject.GetComponent<InjectTargetCollection>().Targets);
+            gameObject.GetComponent<ZenjectBindingCollection>().Bind(Container);
+            Container.QueueForInject(gameObject.GetComponent<InjectTargetCollection>().Targets);
 
             if (ExtraBindingsInstallMethod != null)
             {
-                ExtraBindingsInstallMethod(_container);
+                ExtraBindingsInstallMethod(Container);
                 ExtraBindingsInstallMethod = null;
             }
 
-            InstallInstallers();
+            InstallerCollection.InjectAndInstall(Container);
+            InstallerCollection = default;
 
-            _container.ResolveRoots();
+            Container.ResolveRoots();
         }
 
         void OnDestroy()
@@ -42,5 +42,3 @@ namespace Zenject
         }
     }
 }
-
-#endif

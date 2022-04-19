@@ -95,11 +95,6 @@ namespace Zenject
             return this;
         }
 
-        public BindInfoBuilder FromComponentOnRoot()
-        {
-            return FromComponentOn(container => container.Resolve<Context>().gameObject);
-        }
-
         public BindInfoBuilder FromNewComponentOn(GameObject gameObject)
         {
             Assert.IsNotNull(gameObject, "Received null game object during bind command");

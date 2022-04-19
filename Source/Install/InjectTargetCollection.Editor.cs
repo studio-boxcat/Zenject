@@ -5,7 +5,6 @@ using System.Linq;
 using ModestTree;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.SceneManagement;
 using Zenject.Internal;
 using Object = UnityEngine.Object;
@@ -14,28 +13,20 @@ namespace Zenject
 {
     public partial class InjectTargetCollection
     {
-        [Button("Collect In Scene", ButtonSizes.Medium)]
-        void Editor_CollectInScene()
+        [Button("Collect", ButtonSizes.Medium)]
+        void Editor_Collect()
         {
-            Targets = Internal_CollectInScene();
+            Targets = gameObject.TryGetComponent<SceneContext>(out _)
+                ? Internal_CollectInScene()
+                : Internal_CollectUnderGameObject(gameObject);
         }
 
-        [Button("Collect Under GameObject", ButtonSizes.Medium)]
-        void Editor_CollectUnderGameObject()
+        bool Validate_Targets()
         {
-            Targets = Internal_CollectUnderGameObject(gameObject);
-        }
-
-        void Validate_Targets()
-        {
-            if (name == "SceneContext")
-            {
-                Assert.IsTrue(Targets.SequenceEqual(Internal_CollectInScene()));
-            }
-            else
-            {
-                Assert.IsTrue(Targets.SequenceEqual(Internal_CollectUnderGameObject(gameObject)));
-            }
+            var compare = gameObject.TryGetComponent<SceneContext>(out _)
+                ? Internal_CollectInScene()
+                : Internal_CollectUnderGameObject(gameObject);
+            return Targets.SequenceEqual(compare);
         }
 
         static Object[] Internal_CollectInScene()

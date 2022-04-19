@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ModestTree;
+using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
@@ -19,6 +20,16 @@ namespace Zenject
             bool removed = List.Remove(context);
             if (!removed) Log.Warn("Failed to remove SceneContext from SceneContextRegistry");
         }
-    }
 
+        public static void ForceUnloadAllScenes()
+        {
+            for (var i = List.Count - 1; i >= 0; i--)
+            {
+                var sceneContext = List[i];
+                Object.Destroy(sceneContext.gameObject);
+            }
+
+            Assert.AreEqual(0, List.Count);
+        }
+    }
 }

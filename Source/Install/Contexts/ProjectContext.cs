@@ -1,19 +1,12 @@
-#if !NOT_UNITY3D
-
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public class ProjectContext : Context
+    public class ProjectContext : MonoBehaviour
     {
         static ProjectContext _instance;
-
-        DiContainer _container;
-
-        public override DiContainer Container => _container;
-
-        public static bool HasInstance => _instance != null;
 
         public static ProjectContext Instance
         {
@@ -24,6 +17,13 @@ namespace Zenject
                 return _instance;
             }
         }
+
+        public static bool HasInstance => _instance != null;
+
+        public DiContainer Container;
+
+        [InlineProperty, HideLabel]
+        public InstallerCollection InstallerCollection;
 
         static void InstantiateAndInitialize()
         {
@@ -56,19 +56,16 @@ namespace Zenject
 
         void Initialize()
         {
-            Assert.IsNull(_container);
+            Assert.IsNull(Container);
 
-            _container = new DiContainer();
+            Container = new DiContainer();
 
-            _container.Bind(typeof(TickableManager));
-            _container.Bind(typeof(DisposableManager));
-            _container.Bind(typeof(ProjectKernel)).FromNewComponentOn(gameObject).NonLazy();
+            Container.Bind(typeof(MonoKernel)).FromNewComponentOn(gameObject).NonLazy();
 
-            InstallInstallers();
+            InstallerCollection.InjectAndInstall(Container);
+            InstallerCollection = default;
 
-            _container.ResolveRoots();
+            Container.ResolveRoots();
         }
     }
 }
-
-#endif
