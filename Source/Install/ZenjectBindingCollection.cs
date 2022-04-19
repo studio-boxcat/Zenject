@@ -18,6 +18,7 @@ namespace Zenject
         {
             foreach (var binding in Bindings)
                 binding.Bind(diContainer);
+            Bindings = null;
         }
     }
 }

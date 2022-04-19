@@ -20,6 +20,7 @@ namespace Zenject
         {
             foreach (var target in Targets)
                 diContainer.Inject(target);
+            Targets = null;
         }
     }
 }
