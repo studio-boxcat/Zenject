@@ -530,6 +530,20 @@ namespace Zenject
             return StartBinding().BindSelf(contractType);
         }
 
+        //  This is simply a shortcut to using the FromInstance method.
+        //
+        //  Example:
+        //      Container.BindInstance(new Foo());
+        //
+        //  This line above is equivalent to the following:
+        //
+        //      Container.Bind<Foo>().FromInstance(new Foo());
+        //
+        public BindInfoBuilder Bind(object instance)
+        {
+            return StartBinding().BindSelf(instance.GetType()).FromInstance(instance);
+        }
+
         // Bind all the interfaces for the given type to the same thing.
         //
         // Example:
@@ -556,6 +570,11 @@ namespace Zenject
             return BindInterfacesTo(typeof(T));
         }
 
+        public BindInfoBuilder BindInterfacesTo(object instance)
+        {
+            return BindInterfacesTo(instance.GetType()).FromInstance(instance);
+        }
+
         public BindInfoBuilder BindInterfacesAndSelfTo(Type type)
         {
             return StartBinding().BindInterfacesAndSelf(type);
@@ -567,18 +586,9 @@ namespace Zenject
             return BindInterfacesAndSelfTo(typeof(T));
         }
 
-        //  This is simply a shortcut to using the FromInstance method.
-        //
-        //  Example:
-        //      Container.BindInstance(new Foo());
-        //
-        //  This line above is equivalent to the following:
-        //
-        //      Container.Bind<Foo>().FromInstance(new Foo());
-        //
-        public BindInfoBuilder BindInstance<TContract>(TContract instance)
+        public BindInfoBuilder BindInterfacesAndSelfTo(object instance)
         {
-            return StartBinding().BindSelf(typeof(TContract)).FromInstance(instance);
+            return BindInterfacesAndSelfTo(instance.GetType()).FromInstance(instance);
         }
     }
 }
