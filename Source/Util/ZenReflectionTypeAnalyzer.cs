@@ -1,10 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using ModestTree;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
 namespace Zenject.Internal
@@ -19,9 +18,11 @@ namespace Zenject.Internal
                 GetFieldInfos(type));
         }
 
+        static readonly List<InjectTypeInfo.InjectFieldInfo> _fieldInfoBuffer = new();
+
         static InjectTypeInfo.InjectFieldInfo[] GetFieldInfos(Type type)
         {
-            var list = ListPool<InjectTypeInfo.InjectFieldInfo>.Get();
+            _fieldInfoBuffer.Clear();
 
             while (type != null
                    && type != typeof(object)
@@ -29,25 +30,23 @@ namespace Zenject.Internal
                    && type != typeof(MonoBehaviour)
                    && type != typeof(ScriptableObject))
             {
-                foreach (var field in type.InstanceFields())
+                foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
                 {
                     var injectAttr = field.GetCustomAttribute<InjectAttributeBase>();
                     if (injectAttr == null) continue;
-                    var propertyInfo = new InjectTypeInfo.InjectFieldInfo(field, GetInjectableInfoForMember(field, injectAttr));
-                    list.Add(propertyInfo);
+                    var fieldInfo = new InjectTypeInfo.InjectFieldInfo(field, GetInjectableInfoForMember(field, injectAttr));
+                    _fieldInfoBuffer.Add(fieldInfo);
                 }
 
                 type = type.BaseType;
             }
 
-            var arr = list.ToArray();
-            ListPool<InjectTypeInfo.InjectFieldInfo>.Release(list);
-            return arr;
+            return _fieldInfoBuffer.ToArray();
         }
 
         static InjectTypeInfo.InjectMethodInfo GetMethodInfo(Type type)
         {
-            var methodInfos = type.InstanceMethods();
+            var methodInfos = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsTrue(methodInfos.Count(x => x.IsDefined(typeof(InjectAttributeBase))) <= 1);
 
             // Note that unlike with fields and properties we use GetCustomAttributes
@@ -97,7 +96,8 @@ namespace Zenject.Internal
 
         static ConstructorInfo TryGetInjectConstructor(Type type)
         {
-            var constructors = type.Constructors();
+            var constructors = type.GetConstructors(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
             if (constructors.Length == 0)
                 return null;

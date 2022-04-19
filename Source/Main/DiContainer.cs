@@ -95,31 +95,21 @@ namespace Zenject
             if (bindInfo.NonLazy) _nonLazyProviders.Add(providerIndex);
         }
 
+        static readonly List<ProviderProxy> _providerBuffer = new();
+
         public IList ResolveAll(Type type, int identifier, InjectSources sourceType)
         {
             Assert.IsTrue(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>));
 
+            _providerBuffer.Clear();
+
             var list = (IList) Activator.CreateInstance(type);
             var elementType = type.GetGenericArguments()[0];
+            _containerChain.GetMatchingProviders(new BindingId(elementType, identifier), sourceType, _providerBuffer);
 
-            // Note that different types can map to the same provider (eg. a base type to a concrete class and a concrete class to itself)
-
-            FlushBindings();
-
-            var providers = ListPool<ProviderProxy>.Get();
-
-            _containerChain.GetMatchingProviders(new BindingId(elementType, identifier), sourceType, providers);
-
-            try
-            {
-                foreach (var provider in providers)
-                    list.Add(provider.GetInstance());
-                return list;
-            }
-            finally
-            {
-                ListPool<ProviderProxy>.Release(providers);
-            }
+            foreach (var provider in _providerBuffer)
+                list.Add(provider.GetInstance());
+            return list;
         }
 
         public object Resolve(BindingId id)
