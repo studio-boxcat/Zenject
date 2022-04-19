@@ -21,8 +21,7 @@ namespace Zenject
 
         public object GetInstance()
         {
-            var subContext = new InjectableInfo(typeof(TObj), _identifier, _sourceType);
-            return _method((TObj) _container.Resolve(subContext));
+            return _method((TObj) _container.Resolve(typeof(TObj), _identifier, _sourceType));
         }
     }
 }

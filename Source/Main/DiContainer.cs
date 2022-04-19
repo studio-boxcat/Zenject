@@ -112,18 +112,6 @@ namespace Zenject
             return list;
         }
 
-        public object Resolve(InjectableInfo context)
-        {
-            if (TryResolve(context.Type, context.Identifier, context.SourceType, out var instance))
-            {
-                return instance;
-            }
-            else
-            {
-                throw new Exception("Failed to Resolve: " + context.BindingId);
-            }
-        }
-
         void CallInjectMethods(object injectable, InjectTypeInfo typeInfo, object[] extraArgs)
         {
             var method = typeInfo.InjectMethod;
@@ -462,9 +450,31 @@ namespace Zenject
             return Resolve<TContract>(identifier.GetHashCode());
         }
 
-        public object Resolve(Type contractType, int identifier = 0)
+        public object Resolve(Type contractType, int identifier = 0, InjectSources sourceType = InjectSources.Any)
         {
-            return Resolve(new InjectableInfo(contractType, identifier));
+            if (TryResolve(contractType, identifier, sourceType, out var instance))
+            {
+                return instance;
+            }
+            else
+            {
+                throw new Exception($"Failed to Resolve: {contractType.Name}, {identifier}, {sourceType}");
+            }
+        }
+
+        public object Resolve(InjectableInfo context)
+        {
+            if (TryResolve(context.Type, context.Identifier, context.SourceType, out var instance))
+            {
+                return instance;
+            }
+
+            if (context.Optional == false)
+            {
+                throw new Exception($"Failed to Resolve: {context.Type.Name}, {context.Identifier}, {context.SourceType}");
+            }
+
+            return null;
         }
 
         public bool HasBinding(Type contractType, int identifier = 0, InjectSources sourceType = InjectSources.Any)
