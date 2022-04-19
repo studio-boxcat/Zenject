@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine.Assertions;
 using Zenject.Internal;
 
 namespace Zenject
@@ -20,7 +19,6 @@ namespace Zenject
                 return typeInfo;
 
             typeInfo = ReflectionTypeAnalyzer.GetReflectionInfo(type);
-            Assert.IsTrue(typeInfo.IsInjectionRequired());
             _typeInfo.Add(type, typeInfo);
             return typeInfo;
         }
