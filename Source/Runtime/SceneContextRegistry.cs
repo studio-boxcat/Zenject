@@ -28,8 +28,6 @@ namespace Zenject
                 var sceneContext = List[i];
                 Object.Destroy(sceneContext.gameObject);
             }
-
-            Assert.AreEqual(0, List.Count);
         }
     }
 }
