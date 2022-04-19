@@ -9,8 +9,13 @@ namespace Zenject
 {
     public partial class ZenjectBindingCollection
     {
+        void Reset()
+        {
+            Editor_Collect();
+        }
+
         [Button("Collect", ButtonSizes.Medium)]
-        void Editor_CollectInScene()
+        void Editor_Collect()
         {
             Bindings = gameObject.TryGetComponent<SceneContext>(out _)
                 ? Internal_CollectInScene()
