@@ -47,16 +47,12 @@ namespace Zenject
                     continue;
                 }
 
-                var componentType = component.GetType();
-
                 var bindInfoBuilder = bindType switch
                 {
-                    BindTypes.Self => container.Bind(componentType),
-                    BindTypes.AllInterfaces => container.BindInterfacesTo(componentType),
-                    BindTypes.AllInterfacesAndSelf => container.BindInterfacesAndSelfTo(componentType),
+                    BindTypes.Self => container.Bind(component),
+                    BindTypes.AllInterfaces => container.BindInterfacesTo(component),
+                    BindTypes.AllInterfacesAndSelf => container.BindInterfacesAndSelfTo(component),
                 };
-
-                bindInfoBuilder.FromInstance(component);
 
                 if (identifier != 0)
                     bindInfoBuilder.WithId(identifier);

@@ -39,7 +39,7 @@ namespace Zenject
             _containerChain = new DiContainerChain(this);
             _lazyInjector = new LazyInstanceInjector(this);
 
-            Bind(typeof(DiContainer)).FromInstance(this);
+            Bind(this);
             FlushBindings();
             Assert.IsTrue(_currentBindings.Count == 0);
 
