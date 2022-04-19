@@ -13,6 +13,11 @@ namespace Zenject
 {
     public partial class InjectTargetCollection
     {
+        void Reset()
+        {
+            Editor_Collect();
+        }
+
         [Button("Collect", ButtonSizes.Medium)]
         void Editor_Collect()
         {
@@ -57,7 +62,7 @@ namespace Zenject
                 {
                     if (requiresInjection)
                         injectableComponents.Add(monoBehaviour);
-                    return;
+                    continue;
                 }
 
                 // Do not inject on installers since these are always injected before they are installed

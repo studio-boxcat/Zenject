@@ -23,7 +23,7 @@ namespace Zenject
         {
             return InjectFields.Length != 0
                    || InjectMethod.MethodInfo != null
-                   || InjectConstructor.ConstructorInfo != null;
+                   || InjectConstructor.Parameters.Length > 0;
         }
 
         public readonly struct InjectFieldInfo

@@ -65,14 +65,14 @@ namespace Zenject.Internal
         static InjectTypeInfo.InjectConstructorInfo GetConstructorInfo(Type type)
         {
             var constructor = TryGetInjectConstructor(type);
-            return constructor != null
-                ? new InjectTypeInfo.InjectConstructorInfo(constructor, BakeInjectParameterInfos(constructor))
-                : new InjectTypeInfo.InjectConstructorInfo(null, Array.Empty<InjectableInfo>());
+            return new InjectTypeInfo.InjectConstructorInfo(constructor, BakeInjectParameterInfos(constructor));
         }
 
         static InjectableInfo[] BakeInjectParameterInfos(MethodBase methodInfo)
         {
             var paramInfos = methodInfo.GetParameters();
+            if (paramInfos.Length == 0) return Array.Empty<InjectableInfo>();
+
             var injectParamInfos = new InjectableInfo[paramInfos.Length];
             for (var i = 0; i < paramInfos.Length; i++)
                 injectParamInfos[i] = CreateInjectableInfoForParam(paramInfos[i]);
@@ -99,8 +99,8 @@ namespace Zenject.Internal
             var constructors = type.GetConstructors(
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
-            if (constructors.Length == 0)
-                return null;
+            Assert.AreNotEqual(0, constructors.Length, type.Name);
+            Assert.IsTrue(constructors.Count(x => x.IsDefined(typeof(InjectAttributeBase))) <= 1, type.Name);
 
             if (constructors.Length == 1)
                 return constructors[0];

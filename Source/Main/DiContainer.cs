@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using JetBrains.Annotations;
 using ModestTree;
 using Zenject.Internal;
@@ -262,51 +263,44 @@ namespace Zenject
 
             FlushBindings();
 
-            var typeInfo = TypeAnalyzer.GetInfo(concreteType);
-
             object newObj;
 
-            Assert.IsNotNull(typeInfo.InjectConstructor.ConstructorInfo,
-                "More than one (or zero) constructors found for type '{0}' when creating dependencies.  Use one [Inject] attribute to specify which to use.".Fmt(concreteType));
-
-            // Make a copy since we remove from it below
-            var paramValues = ParamArrayPool.Rent(typeInfo.InjectConstructor.Parameters.Length);
-
-            try
+            var injectableInfo = TypeAnalyzer.GetInfo(concreteType);
+            var constructorInfo = injectableInfo.InjectConstructor;
+            if (constructorInfo.Parameters.Length == 0)
             {
-                for (var i = 0; i < typeInfo.InjectConstructor.Parameters.Length; i++)
-                {
-                    var injectInfo = typeInfo.InjectConstructor.Parameters[i];
+                newObj = constructorInfo.ConstructorInfo.Invoke(null);
+            }
+            else
+            {
+                var paramValues = ParamArrayPool.Rent(constructorInfo.Parameters.Length);
 
-                    if (!InjectUtil.TryGetValueWithType(
-                            extraArgs, injectInfo.Type, out var value))
-                    {
-                        value = Resolve(injectInfo);
-                    }
-
-                    Assert.IsNotNull(value);
-                    paramValues[i] = value;
-                }
-
-                //ModestTree.Log.Debug("Zenject: Instantiating type '{0}'", concreteType);
                 try
                 {
-                    newObj = typeInfo.InjectConstructor.ConstructorInfo.Invoke(paramValues);
+                    ResolveParamArray(this, constructorInfo.Parameters, paramValues, extraArgs);
+                    newObj = constructorInfo.ConstructorInfo.Invoke(paramValues);
                 }
-                catch (Exception e)
+                finally
                 {
-                    throw new Exception("Error occurred while instantiating object with type '{0}'".Fmt(concreteType), e);
+                    ParamArrayPool.Release(paramValues);
                 }
-            }
-            finally
-            {
-                ParamArrayPool.Release(paramValues);
             }
 
             Assert.IsTrue(newObj.GetType() == concreteType);
-            Inject(newObj, extraArgs);
-
+            Inject(newObj, injectableInfo, extraArgs);
             return newObj;
+
+            static void ResolveParamArray(DiContainer container, InjectableInfo[] paramInfos, object[] paramValues, object[] extraArgs)
+            {
+                for (var i = 0; i < paramInfos.Length; i++)
+                {
+                    var injectInfo = paramInfos[i];
+                    if (!InjectUtil.TryGetValueWithType(extraArgs, injectInfo.Type, out var value))
+                        value = container.Resolve(injectInfo);
+                    Assert.IsNotNull(value);
+                    paramValues[i] = value;
+                }
+            }
         }
 
 #if !NOT_UNITY3D
@@ -381,20 +375,19 @@ namespace Zenject
             return gameObj;
         }
 
-        // Inject dependencies into any and all child components on the given game object
 #endif
 
-        // Same as Inject(injectable) except allows adding extra values to be injected
-        // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
-        // the argument list to avoid errors converting to IEnumerable<object>
-        public void Inject(object injectable, [CanBeNull] object[] extraArgs = null)
+        public void Inject(object injectable, InjectTypeInfo typeInfo, [CanBeNull] object[] extraArgs = null)
         {
             FlushBindings();
-
-            var typeInfo = TypeAnalyzer.GetInfo(injectable.GetType());
             foreach (var injectField in typeInfo.InjectFields)
                 InjectMember(injectField.Info, injectField, injectable, extraArgs);
             CallInjectMethods(injectable, typeInfo, extraArgs);
+        }
+
+        public void Inject(object injectable, [CanBeNull] object[] extraArgs = null)
+        {
+            Inject(injectable, TypeAnalyzer.GetInfo(injectable.GetType()), extraArgs);
         }
 
         public bool TryResolve(Type type, int identifier, InjectSources sourceType, out object instance)
