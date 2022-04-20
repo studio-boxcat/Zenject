@@ -1,4 +1,5 @@
 using System;
+using ModestTree;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -28,13 +29,17 @@ namespace Zenject
         {
             foreach (var installer in _scriptableObjectInstallers)
             {
+                Log.Debug("Inject: " + installer.name);
                 container.Inject(installer);
+                Log.Debug("InstallBindings: " + installer.name);
                 installer.InstallBindings();
             }
 
             foreach (var installer in _monoInstallers)
             {
+                Log.Debug("Inject: " + installer.name);
                 container.Inject(installer);
+                Log.Debug("InstallBindings: " + installer.name);
                 installer.InstallBindings();
             }
         }
