@@ -31,7 +31,6 @@ namespace Zenject
             }
 
             InstallerCollection.InjectAndInstall(Container);
-            InstallerCollection = default;
 
             Container.ResolveRoots();
         }

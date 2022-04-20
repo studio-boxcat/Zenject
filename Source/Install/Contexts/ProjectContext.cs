@@ -63,7 +63,6 @@ namespace Zenject
             Container.Bind(typeof(MonoKernel)).FromNewComponentOn(gameObject).NonLazy();
 
             InstallerCollection.InjectAndInstall(Container);
-            InstallerCollection = default;
 
             Container.ResolveRoots();
         }
