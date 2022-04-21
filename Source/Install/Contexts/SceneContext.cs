@@ -19,7 +19,10 @@ namespace Zenject
 
             Container = new DiContainer(ProjectContext.Instance.Container);
 
-            Container.Bind(typeof(MonoKernel)).FromNewComponentOn(gameObject).NonLazy();
+            Container.Bind(typeof(MonoKernel),
+                arguments: new ArgumentArray(gameObject),
+                provider: (container, concreteType, args) => container.InstantiateComponent(concreteType, (GameObject) args.Arg1),
+                nonLazy: true);
 
             gameObject.GetComponent<ZenjectBindingCollection>().Bind(Container);
             Container.QueueForInject(gameObject.GetComponent<InjectTargetCollection>().Targets);

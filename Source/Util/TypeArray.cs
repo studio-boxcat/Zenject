@@ -69,8 +69,8 @@ namespace Zenject
 
         public TypeArray(Type type, Type[] additionalTypes)
         {
-            Assert.IsNotNull(type);
-            Assert.IsTrue(additionalTypes.Length is > 0 and < _maxLength);
+            Assert.IsNotNull(type, type.Name);
+            Assert.IsTrue(additionalTypes.Length is > 0 and < _maxLength, type.Name);
 
             Type1 = type;
 

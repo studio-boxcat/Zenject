@@ -18,15 +18,12 @@ namespace Zenject
     {
         [CanBeNull] public readonly DiContainer ParentContainer;
         [CanBeNull] public readonly Transform ContextTransform;
-        public readonly ProviderRepo ProviderRepo = new();
 
-        readonly DiContainerChain _containerChain;
+        public readonly ProviderRepo ProviderRepo;
+
+        readonly ProviderChain _providerChain;
         readonly LazyInstanceInjector _lazyInjector;
         readonly List<int> _nonLazyProviders = new();
-        readonly List<BindInfoBuilder> _currentBindings = new();
-
-        bool _hasResolvedRoots;
-        bool _isFinalizingBinding;
 
         public DiContainer(
             [CanBeNull] DiContainer parentContainer = null,
@@ -35,32 +32,19 @@ namespace Zenject
             ParentContainer = parentContainer;
             ContextTransform = contextTransform;
 
-            _containerChain = new DiContainerChain(this);
+            ProviderRepo = new ProviderRepo(this);
+
+            _providerChain = new ProviderChain(this);
             _lazyInjector = new LazyInstanceInjector(this);
 
             Bind(this);
-            FlushBindings();
-            Assert.IsTrue(_currentBindings.Count == 0);
-
-            if (parentContainer != null)
-            {
-                parentContainer.FlushBindings();
-                Assert.IsTrue(_currentBindings.Count == 0);
-            }
         }
 
         public void ResolveRoots()
         {
-            Assert.IsFalse(_hasResolvedRoots);
-
-            FlushBindings();
-
             ResolveDependencyRoots();
 
             _lazyInjector.LazyInjectAll();
-
-            Assert.IsFalse(_hasResolvedRoots);
-            _hasResolvedRoots = true;
         }
 
         void ResolveDependencyRoots()
@@ -75,43 +59,34 @@ namespace Zenject
             _lazyInjector.AddInstances(instances);
         }
 
-        public void RegisterProvider(BindInfo bindInfo)
+        public void RegisterProvider(BindInfo bindInfo, object instance)
+        {
+            var contractTypes = bindInfo.BakeContractTypes();
+            var identifier = bindInfo.Identifier;
+            ProviderRepo.Register(contractTypes, identifier, instance);
+        }
+
+        public void RegisterProvider(BindInfo bindInfo, ProvideDelegate provider, ArgumentArray extraArgument, bool nonLazy)
         {
             var contractTypes = bindInfo.BakeContractTypes();
             var identifier = bindInfo.Identifier;
 
-            if (ReferenceEquals(bindInfo.Instance, null) == false)
-            {
-                ProviderRepo.Register(bindInfo.Instance, contractTypes, identifier);
-                return;
-            }
-
-            var provider = bindInfo.ProviderFactory != null
-                ? bindInfo.ProviderFactory(this, bindInfo)
-                : new TransientProvider(bindInfo.ConcreteType, this, bindInfo.Arguments);
-
-            var providerIndex = ProviderRepo.Register(provider, contractTypes, identifier);
-            if (bindInfo.NonLazy) _nonLazyProviders.Add(providerIndex);
+            provider ??= (container, concreteType, args) => container.Instantiate(concreteType, args);
+            var providerIndex = ProviderRepo.Register(contractTypes, identifier, provider, bindInfo.ConcreteType, extraArgument);
+            if (nonLazy) _nonLazyProviders.Add(providerIndex);
         }
-
-        static readonly List<ProviderProxy> _providerBuffer = new();
 
         public IList ResolveAll(Type type, int identifier, InjectSources sourceType)
         {
             Assert.IsTrue(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>));
 
-            _providerBuffer.Clear();
-
             var list = (IList) Activator.CreateInstance(type);
             var elementType = type.GetGenericArguments()[0];
-            _containerChain.GetMatchingProviders(new BindingId(elementType, identifier), sourceType, _providerBuffer);
-
-            foreach (var provider in _providerBuffer)
-                list.Add(provider.GetInstance());
+            _providerChain.ResolveAll(new BindingId(elementType, identifier), sourceType, list);
             return list;
         }
 
-        void CallInjectMethods(object injectable, InjectTypeInfo typeInfo, object[] extraArgs)
+        void CallInjectMethods(object injectable, InjectTypeInfo typeInfo, ArgumentArray extraArgs)
         {
             var method = typeInfo.InjectMethod;
             if (method.MethodInfo == null)
@@ -125,7 +100,7 @@ namespace Zenject
                 {
                     var injectInfo = method.Parameters[k];
 
-                    if (!InjectUtil.TryGetValueWithType(extraArgs, injectInfo.Type, out var value))
+                    if (!extraArgs.TryGetValueWithType(injectInfo.Type, out var value))
                     {
                         value = Resolve(injectInfo);
                     }
@@ -142,9 +117,9 @@ namespace Zenject
         }
 
         void InjectMember(InjectableInfo injectInfo, InjectTypeInfo.InjectFieldInfo setter,
-            object injectable, object[] extraArgs)
+            object injectable, ArgumentArray extraArgs)
         {
-            if (InjectUtil.TryGetValueWithType(extraArgs, injectInfo.Type, out var value))
+            if (extraArgs.TryGetValueWithType(injectInfo.Type, out var value))
             {
                 setter.Invoke(injectable, value);
                 return;
@@ -162,16 +137,12 @@ namespace Zenject
             }
         }
 
-#if !NOT_UNITY3D
-
         // Don't use this unless you know what you're doing
         // You probably want to use InstantiatePrefab instead
         // This one will only create the prefab and will not inject into it
         GameObject InstantiateGameObjectInactive(GameObject prefab, GameObjectCreationParameters creationParameters)
         {
             Assert.IsTrue(prefab != null, "Null prefab found when instantiating game object");
-
-            FlushBindings();
 
             prefab.SetActive(false);
 
@@ -212,8 +183,6 @@ namespace Zenject
 
         public GameObject CreateEmptyGameObject(GameObjectCreationParameters gameObjectBindInfo)
         {
-            FlushBindings();
-
             var gameObj = new GameObject();
             var parent = gameObjectBindInfo.ParentTransform;
 
@@ -231,24 +200,20 @@ namespace Zenject
             return gameObj;
         }
 
-#endif
-
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
-        public T Instantiate<T>([CanBeNull] object[] extraArgs = null)
+        public T Instantiate<T>(ArgumentArray extraArgs = default)
         {
             return (T) Instantiate(typeof(T), extraArgs);
         }
 
-        public object Instantiate(Type concreteType, [CanBeNull] object[] extraArgs = null)
+        public object Instantiate(Type concreteType, ArgumentArray extraArgs = default)
         {
             Assert.IsFalse(concreteType.DerivesFrom<Component>(),
                 "Error occurred while instantiating object of type '{0}'. Instantiator should not be used to create new mono behaviours.  Must use InstantiatePrefabForComponent, InstantiatePrefab, or InstantiateComponent."
                     .Fmt(concreteType));
 
             Assert.IsFalse(concreteType.IsAbstract, "Expected type '{0}' to be non-abstract".Fmt(concreteType));
-
-            FlushBindings();
 
             object newObj;
 
@@ -277,12 +242,12 @@ namespace Zenject
             Inject(newObj, injectableInfo, extraArgs);
             return newObj;
 
-            static void ResolveParamArray(DiContainer container, InjectableInfo[] paramInfos, object[] paramValues, object[] extraArgs)
+            static void ResolveParamArray(DiContainer container, InjectableInfo[] paramInfos, object[] paramValues, ArgumentArray extraArgs)
             {
                 for (var i = 0; i < paramInfos.Length; i++)
                 {
                     var injectInfo = paramInfos[i];
-                    if (!InjectUtil.TryGetValueWithType(extraArgs, injectInfo.Type, out var value))
+                    if (!extraArgs.TryGetValueWithType(injectInfo.Type, out var value))
                         value = container.Resolve(injectInfo);
                     Assert.IsNotNull(value);
                     paramValues[i] = value;
@@ -297,7 +262,7 @@ namespace Zenject
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
         public TContract InstantiateComponent<TContract>(
-            GameObject gameObject, [CanBeNull] object[] extraArgs = null)
+            GameObject gameObject, ArgumentArray extraArgs = default)
             where TContract : Component
         {
             return (TContract) InstantiateComponent(typeof(TContract), gameObject, extraArgs);
@@ -309,26 +274,16 @@ namespace Zenject
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
         // the argument list to avoid errors converting to IEnumerable<object>
         public Component InstantiateComponent(
-            Type componentType, GameObject gameObject, [CanBeNull] object[] extraArgs = null)
+            Type componentType, GameObject gameObject, ArgumentArray extraArgs = default)
         {
             Assert.IsTrue(componentType.DerivesFrom<Component>());
-
-            FlushBindings();
 
             var monoBehaviour = gameObject.AddComponent(componentType);
             Inject(monoBehaviour, extraArgs);
             return monoBehaviour;
         }
 
-        public T InstantiateComponentOnNewGameObject<T>()
-            where T : Component
-        {
-            return InstantiateComponentOnNewGameObject<T>(Array.Empty<object>());
-        }
-
-        // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
-        // the argument list to avoid errors converting to IEnumerable<object>
-        public T InstantiateComponentOnNewGameObject<T>(object[] extraArgs) where T : Component
+        public T InstantiateComponentOnNewGameObject<T>(ArgumentArray extraArgs = default) where T : Component
         {
             return InstantiateComponent<T>(CreateEmptyGameObject(default), extraArgs);
         }
@@ -355,7 +310,6 @@ namespace Zenject
         // Create a new game object from a prefab and fill in dependencies for all children
         public GameObject InstantiatePrefab(GameObject prefab, GameObjectCreationParameters gameObjectBindInfo = default)
         {
-            FlushBindings();
             var gameObj = InstantiateGameObjectInactive(prefab, gameObjectBindInfo);
             gameObj.GetComponent<InjectTargetCollection>().Inject(this);
             gameObj.SetActive(true);
@@ -364,15 +318,14 @@ namespace Zenject
 
 #endif
 
-        public void Inject(object injectable, InjectTypeInfo typeInfo, [CanBeNull] object[] extraArgs = null)
+        public void Inject(object injectable, InjectTypeInfo typeInfo, ArgumentArray extraArgs)
         {
-            FlushBindings();
             foreach (var injectField in typeInfo.InjectFields)
                 InjectMember(injectField.Info, injectField, injectable, extraArgs);
             CallInjectMethods(injectable, typeInfo, extraArgs);
         }
 
-        public void Inject(object injectable, [CanBeNull] object[] extraArgs = null)
+        public void Inject(object injectable, ArgumentArray extraArgs = default)
         {
             Inject(injectable, TypeAnalyzer.GetInfo(injectable.GetType()), extraArgs);
         }
@@ -386,16 +339,7 @@ namespace Zenject
                 return true;
             }
 
-            FlushBindings();
-
-            if (_containerChain.TryGetFirstProvider(new BindingId(type, identifier), sourceType, out var provider) == false)
-            {
-                instance = null;
-                return false;
-            }
-
-            instance = provider.GetInstance();
-            return true;
+            return _providerChain.TryResolve(new BindingId(type, identifier), sourceType, out instance);
         }
 
         public bool TryResolve<TContract>(int identifier, InjectSources sourceType, out TContract instance)
@@ -484,120 +428,103 @@ namespace Zenject
         // You shouldn't need to use this
         public bool HasBinding(InjectableInfo context)
         {
-            FlushBindings();
-            return _containerChain.TryGetFirstProvider(context.BindingId, context.SourceType, out _);
+            return _providerChain.HasBinding(context.BindingId, context.SourceType);
         }
 
-        // You shouldn't need to use this
-        public void FlushBindings()
+        public void Bind(Type contractType, int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
-            _isFinalizingBinding = true;
-
-            try
+            RegisterProvider(new BindInfo
             {
-                foreach (var bindInfoBuilder in _currentBindings)
-                    RegisterProvider(bindInfoBuilder.GetBindInfo());
-            }
-            finally
+                ConcreteType = contractType,
+                Identifier = identifier,
+                BindConcreteType = true,
+            }, provider, arguments, nonLazy);
+        }
+
+        public void Bind<TContract>(int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
+        {
+            Bind(typeof(TContract), identifier, provider, arguments, nonLazy);
+        }
+
+        public void Bind(object instance)
+        {
+            RegisterProvider(new BindInfo
             {
-                _currentBindings.Clear();
-                _isFinalizingBinding = false;
-            }
+                ConcreteType = instance.GetType(),
+                BindConcreteType = true,
+            }, instance);
         }
 
-        // Don't use this method
-        public BindInfoBuilder StartBinding(bool flush = true)
+        public void Bind(object instance, int id)
         {
-            Assert.IsFalse(_isFinalizingBinding,
-                "Attempted to start a binding during a binding finalizer.  This is not allowed, since binding finalizers should directly use AddProvider instead, to allow for bindings to be inherited properly without duplicates");
-
-            if (flush) FlushBindings();
-
-            var builder = new BindInfoBuilder();
-            _currentBindings.Add(builder);
-            return builder;
+            RegisterProvider(new BindInfo
+            {
+                ConcreteType = instance.GetType(),
+                Identifier = id,
+                BindConcreteType = true,
+            }, instance);
         }
 
-        // Map the given type to a way of obtaining it
-        // Note that this can include open generic types as well such as List<>
-        public BindInfoBuilder Bind<TContract>()
+        public void Bind(object instance, string id)
         {
-            return StartBinding().BindSelf(typeof(TContract));
+            RegisterProvider(new BindInfo
+            {
+                ConcreteType = instance.GetType(),
+                Identifier = id.GetHashCode(),
+                BindConcreteType = true,
+            }, instance);
         }
 
-        // This is only useful for complex cases where you want to add multiple bindings
-        // at the same time and can be ignored by 99% of users
-        public BindInfoBuilder BindNoFlush<TContract>()
+        public void BindInterfacesTo(Type type, int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
         {
-            return StartBinding(false).BindSelf(typeof(TContract));
+            RegisterProvider(new BindInfo
+            {
+                ConcreteType = type,
+                Identifier = identifier,
+                BindInterfaces = true,
+            }, null, arguments, nonLazy: nonLazy);
         }
 
-        // Non-generic version of Bind<> for cases where you only have the runtime type
-        // Note that this can include open generic types as well such as List<>
-        public BindInfoBuilder Bind(Type contractType)
+        public void BindInterfacesTo<T>(int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
         {
-            return StartBinding().BindSelf(contractType);
+            BindInterfacesTo(typeof(T), identifier, arguments, nonLazy);
         }
 
-        //  This is simply a shortcut to using the FromInstance method.
-        //
-        //  Example:
-        //      Container.BindInstance(new Foo());
-        //
-        //  This line above is equivalent to the following:
-        //
-        //      Container.Bind<Foo>().FromInstance(new Foo());
-        //
-        public BindInfoBuilder Bind(object instance)
+        public void BindInterfacesTo(object instance, int identifier = 0)
         {
-            return StartBinding().BindSelf(instance.GetType()).FromInstance(instance);
+            RegisterProvider(new BindInfo
+            {
+                ConcreteType = instance.GetType(),
+                Identifier = identifier,
+                BindInterfaces = true,
+            }, instance);
         }
 
-        // Bind all the interfaces for the given type to the same thing.
-        //
-        // Example:
-        //
-        //    public class Foo : ITickable, IInitializable
-        //    {
-        //    }
-        //
-        //    Container.BindInterfacesTo<Foo>();
-        //
-        //  This line above is equivalent to the following:
-        //
-        //    Container.Bind<ITickable>().ToSingle<Foo>();
-        //    Container.Bind<IInitializable>().ToSingle<Foo>();
-        //
-        // Note here that we do not bind Foo to itself.  For that, use BindInterfacesAndSelfTo
-        public BindInfoBuilder BindInterfacesTo(Type type)
+        public void BindInterfacesAndSelfTo(Type type, int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
         {
-            return StartBinding().BindInterfaces(type);
+            RegisterProvider(new BindInfo
+            {
+                ConcreteType = type,
+                Identifier = identifier,
+                BindConcreteType = true,
+                BindInterfaces = true,
+            }, null, arguments, nonLazy: nonLazy);
         }
 
-        public BindInfoBuilder BindInterfacesTo<T>()
+        public void BindInterfacesAndSelfTo<T>(int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
         {
-            return BindInterfacesTo(typeof(T));
+            BindInterfacesAndSelfTo(typeof(T), identifier, arguments, nonLazy);
         }
 
-        public BindInfoBuilder BindInterfacesTo(object instance)
+        public void BindInterfacesAndSelfTo(object instance, int identifier = 0)
         {
-            return BindInterfacesTo(instance.GetType()).FromInstance(instance);
-        }
-
-        public BindInfoBuilder BindInterfacesAndSelfTo(Type type)
-        {
-            return StartBinding().BindInterfacesAndSelf(type);
-        }
-
-        // Same as BindInterfaces except also binds to self
-        public BindInfoBuilder BindInterfacesAndSelfTo<T>()
-        {
-            return BindInterfacesAndSelfTo(typeof(T));
-        }
-
-        public BindInfoBuilder BindInterfacesAndSelfTo(object instance)
-        {
-            return BindInterfacesAndSelfTo(instance.GetType()).FromInstance(instance);
+            RegisterProvider(new BindInfo
+            {
+                ConcreteType = instance.GetType(),
+                Identifier = identifier,
+                BindConcreteType = true,
+                BindInterfaces = true,
+            }, instance);
         }
     }
 }
