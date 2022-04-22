@@ -26,6 +26,13 @@ namespace Zenject
             _container = container;
         }
 
+        public void AddInstance(object instance)
+        {
+            Assert.IsFalse(_isInjecting);
+            _instancesToInject.Add(instance);
+            Assert.AreEqual(_instancesToInject.Count, _instancesToInject.Distinct().Count());
+        }
+
         public void AddInstances(object[] instances)
         {
             Assert.IsFalse(_isInjecting);

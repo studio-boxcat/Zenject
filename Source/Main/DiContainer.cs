@@ -54,6 +54,11 @@ namespace Zenject
             _nonLazyProviders.Clear();
         }
 
+        public void QueueForInject(object instance)
+        {
+            _lazyInjector.AddInstance(instance);
+        }
+
         public void QueueForInject(object[] instances)
         {
             _lazyInjector.AddInstances(instances);
