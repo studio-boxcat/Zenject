@@ -28,6 +28,8 @@ namespace Zenject
 
         bool Validate_Targets()
         {
+            if (Application.isPlaying) return true;
+
             var compare = gameObject.TryGetComponent<SceneContext>(out _)
                 ? Internal_CollectInScene()
                 : Internal_CollectUnderGameObject(gameObject);

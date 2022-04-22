@@ -6,6 +6,7 @@ namespace Zenject
     public partial class ZenjectBindingCollection : MonoBehaviour
     {
         [ListDrawerSettings(IsReadOnly = true)]
+        [ValidateInput("Validate_Bindings")]
         public ZenjectBindingBase[] Bindings;
 
         public static void TryBind(GameObject gameObject, DiContainer diContainer)
