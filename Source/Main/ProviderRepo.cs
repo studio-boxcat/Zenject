@@ -117,15 +117,19 @@ namespace Zenject
         [Conditional("DEBUG")]
         public void MarkResolvesInProgress(int providerIndex)
         {
+#if DEBUG
             if (!_resolvesInProgress.Add(providerIndex))
                 throw new Exception("Circular dependency detected!");
+#endif
         }
 
         [Conditional("DEBUG")]
         public void UnmarkResolvesInProgress(int providerIndex)
         {
+#if DEBUG
             var removed = _resolvesInProgress.Remove(providerIndex);
             Assert.IsTrue(removed);
+#endif
         }
 
         readonly struct ProviderInfo
