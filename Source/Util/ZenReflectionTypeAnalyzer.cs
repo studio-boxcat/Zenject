@@ -47,7 +47,8 @@ namespace Zenject.Internal
 
         static InjectTypeInfo.InjectMethodInfo GetMethodInfo(Type type)
         {
-            var methodInfo = type.GetMethod("Zenject_Constructor", BindingFlags.Instance);
+            var methodInfo = type.GetMethod("Zenject_Constructor",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             return methodInfo != null
                 ? new InjectTypeInfo.InjectMethodInfo(methodInfo, BakeInjectParameterInfos(methodInfo))
                 : default;
