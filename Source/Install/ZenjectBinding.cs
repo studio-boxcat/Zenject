@@ -8,7 +8,7 @@ namespace Zenject
     public class ZenjectBinding : ZenjectBindingBase
     {
         [FormerlySerializedAs("_components")]
-        [SerializeField]
+        [SerializeField, Required]
         public Component[] Components = null;
 
         [FormerlySerializedAs("_identifier")]
