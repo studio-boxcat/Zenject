@@ -7,6 +7,7 @@ namespace Zenject
 {
     public class ZenjectBinding : ZenjectBindingBase
     {
+        [ListDrawerSettings(IsReadOnly = true)]
         [FormerlySerializedAs("_components")]
         [SerializeField, Required]
         public Component[] Components = null;
