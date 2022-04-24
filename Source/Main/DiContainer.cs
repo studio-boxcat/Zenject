@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using JetBrains.Annotations;
 using ModestTree;
 using Zenject.Internal;
@@ -91,34 +92,21 @@ namespace Zenject
             return list;
         }
 
-        void CallInjectMethods(object injectable, InjectTypeInfo typeInfo, ArgumentArray extraArgs)
+        void CallInjectMethods(object injectable, InjectTypeInfo.InjectMethodInfo method, ArgumentArray extraArgs)
         {
-            var method = typeInfo.InjectMethod;
-            if (method.MethodInfo == null)
-                return;
-
             var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
 
-            try
+            for (var i = 0; i < method.Parameters.Length; i++)
             {
-                for (int k = 0; k < method.Parameters.Length; k++)
-                {
-                    var injectInfo = method.Parameters[k];
-
-                    if (!extraArgs.TryGetValueWithType(injectInfo.Type, out var value))
-                    {
-                        value = Resolve(injectInfo);
-                    }
-
-                    paramValues[k] = value;
-                }
-
-                method.MethodInfo.Invoke(injectable, paramValues);
+                var injectInfo = method.Parameters[i];
+                if (!extraArgs.TryGetValueWithType(injectInfo.Type, out var value))
+                    value = Resolve(injectInfo);
+                paramValues[i] = value;
             }
-            finally
-            {
-                ParamArrayPool.Release(paramValues);
-            }
+
+            method.MethodInfo.Invoke(injectable, paramValues);
+
+            ParamArrayPool.Release(paramValues);
         }
 
         void InjectMember(InjectableInfo injectInfo, InjectTypeInfo.InjectFieldInfo setter,
@@ -214,7 +202,7 @@ namespace Zenject
 
         public object Instantiate(Type concreteType, ArgumentArray extraArgs = default)
         {
-            Assert.IsFalse(concreteType.DerivesFrom<Component>(),
+            Assert.IsFalse(concreteType.IsSubclassOf(typeof(Component)),
                 "Error occurred while instantiating object of type '{0}'. Instantiator should not be used to create new mono behaviours.  Must use InstantiatePrefabForComponent, InstantiatePrefab, or InstantiateComponent."
                     .Fmt(concreteType));
 
@@ -281,7 +269,7 @@ namespace Zenject
         public Component InstantiateComponent(
             Type componentType, GameObject gameObject, ArgumentArray extraArgs = default)
         {
-            Assert.IsTrue(componentType.DerivesFrom<Component>());
+            Assert.IsTrue(componentType.IsSubclassOf(typeof(Component)));
 
             var monoBehaviour = gameObject.AddComponent(componentType);
             Inject(monoBehaviour, extraArgs);
@@ -325,9 +313,15 @@ namespace Zenject
 
         public void Inject(object injectable, InjectTypeInfo typeInfo, ArgumentArray extraArgs)
         {
-            foreach (var injectField in typeInfo.InjectFields)
-                InjectMember(injectField.Info, injectField, injectable, extraArgs);
-            CallInjectMethods(injectable, typeInfo, extraArgs);
+            if (typeInfo.InjectFields != null)
+            {
+                foreach (var injectField in typeInfo.InjectFields)
+                    InjectMember(injectField.Info, injectField, injectable, extraArgs);
+            }
+
+            var method = typeInfo.InjectMethod;
+            if (method.MethodInfo != null)
+                CallInjectMethods(injectable, method, extraArgs);
         }
 
         public void Inject(object injectable, ArgumentArray extraArgs = default)

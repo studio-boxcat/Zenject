@@ -6,7 +6,6 @@ using ModestTree;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Zenject.Internal;
 using Object = UnityEngine.Object;
 
 namespace Zenject
@@ -68,13 +67,13 @@ namespace Zenject
                 }
 
                 // Do not inject on installers since these are always injected before they are installed
-                if (type.DerivesFrom<MonoInstaller>())
+                if (type.IsSubclassOf(typeof(MonoInstaller)))
                 {
                     _requiresInjection.Add(type, false);
                     continue;
                 }
 
-                var typeInfo = ReflectionTypeAnalyzer.GetReflectionInfo(monoBehaviour.GetType());
+                var typeInfo = TypeAnalyzer.GetInfo(monoBehaviour.GetType());
                 if (typeInfo.IsInjectionRequired())
                 {
                     _requiresInjection.Add(type, true);

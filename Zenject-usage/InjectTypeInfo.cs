@@ -1,4 +1,6 @@
 using System.Reflection;
+using JetBrains.Annotations;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -6,6 +8,7 @@ namespace Zenject
     {
         public readonly InjectConstructorInfo InjectConstructor;
         public readonly InjectMethodInfo InjectMethod;
+        [CanBeNull]
         public readonly InjectFieldInfo[] InjectFields;
 
 
@@ -14,6 +17,10 @@ namespace Zenject
             InjectMethodInfo injectMethod,
             InjectFieldInfo[] injectFields)
         {
+            Assert.AreEqual(injectConstructor.ConstructorInfo == null, injectConstructor.Parameters == null);
+            Assert.AreEqual(injectMethod.MethodInfo == null, injectMethod.Parameters == null);
+            Assert.IsTrue(injectFields == null || injectFields.Length > 0);
+
             InjectConstructor = injectConstructor;
             InjectMethod = injectMethod;
             InjectFields = injectFields;
@@ -21,7 +28,7 @@ namespace Zenject
 
         public bool IsInjectionRequired()
         {
-            return InjectFields.Length != 0
+            return InjectFields != null
                    || InjectMethod.MethodInfo != null
                    || InjectConstructor.Parameters.Length > 0;
         }
@@ -45,7 +52,7 @@ namespace Zenject
 
         public readonly struct InjectConstructorInfo
         {
-            // Null for abstract types
+            [CanBeNull]
             public readonly ConstructorInfo ConstructorInfo;
             public readonly InjectableInfo[] Parameters;
 
@@ -58,6 +65,7 @@ namespace Zenject
 
         public readonly struct InjectMethodInfo
         {
+            [CanBeNull]
             public readonly MethodInfo MethodInfo;
             public readonly InjectableInfo[] Parameters;
 
