@@ -87,14 +87,16 @@ namespace Zenject
 
         public void ResolveAll(BindingId bindingId, IList buffer)
         {
+            var (type, identifier) = bindingId;
+
             for (var index = 0; index < _providers.Count; index++)
             {
                 var providerInfo = _providers[index];
 
-                if (providerInfo.Identifier != bindingId.Identifier)
+                if (providerInfo.Identifier != identifier)
                     continue;
 
-                if (providerInfo.ContractTypes.Contains(bindingId.Type) == false)
+                if (providerInfo.ContractTypes.Contains(type) == false)
                     continue;
 
                 if (providerInfo.HasInstance == false)

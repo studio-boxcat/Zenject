@@ -17,6 +17,12 @@ namespace Zenject
             Identifier = identifier;
         }
 
+        public void Deconstruct(out Type type, out int identifier)
+        {
+            type = Type;
+            identifier = Identifier;
+        }
+
         public override string ToString() => $"{Type.PrettyName()} ({Identifier})";
 
         public bool Equals(BindingId other) => Type == other.Type && Identifier == other.Identifier;
