@@ -9,11 +9,9 @@ namespace Zenject
     public struct InstallerCollection
     {
         [SerializeField, Required]
-        [ListDrawerSettings(DraggableItems = false)]
         ScriptableObjectInstaller[] _scriptableObjectInstallers;
 
         [SerializeField, Required]
-        [ListDrawerSettings(DraggableItems = false)]
         MonoInstaller[] _monoInstallers;
 
 
