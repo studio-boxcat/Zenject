@@ -24,8 +24,11 @@ namespace Zenject
                 provider: (container, concreteType, args) => container.InstantiateComponent(concreteType, (GameObject) args.Arg1),
                 nonLazy: true);
 
-            gameObject.GetComponent<ZenjectBindingCollection>().Bind(Container);
-            Container.QueueForInject(gameObject.GetComponent<InjectTargetCollection>().Targets);
+            if (gameObject.TryGetComponent(out ZenjectBindingCollection zenjectBindingCollection))
+                zenjectBindingCollection.Bind(Container);
+
+            if (gameObject.TryGetComponent(out InjectTargetCollection injectTargetCollection))
+                Container.QueueForInject(injectTargetCollection.Targets);
 
             if (ExtraBindingsInstallMethod != null)
             {
