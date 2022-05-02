@@ -121,7 +121,7 @@ namespace Zenject
         {
 #if DEBUG
             if (!_resolvesInProgress.Add(providerIndex))
-                throw new Exception("Circular dependency detected!");
+                throw new Exception("Circular dependency detected! " + _providers[providerIndex].ContractTypes[0].Name);
 #endif
         }
 
