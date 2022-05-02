@@ -26,7 +26,8 @@ namespace Zenject
 
         public TypeArray(Type[] types)
         {
-            Assert.IsTrue(types.Length is > 0 and <= _maxLength);
+            Assert.IsTrue(types.Length > 0, "주어진 타입의 숫자가 0개 입니다.");
+            Assert.IsTrue(types.Length <= _maxLength, "주어진 타입의 숫자가 최대 개수 이상입니다: " + types[0].Name);
 
             var len = types.Length;
             if (len == 1)
