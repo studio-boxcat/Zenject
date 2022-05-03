@@ -9,7 +9,7 @@ namespace Zenject
     public static class TypeAnalyzer
     {
         static readonly Dictionary<Type, InjectTypeInfo> _typeInfo = new();
-        static readonly InjectableInfo[] _emptyInjectableArray = Array.Empty<InjectableInfo>();
+        static readonly InjectSpec[] _emptyInjectableArray = Array.Empty<InjectSpec>();
 
         public static InjectTypeInfo GetInfo(Type type)
         {
@@ -98,30 +98,30 @@ namespace Zenject
 
             return _fieldInfoBuffer.ToArray();
 
-            static InjectableInfo GetInjectableInfoForMember(FieldInfo fieldInfo, InjectAttributeBase injectAttr)
+            static InjectSpec GetInjectableInfoForMember(FieldInfo fieldInfo, InjectAttributeBase injectAttr)
             {
                 return injectAttr != null
-                    ? new InjectableInfo(fieldInfo.FieldType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
-                    : new InjectableInfo(fieldInfo.FieldType, 0, InjectSources.Any);
+                    ? new InjectSpec(fieldInfo.FieldType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
+                    : new InjectSpec(fieldInfo.FieldType, 0, InjectSources.Any);
             }
         }
 
-        static InjectableInfo[] BakeInjectParameterInfos(MethodBase methodInfo)
+        static InjectSpec[] BakeInjectParameterInfos(MethodBase methodInfo)
         {
             var paramInfos = methodInfo.GetParameters();
             if (paramInfos.Length == 0) return _emptyInjectableArray;
 
-            var injectParamInfos = new InjectableInfo[paramInfos.Length];
+            var injectParamInfos = new InjectSpec[paramInfos.Length];
             for (var i = 0; i < paramInfos.Length; i++)
                 injectParamInfos[i] = CreateInjectableInfoForParam(paramInfos[i]);
             return injectParamInfos;
 
-            static InjectableInfo CreateInjectableInfoForParam(ParameterInfo paramInfo)
+            static InjectSpec CreateInjectableInfoForParam(ParameterInfo paramInfo)
             {
                 var injectAttr = paramInfo.GetCustomAttribute<InjectAttributeBase>();
                 return injectAttr != null
-                    ? new InjectableInfo(paramInfo.ParameterType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
-                    : new InjectableInfo(paramInfo.ParameterType, 0, InjectSources.Any);
+                    ? new InjectSpec(paramInfo.ParameterType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
+                    : new InjectSpec(paramInfo.ParameterType, 0, InjectSources.Any);
             }
         }
     }

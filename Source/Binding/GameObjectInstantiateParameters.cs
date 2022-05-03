@@ -2,9 +2,9 @@ using UnityEngine;
 
 namespace Zenject
 {
-    public struct GameObjectCreationParameters
+    public struct GameObjectInstantiateParameters
     {
-        public Transform ParentTransform;
+        public Transform Parent;
         public Vector3? Position;
         public Quaternion? Rotation;
     }

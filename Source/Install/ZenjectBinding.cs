@@ -32,7 +32,7 @@ namespace Zenject
         {
             var identifier = 0;
             if (Identifier.Length > 0)
-                identifier = Identifier.GetHashCode();
+                identifier = Hasher.Hash(Identifier);
 
             foreach (var component in Components)
             {

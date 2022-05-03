@@ -12,7 +12,7 @@ namespace Zenject
         }
 
         public InjectAttribute(string id)
-            : base(id.GetHashCode())
+            : base(Hasher.Hash(id))
         {
         }
     }

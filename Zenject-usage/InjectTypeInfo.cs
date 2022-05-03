@@ -6,39 +6,39 @@ namespace Zenject
 {
     public readonly struct InjectTypeInfo
     {
-        public readonly InjectConstructorInfo InjectConstructor;
-        public readonly InjectMethodInfo InjectMethod;
+        public readonly InjectConstructorInfo Constructor;
+        public readonly InjectMethodInfo Method;
         [CanBeNull]
-        public readonly InjectFieldInfo[] InjectFields;
+        public readonly InjectFieldInfo[] Fields;
 
 
         public InjectTypeInfo(
-            InjectConstructorInfo injectConstructor,
-            InjectMethodInfo injectMethod,
-            InjectFieldInfo[] injectFields)
+            InjectConstructorInfo constructor,
+            InjectMethodInfo method,
+            InjectFieldInfo[] fields)
         {
-            Assert.AreEqual(injectConstructor.ConstructorInfo == null, injectConstructor.Parameters == null);
-            Assert.AreEqual(injectMethod.MethodInfo == null, injectMethod.Parameters == null);
-            Assert.IsTrue(injectFields == null || injectFields.Length > 0);
+            Assert.AreEqual(constructor.ConstructorInfo == null, constructor.Parameters == null);
+            Assert.AreEqual(method.MethodInfo == null, method.Parameters == null);
+            Assert.IsTrue(fields == null || fields.Length > 0);
 
-            InjectConstructor = injectConstructor;
-            InjectMethod = injectMethod;
-            InjectFields = injectFields;
+            Constructor = constructor;
+            Method = method;
+            Fields = fields;
         }
 
         public bool IsInjectionRequired()
         {
-            return InjectFields != null
-                   || InjectMethod.MethodInfo != null
-                   || InjectConstructor.Parameters != null;
+            return Fields != null
+                   || Method.MethodInfo != null
+                   || Constructor.Parameters != null;
         }
 
         public readonly struct InjectFieldInfo
         {
             public readonly FieldInfo FieldInfo;
-            public readonly InjectableInfo Info;
+            public readonly InjectSpec Info;
 
-            public InjectFieldInfo(FieldInfo fieldInfo, InjectableInfo info) : this()
+            public InjectFieldInfo(FieldInfo fieldInfo, InjectSpec info) : this()
             {
                 FieldInfo = fieldInfo;
                 Info = info;
@@ -54,9 +54,9 @@ namespace Zenject
         {
             [CanBeNull]
             public readonly ConstructorInfo ConstructorInfo;
-            public readonly InjectableInfo[] Parameters;
+            public readonly InjectSpec[] Parameters;
 
-            public InjectConstructorInfo(ConstructorInfo constructorInfo, InjectableInfo[] parameters)
+            public InjectConstructorInfo(ConstructorInfo constructorInfo, InjectSpec[] parameters)
             {
                 ConstructorInfo = constructorInfo;
                 Parameters = parameters;
@@ -67,9 +67,9 @@ namespace Zenject
         {
             [CanBeNull]
             public readonly MethodInfo MethodInfo;
-            public readonly InjectableInfo[] Parameters;
+            public readonly InjectSpec[] Parameters;
 
-            public InjectMethodInfo(MethodInfo methodInfo, InjectableInfo[] parameters)
+            public InjectMethodInfo(MethodInfo methodInfo, InjectSpec[] parameters)
             {
                 MethodInfo = methodInfo;
                 Parameters = parameters;

@@ -4,7 +4,7 @@ namespace Zenject
 {
     // An injectable is a field or property with [Inject] attribute
     // Or a constructor parameter
-    public readonly struct InjectableInfo
+    public readonly struct InjectSpec
     {
         // The type of the constructor parameter, field or property
         public readonly Type Type;
@@ -28,23 +28,7 @@ namespace Zenject
         public BindingId BindingId => new(Type, Identifier);
 
 
-        public InjectableInfo(Type type, int identifier = 0)
-        {
-            Type = type;
-            Identifier = identifier;
-            SourceType = InjectSources.Any;
-            Optional = false;
-        }
-
-        public InjectableInfo(Type type, int identifier, bool optional = false)
-        {
-            Type = type;
-            Identifier = identifier;
-            SourceType = InjectSources.Any;
-            Optional = optional;
-        }
-
-        public InjectableInfo(Type type, int identifier, InjectSources sourceType, bool optional = false)
+        public InjectSpec(Type type, int identifier, InjectSources sourceType, bool optional = false)
         {
             Type = type;
             Identifier = identifier;
@@ -55,11 +39,6 @@ namespace Zenject
         public override string ToString()
         {
             return BindingId.ToString();
-        }
-
-        public InjectableInfo MutateMemberType(Type memberType)
-        {
-            return new InjectableInfo(memberType, Identifier, SourceType, Optional);
         }
     }
 }

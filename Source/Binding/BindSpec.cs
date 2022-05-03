@@ -3,7 +3,7 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public struct BindInfo
+    public struct BindSpec
     {
         public Type ConcreteType;
         public int Identifier;

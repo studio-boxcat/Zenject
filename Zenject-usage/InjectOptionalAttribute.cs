@@ -13,7 +13,7 @@ namespace Zenject
         }
 
         public InjectOptionalAttribute(string id)
-            : base(id.GetHashCode(), optional: true)
+            : base(Hasher.Hash(id), optional: true)
         {
         }
     }

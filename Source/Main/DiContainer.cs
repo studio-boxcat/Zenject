@@ -65,20 +65,20 @@ namespace Zenject
             _lazyInjector.AddInstances(instances);
         }
 
-        public void RegisterProvider(BindInfo bindInfo, object instance)
+        public void RegisterProvider(BindSpec bindSpec, object instance)
         {
-            var contractTypes = bindInfo.BakeContractTypes();
-            var identifier = bindInfo.Identifier;
+            var contractTypes = bindSpec.BakeContractTypes();
+            var identifier = bindSpec.Identifier;
             ProviderRepo.Register(contractTypes, identifier, instance);
         }
 
-        public void RegisterProvider(BindInfo bindInfo, ProvideDelegate provider, ArgumentArray extraArgument, bool nonLazy)
+        public void RegisterProvider(BindSpec bindSpec, ProvideDelegate provider, ArgumentArray extraArgument, bool nonLazy)
         {
-            var contractTypes = bindInfo.BakeContractTypes();
-            var identifier = bindInfo.Identifier;
+            var contractTypes = bindSpec.BakeContractTypes();
+            var identifier = bindSpec.Identifier;
 
             provider ??= (container, concreteType, args) => container.Instantiate(concreteType, args);
-            var providerIndex = ProviderRepo.Register(contractTypes, identifier, provider, bindInfo.ConcreteType, extraArgument);
+            var providerIndex = ProviderRepo.Register(contractTypes, identifier, provider, bindSpec.ConcreteType, extraArgument);
             if (nonLazy) _nonLazyProviders.Add(providerIndex);
         }
 
@@ -109,7 +109,7 @@ namespace Zenject
             ParamArrayPool.Release(paramValues);
         }
 
-        void InjectMember(InjectableInfo injectInfo, InjectTypeInfo.InjectFieldInfo setter,
+        void InjectMember(InjectSpec injectInfo, InjectTypeInfo.InjectFieldInfo setter,
             object injectable, ArgumentArray extraArgs)
         {
             if (extraArgs.TryGetValueWithType(injectInfo.Type, out var value))
@@ -133,31 +133,31 @@ namespace Zenject
         // Don't use this unless you know what you're doing
         // You probably want to use InstantiatePrefab instead
         // This one will only create the prefab and will not inject into it
-        GameObject InstantiateGameObjectInactive(GameObject prefab, GameObjectCreationParameters creationParameters)
+        GameObject InstantiateGameObjectInactive(GameObject prefab, GameObjectInstantiateParameters instantiateParameters)
         {
             Assert.IsTrue(prefab != null, "Null prefab found when instantiating game object");
 
             prefab.SetActive(false);
 
-            var parent = creationParameters.ParentTransform;
+            var parent = instantiateParameters.Parent;
             var initialParent = parent ?? ContextTransform;
 
             GameObject gameObj;
             bool positionOrRotationWereSet;
 
-            if (creationParameters.Position.HasValue && creationParameters.Rotation.HasValue)
+            if (instantiateParameters.Position.HasValue && instantiateParameters.Rotation.HasValue)
             {
-                gameObj = Object.Instantiate(prefab, creationParameters.Position.Value, creationParameters.Rotation.Value, initialParent);
+                gameObj = Object.Instantiate(prefab, instantiateParameters.Position.Value, instantiateParameters.Rotation.Value, initialParent);
                 positionOrRotationWereSet = true;
             }
-            else if (creationParameters.Position.HasValue)
+            else if (instantiateParameters.Position.HasValue)
             {
-                gameObj = Object.Instantiate(prefab, creationParameters.Position.Value, prefab.transform.rotation, initialParent);
+                gameObj = Object.Instantiate(prefab, instantiateParameters.Position.Value, prefab.transform.rotation, initialParent);
                 positionOrRotationWereSet = true;
             }
-            else if (creationParameters.Rotation.HasValue)
+            else if (instantiateParameters.Rotation.HasValue)
             {
-                gameObj = Object.Instantiate(prefab, prefab.transform.position, creationParameters.Rotation.Value, initialParent);
+                gameObj = Object.Instantiate(prefab, prefab.transform.position, instantiateParameters.Rotation.Value, initialParent);
                 positionOrRotationWereSet = true;
             }
             else
@@ -174,10 +174,10 @@ namespace Zenject
             return gameObj;
         }
 
-        public GameObject CreateEmptyGameObject(GameObjectCreationParameters gameObjectBindInfo)
+        public GameObject CreateEmptyGameObject(GameObjectInstantiateParameters instantiateParams)
         {
             var gameObj = new GameObject();
-            var parent = gameObjectBindInfo.ParentTransform;
+            var parent = instantiateParams.Parent;
 
             if (parent == null)
             {
@@ -211,7 +211,7 @@ namespace Zenject
             object newObj;
 
             var injectableInfo = TypeAnalyzer.GetInfo(concreteType);
-            var constructorInfo = injectableInfo.InjectConstructor;
+            var constructorInfo = injectableInfo.Constructor;
             if (constructorInfo.Parameters.Length == 0)
             {
                 newObj = constructorInfo.ConstructorInfo.Invoke(null);
@@ -235,7 +235,7 @@ namespace Zenject
             Inject(newObj, injectableInfo, extraArgs);
             return newObj;
 
-            static void ResolveParamArray(DiContainer container, InjectableInfo[] paramInfos, object[] paramValues, ArgumentArray extraArgs)
+            static void ResolveParamArray(DiContainer container, InjectSpec[] paramInfos, object[] paramValues, ArgumentArray extraArgs)
             {
                 for (var i = 0; i < paramInfos.Length; i++)
                 {
@@ -282,28 +282,28 @@ namespace Zenject
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(GameObject prefab, Transform parentTransform)
+        public GameObject InstantiatePrefab(GameObject prefab, Transform parent)
         {
             return InstantiatePrefab(
-                prefab, new GameObjectCreationParameters {ParentTransform = parentTransform});
+                prefab, new GameObjectInstantiateParameters {Parent = parent});
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(GameObject prefab, Vector3 position, Quaternion rotation, Transform parentTransform)
+        public GameObject InstantiatePrefab(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
         {
             return InstantiatePrefab(
-                prefab, new GameObjectCreationParameters
+                prefab, new GameObjectInstantiateParameters
                 {
-                    ParentTransform = parentTransform,
+                    Parent = parent,
                     Position = position,
                     Rotation = rotation
                 });
         }
 
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(GameObject prefab, GameObjectCreationParameters gameObjectBindInfo = default)
+        public GameObject InstantiatePrefab(GameObject prefab, GameObjectInstantiateParameters instantiateParams = default)
         {
-            var gameObj = InstantiateGameObjectInactive(prefab, gameObjectBindInfo);
+            var gameObj = InstantiateGameObjectInactive(prefab, instantiateParams);
             gameObj.GetComponent<InjectTargetCollection>().Inject(this);
             gameObj.SetActive(true);
             return gameObj;
@@ -313,13 +313,13 @@ namespace Zenject
 
         public void Inject(object injectable, InjectTypeInfo typeInfo, ArgumentArray extraArgs)
         {
-            if (typeInfo.InjectFields != null)
+            if (typeInfo.Fields != null)
             {
-                foreach (var injectField in typeInfo.InjectFields)
+                foreach (var injectField in typeInfo.Fields)
                     InjectMember(injectField.Info, injectField, injectable, extraArgs);
             }
 
-            var method = typeInfo.InjectMethod;
+            var method = typeInfo.Method;
             if (method.MethodInfo != null)
                 CallInjectMethods(injectable, method, extraArgs);
         }
@@ -362,7 +362,7 @@ namespace Zenject
 
         public bool TryResolve<TContract>(string identifier, out TContract instance)
         {
-            return TryResolve(identifier.GetHashCode(), InjectSources.Any, out instance);
+            return TryResolve(Hasher.Hash(identifier), InjectSources.Any, out instance);
         }
 
         public bool TryResolve<TContract>(out TContract instance)
@@ -389,7 +389,7 @@ namespace Zenject
 
         public TContract Resolve<TContract>(string identifier)
         {
-            return Resolve<TContract>(identifier.GetHashCode());
+            return Resolve<TContract>(Hasher.Hash(identifier));
         }
 
         public object Resolve(Type contractType, int identifier = 0, InjectSources sourceType = InjectSources.Any)
@@ -400,39 +400,29 @@ namespace Zenject
             }
             else
             {
-                throw new Exception($"Failed to Resolve: {contractType.Name}, {identifier}, {sourceType}");
+                throw new Exception($"Failed to Resolve: {contractType.Name}, {Hasher.ToHumanReadableString(identifier)}, {sourceType}");
             }
         }
 
-        public object Resolve(InjectableInfo context)
+        public object Resolve(InjectSpec injectSpec)
         {
-            if (TryResolve(context.Type, context.Identifier, context.SourceType, out var instance))
-            {
-                return instance;
-            }
-
-            if (context.Optional == false)
-            {
-                throw new Exception($"Failed to Resolve: {context.Type.Name}, {context.Identifier}, {context.SourceType}");
-            }
-
-            return null;
+            return Resolve(injectSpec.Type, injectSpec.Identifier, injectSpec.SourceType);
         }
 
         public bool HasBinding(Type contractType, int identifier = 0, InjectSources sourceType = InjectSources.Any)
         {
-            return HasBinding(new InjectableInfo(contractType, identifier, sourceType));
+            return HasBinding(new InjectSpec(contractType, identifier, sourceType));
         }
 
         // You shouldn't need to use this
-        public bool HasBinding(InjectableInfo context)
+        public bool HasBinding(InjectSpec injectSpec)
         {
-            return _providerChain.HasBinding(context.BindingId, context.SourceType);
+            return _providerChain.HasBinding(injectSpec.BindingId, injectSpec.SourceType);
         }
 
         public void Bind(Type contractType, int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
-            RegisterProvider(new BindInfo
+            RegisterProvider(new BindSpec
             {
                 ConcreteType = contractType,
                 Identifier = identifier,
@@ -447,7 +437,7 @@ namespace Zenject
 
         public void Bind(object instance)
         {
-            RegisterProvider(new BindInfo
+            RegisterProvider(new BindSpec
             {
                 ConcreteType = instance.GetType(),
                 BindConcreteType = true,
@@ -456,7 +446,7 @@ namespace Zenject
 
         public void Bind(object instance, int id)
         {
-            RegisterProvider(new BindInfo
+            RegisterProvider(new BindSpec
             {
                 ConcreteType = instance.GetType(),
                 Identifier = id,
@@ -466,17 +456,17 @@ namespace Zenject
 
         public void Bind(object instance, string id)
         {
-            RegisterProvider(new BindInfo
+            RegisterProvider(new BindSpec
             {
                 ConcreteType = instance.GetType(),
-                Identifier = id.GetHashCode(),
+                Identifier = Hasher.Hash(id),
                 BindConcreteType = true,
             }, instance);
         }
 
         public void BindInterfacesTo(Type type, int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
         {
-            RegisterProvider(new BindInfo
+            RegisterProvider(new BindSpec
             {
                 ConcreteType = type,
                 Identifier = identifier,
@@ -491,7 +481,7 @@ namespace Zenject
 
         public void BindInterfacesTo(object instance, int identifier = 0)
         {
-            RegisterProvider(new BindInfo
+            RegisterProvider(new BindSpec
             {
                 ConcreteType = instance.GetType(),
                 Identifier = identifier,
@@ -501,7 +491,7 @@ namespace Zenject
 
         public void BindInterfacesAndSelfTo(Type type, int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
         {
-            RegisterProvider(new BindInfo
+            RegisterProvider(new BindSpec
             {
                 ConcreteType = type,
                 Identifier = identifier,
@@ -517,7 +507,7 @@ namespace Zenject
 
         public void BindInterfacesAndSelfTo(object instance, int identifier = 0)
         {
-            RegisterProvider(new BindInfo
+            RegisterProvider(new BindSpec
             {
                 ConcreteType = instance.GetType(),
                 Identifier = identifier,
