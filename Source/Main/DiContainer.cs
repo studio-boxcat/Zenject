@@ -409,9 +409,9 @@ namespace Zenject
             return Resolve(injectSpec.Type, injectSpec.Identifier, injectSpec.SourceType);
         }
 
-        public bool HasBinding(Type contractType, int identifier = 0, InjectSources sourceType = InjectSources.Any)
+        public bool HasBinding(Type type, int identifier = 0, InjectSources sourceType = InjectSources.Any)
         {
-            return HasBinding(new InjectSpec(contractType, identifier, sourceType));
+            return HasBinding(new InjectSpec(type, identifier, sourceType));
         }
 
         // You shouldn't need to use this
@@ -420,11 +420,11 @@ namespace Zenject
             return _providerChain.HasBinding(injectSpec.BindingId, injectSpec.SourceType);
         }
 
-        public void Bind(Type contractType, int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
+        public void Bind(Type type, int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = contractType,
+                ConcreteType = type,
                 Identifier = identifier,
                 BindConcreteType = true,
             }, provider, arguments, nonLazy);
@@ -462,6 +462,16 @@ namespace Zenject
                 Identifier = Hasher.Hash(id),
                 BindConcreteType = true,
             }, instance);
+        }
+
+        public void Bind(Type type, string id, ProvideDelegate provider, ArgumentArray arguments = default, bool nonLazy = false)
+        {
+            RegisterProvider(new BindSpec
+            {
+                ConcreteType = type,
+                Identifier = Hasher.Hash(id),
+                BindConcreteType = true,
+            }, provider, arguments, nonLazy);
         }
 
         public void BindInterfacesTo(Type type, int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
