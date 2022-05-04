@@ -406,7 +406,17 @@ namespace Zenject
 
         public object Resolve(InjectSpec injectSpec)
         {
-            return Resolve(injectSpec.Type, injectSpec.Identifier, injectSpec.SourceType);
+            if (TryResolve(injectSpec.Type, injectSpec.Identifier, injectSpec.SourceType, out var instance))
+            {
+                return instance;
+            }
+
+            if (injectSpec.Optional == false)
+            {
+                throw new Exception($"Failed to Resolve: {injectSpec.Type.Name}, {Hasher.ToHumanReadableString(injectSpec.Identifier)}, {injectSpec.SourceType}");
+            }
+
+            return null;
         }
 
         public bool HasBinding(Type type, int identifier = 0, InjectSources sourceType = InjectSources.Any)
