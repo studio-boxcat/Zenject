@@ -38,7 +38,7 @@ namespace Zenject
 
         public override string ToString()
         {
-            return BindingId.ToString();
+            return $"({Type.Name}, {Hasher.ToHumanReadableString(Identifier)}, {SourceType}, {Optional})";
         }
     }
 }

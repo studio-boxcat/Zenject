@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using JetBrains.Annotations;
 using ModestTree;
 using Zenject.Internal;
@@ -190,10 +189,9 @@ namespace Zenject
                     ParamArrayPool.Release(paramValues);
                 }
 #if DEBUG
-                catch (Exception)
+                catch (ParamResolveException e)
                 {
-                    Debug.LogError($"Failed to Instantiate: {concreteType.Name}");
-                    throw;
+                    throw new MethodInvokeException(constructorInfo.ConstructorInfo, e.ParamSpec, e.ParamIndex, e);
                 }
 #endif
             }
@@ -213,7 +211,7 @@ namespace Zenject
                     value = container.Resolve(paramSpec);
 
                 if (value == null && !paramSpec.Optional)
-                    throw new Exception($"Failed to Resolve Param: paramType={paramSpec.Type.Name} paramIndex={i}");
+                    throw new ParamResolveException(paramSpec, i);
 
                 paramValues[i] = value;
             }
@@ -311,10 +309,9 @@ namespace Zenject
                     value = container.Resolve(injectSpec);
                 }
 #if DEBUG
-                catch (Exception)
+                catch (Exception e)
                 {
-                    Debug.LogError($"Failed to Resolve Member: injectableType={injectable.GetType().Name}, fieldName={setter.FieldInfo.Name}");
-                    throw;
+                    throw new FieldResolveException(injectable.GetType(), injectSpec, e);
                 }
 #endif
 
@@ -340,10 +337,9 @@ namespace Zenject
                     ParamArrayPool.Release(paramValues);
                 }
 #if DEBUG
-                catch (Exception)
+                catch (ParamResolveException e)
                 {
-                    Debug.LogError($"Failed to Inject Method: {injectable.GetType().Name}", injectable as Object);
-                    throw;
+                    throw new MethodInvokeException(method.MethodInfo, e.ParamSpec, e.ParamIndex, e);
                 }
 #endif
             }
