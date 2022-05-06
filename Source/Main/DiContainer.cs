@@ -92,44 +92,6 @@ namespace Zenject
             return list;
         }
 
-        void CallInjectMethods(object injectable, InjectTypeInfo.InjectMethodInfo method, ArgumentArray extraArgs)
-        {
-            var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
-
-            for (var i = 0; i < method.Parameters.Length; i++)
-            {
-                var injectSpec = method.Parameters[i];
-                if (!extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
-                    value = Resolve(injectSpec);
-                paramValues[i] = value;
-            }
-
-            method.MethodInfo.Invoke(injectable, paramValues);
-
-            ParamArrayPool.Release(paramValues);
-        }
-
-        void InjectMember(InjectSpec injectSpec, InjectTypeInfo.InjectFieldInfo setter,
-            object injectable, ArgumentArray extraArgs)
-        {
-            if (extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
-            {
-                setter.Invoke(injectable, value);
-                return;
-            }
-
-            value = Resolve(injectSpec);
-
-            if (injectSpec.Optional && value == null)
-            {
-                // Do not override in this case so it retains the hard-coded value
-            }
-            else
-            {
-                setter.Invoke(injectable, value);
-            }
-        }
-
         // Don't use this unless you know what you're doing
         // You probably want to use InstantiatePrefab instead
         // This one will only create the prefab and will not inject into it
@@ -234,17 +196,17 @@ namespace Zenject
             Assert.IsTrue(newObj.GetType() == concreteType);
             Inject(newObj, injectableInfo, extraArgs);
             return newObj;
+        }
 
-            static void ResolveParamArray(DiContainer container, InjectSpec[] paramInfos, object[] paramValues, ArgumentArray extraArgs)
+        static void ResolveParamArray(DiContainer container, InjectSpec[] paramSpecs, object[] paramValues, ArgumentArray extraArgs)
+        {
+            for (var i = 0; i < paramSpecs.Length; i++)
             {
-                for (var i = 0; i < paramInfos.Length; i++)
-                {
-                    var injectSpec = paramInfos[i];
-                    if (!extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
-                        value = container.Resolve(injectSpec);
-                    Assert.IsTrue(value != null || injectSpec.Optional);
-                    paramValues[i] = value;
-                }
+                var injectSpec = paramSpecs[i];
+                if (!extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
+                    value = container.Resolve(injectSpec);
+                Assert.IsTrue(value != null || injectSpec.Optional);
+                paramValues[i] = value;
             }
         }
 
@@ -316,12 +278,43 @@ namespace Zenject
             if (typeInfo.Fields != null)
             {
                 foreach (var injectField in typeInfo.Fields)
-                    InjectMember(injectField.Info, injectField, injectable, extraArgs);
+                    InjectMember(this, injectField.Info, injectField, injectable, extraArgs);
             }
 
             var method = typeInfo.Method;
             if (method.MethodInfo != null)
-                CallInjectMethods(injectable, method, extraArgs);
+                InjectMethod(this, injectable, method, extraArgs);
+
+            static void InjectMember(
+                DiContainer container,
+                InjectSpec injectSpec, InjectTypeInfo.InjectFieldInfo setter,
+                object injectable, ArgumentArray extraArgs)
+            {
+                if (extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
+                {
+                    setter.Invoke(injectable, value);
+                    return;
+                }
+
+                value = container.Resolve(injectSpec);
+
+                if (injectSpec.Optional && value == null)
+                {
+                    // Do not override in this case so it retains the hard-coded value
+                }
+                else
+                {
+                    setter.Invoke(injectable, value);
+                }
+            }
+
+            static void InjectMethod(DiContainer container, object injectable, InjectTypeInfo.InjectMethodInfo method, ArgumentArray extraArgs)
+            {
+                var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
+                ResolveParamArray(container, method.Parameters, paramValues, extraArgs);
+                method.MethodInfo.Invoke(injectable, paramValues);
+                ParamArrayPool.Release(paramValues);
+            }
         }
 
         public void Inject(object injectable, ArgumentArray extraArgs = default)

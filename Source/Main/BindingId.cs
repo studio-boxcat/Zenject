@@ -32,9 +32,9 @@ namespace Zenject
         public static bool operator ==(BindingId a, BindingId b) => a.Equals(b);
         public static bool operator !=(BindingId a, BindingId b) => !a.Equals(b);
 
-        public static readonly IEqualityComparer<BindingId> Comparer = new TypeIdentifierEqualityComparer();
+        public static readonly IEqualityComparer<BindingId> Comparer = new EqualityComparer();
 
-        sealed class TypeIdentifierEqualityComparer : IEqualityComparer<BindingId>
+        sealed class EqualityComparer : IEqualityComparer<BindingId>
         {
             public bool Equals(BindingId x, BindingId y) => x.Equals(y);
             public int GetHashCode(BindingId obj) => obj.GetHashCode();
