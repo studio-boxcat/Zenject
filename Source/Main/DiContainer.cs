@@ -98,9 +98,9 @@ namespace Zenject
 
             for (var i = 0; i < method.Parameters.Length; i++)
             {
-                var injectInfo = method.Parameters[i];
-                if (!extraArgs.TryGetValueWithType(injectInfo.Type, out var value))
-                    value = Resolve(injectInfo);
+                var injectSpec = method.Parameters[i];
+                if (!extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
+                    value = Resolve(injectSpec);
                 paramValues[i] = value;
             }
 
@@ -109,18 +109,18 @@ namespace Zenject
             ParamArrayPool.Release(paramValues);
         }
 
-        void InjectMember(InjectSpec injectInfo, InjectTypeInfo.InjectFieldInfo setter,
+        void InjectMember(InjectSpec injectSpec, InjectTypeInfo.InjectFieldInfo setter,
             object injectable, ArgumentArray extraArgs)
         {
-            if (extraArgs.TryGetValueWithType(injectInfo.Type, out var value))
+            if (extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
             {
                 setter.Invoke(injectable, value);
                 return;
             }
 
-            value = Resolve(injectInfo);
+            value = Resolve(injectSpec);
 
-            if (injectInfo.Optional && value == null)
+            if (injectSpec.Optional && value == null)
             {
                 // Do not override in this case so it retains the hard-coded value
             }
@@ -239,10 +239,10 @@ namespace Zenject
             {
                 for (var i = 0; i < paramInfos.Length; i++)
                 {
-                    var injectInfo = paramInfos[i];
-                    if (!extraArgs.TryGetValueWithType(injectInfo.Type, out var value))
-                        value = container.Resolve(injectInfo);
-                    Assert.IsNotNull(value);
+                    var injectSpec = paramInfos[i];
+                    if (!extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
+                        value = container.Resolve(injectSpec);
+                    Assert.IsTrue(value != null || injectSpec.Optional);
                     paramValues[i] = value;
                 }
             }
