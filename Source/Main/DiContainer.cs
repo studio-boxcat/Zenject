@@ -180,17 +180,22 @@ namespace Zenject
             }
             else
             {
-                var paramValues = ParamArrayPool.Rent(constructorInfo.Parameters.Length);
-
+#if DEBUG
                 try
+#endif
                 {
+                    var paramValues = ParamArrayPool.Rent(constructorInfo.Parameters.Length);
                     ResolveParamArray(this, constructorInfo.Parameters, paramValues, extraArgs);
                     newObj = constructorInfo.ConstructorInfo.Invoke(paramValues);
-                }
-                finally
-                {
                     ParamArrayPool.Release(paramValues);
                 }
+#if DEBUG
+                catch (Exception)
+                {
+                    Debug.LogError($"Failed to Instantiate: {concreteType.Name}");
+                    throw;
+                }
+#endif
             }
 
             Assert.IsTrue(newObj.GetType() == concreteType);
@@ -202,10 +207,14 @@ namespace Zenject
         {
             for (var i = 0; i < paramSpecs.Length; i++)
             {
-                var injectSpec = paramSpecs[i];
-                if (!extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
-                    value = container.Resolve(injectSpec);
-                Assert.IsTrue(value != null || injectSpec.Optional);
+                var paramSpec = paramSpecs[i];
+
+                if (!extraArgs.TryGetValueWithType(paramSpec.Type, out var value))
+                    value = container.Resolve(paramSpec);
+
+                if (value == null && !paramSpec.Optional)
+                    throw new Exception($"Failed to Resolve Param: paramType={paramSpec.Type.Name} paramIndex={i}");
+
                 paramValues[i] = value;
             }
         }
@@ -278,17 +287,16 @@ namespace Zenject
             if (typeInfo.Fields != null)
             {
                 foreach (var injectField in typeInfo.Fields)
-                    InjectMember(this, injectField.Info, injectField, injectable, extraArgs);
+                    InjectMember(this, injectable, injectField, injectField.Info, extraArgs);
             }
 
             var method = typeInfo.Method;
             if (method.MethodInfo != null)
                 InjectMethod(this, injectable, method, extraArgs);
 
-            static void InjectMember(
-                DiContainer container,
-                InjectSpec injectSpec, InjectTypeInfo.InjectFieldInfo setter,
-                object injectable, ArgumentArray extraArgs)
+            static void InjectMember(DiContainer container,
+                object injectable, InjectTypeInfo.InjectFieldInfo setter,
+                InjectSpec injectSpec, ArgumentArray extraArgs)
             {
                 if (extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
                 {
@@ -296,7 +304,19 @@ namespace Zenject
                     return;
                 }
 
-                value = container.Resolve(injectSpec);
+#if DEBUG
+                try
+#endif
+                {
+                    value = container.Resolve(injectSpec);
+                }
+#if DEBUG
+                catch (Exception)
+                {
+                    Debug.LogError($"Failed to Resolve Member: injectableType={injectable.GetType().Name}, fieldName={setter.FieldInfo.Name}");
+                    throw;
+                }
+#endif
 
                 if (injectSpec.Optional && value == null)
                 {
@@ -310,10 +330,22 @@ namespace Zenject
 
             static void InjectMethod(DiContainer container, object injectable, InjectTypeInfo.InjectMethodInfo method, ArgumentArray extraArgs)
             {
-                var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
-                ResolveParamArray(container, method.Parameters, paramValues, extraArgs);
-                method.MethodInfo.Invoke(injectable, paramValues);
-                ParamArrayPool.Release(paramValues);
+#if DEBUG
+                try
+#endif
+                {
+                    var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
+                    ResolveParamArray(container, method.Parameters, paramValues, extraArgs);
+                    method.MethodInfo.Invoke(injectable, paramValues);
+                    ParamArrayPool.Release(paramValues);
+                }
+#if DEBUG
+                catch (Exception)
+                {
+                    Debug.LogError($"Failed to Inject Method: {injectable.GetType().Name}", injectable as Object);
+                    throw;
+                }
+#endif
             }
         }
 
