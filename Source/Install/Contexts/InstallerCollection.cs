@@ -25,19 +25,42 @@ namespace Zenject
         public void InjectAndInstall(DiContainer container)
         {
             foreach (var installer in _scriptableObjectInstallers)
-            {
-                // Log.Debug("Inject: " + installer.name);
-                container.Inject(installer);
-                // Log.Debug("InstallBindings: " + installer.name);
-                installer.InstallBindings();
-            }
+                InjectAndInstallBindings(container, installer);
 
             foreach (var installer in _monoInstallers)
+                InjectAndInstallBindings(container, installer);
+
+            static void InjectAndInstallBindings(DiContainer container, IInstaller installer)
             {
-                // Log.Debug("Inject: " + installer.name);
-                container.Inject(installer);
-                // Log.Debug("InstallBindings: " + installer.name);
-                installer.InstallBindings();
+#if DEBUG
+                try
+#endif
+                {
+                    // Log.Debug("Inject: " + installer.name);
+                    container.Inject(installer);
+                }
+#if DEBUG
+                catch (Exception)
+                {
+                    Debug.LogError("Failed to Inject to Installer: " + installer, (UnityEngine.Object) installer);
+                    throw;
+                }
+#endif
+
+#if DEBUG
+                try
+#endif
+                {
+                    // Log.Debug("InstallBindings: " + installer.name);
+                    installer.InstallBindings();
+                }
+#if DEBUG
+                catch (Exception)
+                {
+                    Debug.LogError("Failed to Install Bindings of Installer: " + installer, (UnityEngine.Object) installer);
+                    throw;
+                }
+#endif
             }
         }
     }
