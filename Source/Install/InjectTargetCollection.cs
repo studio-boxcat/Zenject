@@ -10,16 +10,16 @@ namespace Zenject
         [ValidateInput("Validate_Targets")]
         public Object[] Targets;
 
-        public static void TryInject(GameObject gameObject, DiContainer diContainer)
+        public static void TryInject(GameObject gameObject, DiContainer diContainer, ArgumentArray extraArgs)
         {
             if (gameObject.TryGetComponent(out InjectTargetCollection explicitInjectTargetCollection))
-                explicitInjectTargetCollection.Inject(diContainer);
+                explicitInjectTargetCollection.Inject(diContainer, extraArgs);
         }
 
-        public void Inject(DiContainer diContainer)
+        public void Inject(DiContainer diContainer, ArgumentArray extraArgs)
         {
             foreach (var target in Targets)
-                diContainer.Inject(target);
+                diContainer.Inject(target, extraArgs);
             Targets = null;
         }
     }

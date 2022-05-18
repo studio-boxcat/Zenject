@@ -51,7 +51,7 @@ namespace Zenject
                 return false;
             }
 
-            if (Arg1.GetType().DerivesFromOrEqual(injectedFieldType))
+            if (injectedFieldType.IsInstanceOfType(Arg1))
             {
                 value = Arg1;
                 return true;
@@ -63,7 +63,7 @@ namespace Zenject
                 return false;
             }
 
-            if (Arg2.GetType().DerivesFromOrEqual(injectedFieldType))
+            if (injectedFieldType.IsInstanceOfType(Arg2))
             {
                 value = Arg2;
                 return true;
@@ -75,7 +75,7 @@ namespace Zenject
                 return false;
             }
 
-            if (Arg3.GetType().DerivesFromOrEqual(injectedFieldType))
+            if (injectedFieldType.IsInstanceOfType(Arg3))
             {
                 value = Arg3;
                 return true;

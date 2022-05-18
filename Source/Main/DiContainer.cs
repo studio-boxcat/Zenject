@@ -17,7 +17,6 @@ namespace Zenject
     public class DiContainer
     {
         [CanBeNull] public readonly DiContainer ParentContainer;
-        [CanBeNull] public readonly Transform ContextTransform;
 
         public readonly ProviderRepo ProviderRepo;
 
@@ -26,11 +25,9 @@ namespace Zenject
         readonly List<int> _nonLazyProviders = new();
 
         public DiContainer(
-            [CanBeNull] DiContainer parentContainer = null,
-            [CanBeNull] Transform contextTransform = null)
+            [CanBeNull] DiContainer parentContainer = null)
         {
             ParentContainer = parentContainer;
-            ContextTransform = contextTransform;
 
             ProviderRepo = new ProviderRepo(this);
 
@@ -94,64 +91,13 @@ namespace Zenject
         // Don't use this unless you know what you're doing
         // You probably want to use InstantiatePrefab instead
         // This one will only create the prefab and will not inject into it
-        GameObject InstantiateGameObjectInactive(GameObject prefab, GameObjectInstantiateParameters instantiateParameters)
+        static GameObject InstantiateGameObjectInactive(GameObject prefab, Transform parent)
         {
             Assert.IsTrue(prefab != null, "Null prefab found when instantiating game object");
-
             prefab.SetActive(false);
-
-            var parent = instantiateParameters.Parent;
-            var initialParent = parent ?? ContextTransform;
-
-            GameObject gameObj;
-            bool positionOrRotationWereSet;
-
-            if (instantiateParameters.Position.HasValue && instantiateParameters.Rotation.HasValue)
-            {
-                gameObj = Object.Instantiate(prefab, instantiateParameters.Position.Value, instantiateParameters.Rotation.Value, initialParent);
-                positionOrRotationWereSet = true;
-            }
-            else if (instantiateParameters.Position.HasValue)
-            {
-                gameObj = Object.Instantiate(prefab, instantiateParameters.Position.Value, prefab.transform.rotation, initialParent);
-                positionOrRotationWereSet = true;
-            }
-            else if (instantiateParameters.Rotation.HasValue)
-            {
-                gameObj = Object.Instantiate(prefab, prefab.transform.position, instantiateParameters.Rotation.Value, initialParent);
-                positionOrRotationWereSet = true;
-            }
-            else
-            {
-                gameObj = Object.Instantiate(prefab, initialParent);
-                positionOrRotationWereSet = false;
-            }
-
+            var inst = Object.Instantiate(prefab, parent);
             prefab.SetActive(true);
-
-            if (gameObj.transform.parent != parent)
-                gameObj.transform.SetParent(parent, positionOrRotationWereSet);
-
-            return gameObj;
-        }
-
-        public GameObject CreateEmptyGameObject(GameObjectInstantiateParameters instantiateParams)
-        {
-            var gameObj = new GameObject();
-            var parent = instantiateParams.Parent;
-
-            if (parent == null)
-            {
-                // This ensures it gets added to the right scene instead of just the active scene
-                gameObj.transform.SetParent(ContextTransform, false);
-                gameObj.transform.SetParent(null, false);
-            }
-            else
-            {
-                gameObj.transform.SetParent(parent, false);
-            }
-
-            return gameObj;
+            return inst;
         }
 
         // Note: For IL2CPP platforms make sure to use new object[] instead of new [] when creating
@@ -245,37 +191,13 @@ namespace Zenject
             return monoBehaviour;
         }
 
-        public T InstantiateComponentOnNewGameObject<T>(ArgumentArray extraArgs = default) where T : Component
-        {
-            return InstantiateComponent<T>(CreateEmptyGameObject(default), extraArgs);
-        }
-
         // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(GameObject prefab, Transform parent)
+        public GameObject InstantiatePrefab(GameObject prefab, Transform parent, ArgumentArray extraArgs = default)
         {
-            return InstantiatePrefab(
-                prefab, new GameObjectInstantiateParameters {Parent = parent});
-        }
-
-        // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
-        {
-            return InstantiatePrefab(
-                prefab, new GameObjectInstantiateParameters
-                {
-                    Parent = parent,
-                    Position = position,
-                    Rotation = rotation
-                });
-        }
-
-        // Create a new game object from a prefab and fill in dependencies for all children
-        public GameObject InstantiatePrefab(GameObject prefab, GameObjectInstantiateParameters instantiateParams = default)
-        {
-            var gameObj = InstantiateGameObjectInactive(prefab, instantiateParams);
-            gameObj.GetComponent<InjectTargetCollection>().Inject(this);
-            gameObj.SetActive(true);
-            return gameObj;
+            var inst = InstantiateGameObjectInactive(prefab, parent);
+            inst.GetComponent<InjectTargetCollection>().Inject(this, extraArgs);
+            inst.SetActive(true);
+            return inst;
         }
 
 #endif
