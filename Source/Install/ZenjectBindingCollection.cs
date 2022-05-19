@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Zenject
 {
+    [DisallowMultipleComponent]
     public partial class ZenjectBindingCollection : MonoBehaviour
     {
         [ListDrawerSettings(IsReadOnly = true)]

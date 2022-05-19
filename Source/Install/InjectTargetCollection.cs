@@ -4,6 +4,7 @@ using Object = UnityEngine.Object;
 
 namespace Zenject
 {
+    [DisallowMultipleComponent]
     public partial class InjectTargetCollection : MonoBehaviour
     {
         [ListDrawerSettings(IsReadOnly = true)]
