@@ -195,7 +195,7 @@ namespace Zenject
         public GameObject InstantiatePrefab(GameObject prefab, Transform parent, ArgumentArray extraArgs = default)
         {
             var inst = InstantiateGameObjectInactive(prefab, parent);
-            inst.GetComponent<InjectTargetCollection>().Inject(this, extraArgs);
+            InjectTargetCollection.TryInject(inst, this, extraArgs);
             inst.SetActive(true);
             return inst;
         }
