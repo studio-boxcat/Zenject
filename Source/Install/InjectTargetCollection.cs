@@ -13,14 +13,23 @@ namespace Zenject
 
         public static void TryInject(GameObject gameObject, DiContainer diContainer, ArgumentArray extraArgs)
         {
-            if (gameObject.TryGetComponent(out InjectTargetCollection explicitInjectTargetCollection))
-                explicitInjectTargetCollection.Inject(diContainer, extraArgs);
+            if (gameObject.TryGetComponent(out InjectTargetCollection injectTargetCollection))
+                injectTargetCollection.Inject(diContainer, extraArgs);
         }
 
         public void Inject(DiContainer diContainer, ArgumentArray extraArgs)
         {
             foreach (var target in Targets)
-                diContainer.Inject(target, extraArgs);
+            {
+                if (target is InjectTargetCollection injectTargetCollection)
+                {
+                    injectTargetCollection.Inject(diContainer, extraArgs);
+                }
+                else
+                {
+                    diContainer.Inject(target, extraArgs);
+                }
+            }
             Targets = null;
         }
     }

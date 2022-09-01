@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ModestTree;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -55,33 +54,42 @@ namespace Zenject
         static void GetInjectableMonoBehavioursUnderGameObject(
             GameObject gameObject, List<MonoBehaviour> injectableComponents)
         {
-            foreach (var monoBehaviour in gameObject.GetComponentsInChildren<MonoBehaviour>(true))
+            foreach (var child in gameObject.GetComponentsInChildren<Transform>(true))
             {
-                var type = monoBehaviour.GetType();
-
-                if (_requiresInjection.TryGetValue(type, out var requiresInjection))
+                if (child != gameObject.transform && child.TryGetComponent<InjectTargetCollection>(out var injectTargetCollection))
                 {
-                    if (requiresInjection)
+                    injectableComponents.Add(injectTargetCollection);
+                    continue;
+                }
+
+                foreach (var monoBehaviour in child.GetComponents<MonoBehaviour>())
+                {
+                    var type = monoBehaviour.GetType();
+
+                    if (_requiresInjection.TryGetValue(type, out var requiresInjection))
+                    {
+                        if (requiresInjection)
+                            injectableComponents.Add(monoBehaviour);
+                        continue;
+                    }
+
+                    // Do not inject on installers since these are always injected before they are installed
+                    if (type.IsSubclassOf(typeof(MonoInstaller)))
+                    {
+                        _requiresInjection.Add(type, false);
+                        continue;
+                    }
+
+                    var typeInfo = TypeAnalyzer.GetInfo(monoBehaviour.GetType());
+                    if (typeInfo.IsInjectionRequired())
+                    {
+                        _requiresInjection.Add(type, true);
                         injectableComponents.Add(monoBehaviour);
-                    continue;
-                }
-
-                // Do not inject on installers since these are always injected before they are installed
-                if (type.IsSubclassOf(typeof(MonoInstaller)))
-                {
-                    _requiresInjection.Add(type, false);
-                    continue;
-                }
-
-                var typeInfo = TypeAnalyzer.GetInfo(monoBehaviour.GetType());
-                if (typeInfo.IsInjectionRequired())
-                {
-                    _requiresInjection.Add(type, true);
-                    injectableComponents.Add(monoBehaviour);
-                }
-                else
-                {
-                    _requiresInjection.Add(type, false);
+                    }
+                    else
+                    {
+                        _requiresInjection.Add(type, false);
+                    }
                 }
             }
         }
