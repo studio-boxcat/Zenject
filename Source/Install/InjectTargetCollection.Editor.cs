@@ -36,61 +36,74 @@ namespace Zenject
 
         static Object[] Internal_CollectInScene()
         {
-            var output = new List<MonoBehaviour>();
+            var output = new List<Object>();
             foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
-                GetInjectableMonoBehavioursUnderGameObject(rootObj, output);
-            return output.Cast<Object>().ToArray();
+                GetInjectableMonoBehavioursUnderGameObject(rootObj.transform, output);
+            return output.ToArray();
         }
 
         static Object[] Internal_CollectUnderGameObject(GameObject gameObject)
         {
-            var output = new List<MonoBehaviour>();
-            GetInjectableMonoBehavioursUnderGameObject(gameObject, output);
-            return output.Cast<Object>().ToArray();
+            var output = new List<Object>();
+            GetInjectableMonoBehavioursUnderGameObject(gameObject.transform, output);
+            return output.ToArray();
         }
 
-        static readonly Dictionary<Type, bool> _requiresInjection = new();
+        static readonly List<MonoBehaviour> _monoBehaviourBuf = new();
 
         static void GetInjectableMonoBehavioursUnderGameObject(
-            GameObject gameObject, List<MonoBehaviour> injectableComponents)
+            Transform transform, List<Object> injectableComponents)
         {
-            foreach (var child in gameObject.GetComponentsInChildren<Transform>(true))
+            // 대상에 붙어있는 컴포넌트 중 인젝션이 필요한 것을 찾음.
+            transform.GetComponents(_monoBehaviourBuf);
+            foreach (var monoBehaviour in _monoBehaviourBuf)
             {
-                if (child != gameObject.transform && child.TryGetComponent<InjectTargetCollection>(out var injectTargetCollection))
+                var type = monoBehaviour.GetType();
+                if (RequiresInject(type))
+                    injectableComponents.Add(monoBehaviour);
+            }
+
+            // 자식을 순회하면서 인젝션이 필요한 것을 찾음.
+            var childCount = transform.childCount;
+            for (var i = 0; i < childCount; i++)
+            {
+                var child = transform.GetChild(i);
+
+                // 자식에게 InjectTargetCollection 가 부착되어있는 경우, 인젝션 대상을 찾지 않음.
+                if (child.TryGetComponent(out InjectTargetCollection injectTargetCollection))
                 {
                     injectableComponents.Add(injectTargetCollection);
                     continue;
                 }
 
-                foreach (var monoBehaviour in child.GetComponents<MonoBehaviour>())
-                {
-                    var type = monoBehaviour.GetType();
+                GetInjectableMonoBehavioursUnderGameObject(child, injectableComponents);
+            }
+        }
 
-                    if (_requiresInjection.TryGetValue(type, out var requiresInjection))
-                    {
-                        if (requiresInjection)
-                            injectableComponents.Add(monoBehaviour);
-                        continue;
-                    }
+        static readonly Dictionary<Type, bool> _requiresInjectCache = new();
 
-                    // Do not inject on installers since these are always injected before they are installed
-                    if (type.IsSubclassOf(typeof(MonoInstaller)))
-                    {
-                        _requiresInjection.Add(type, false);
-                        continue;
-                    }
+        static bool RequiresInject(Type type)
+        {
+            if (_requiresInjectCache.TryGetValue(type, out var requiresInjection))
+                return requiresInjection;
 
-                    var typeInfo = TypeAnalyzer.GetInfo(monoBehaviour.GetType());
-                    if (typeInfo.IsInjectionRequired())
-                    {
-                        _requiresInjection.Add(type, true);
-                        injectableComponents.Add(monoBehaviour);
-                    }
-                    else
-                    {
-                        _requiresInjection.Add(type, false);
-                    }
-                }
+            // Do not inject on installers since these are always injected before they are installed
+            if (type.IsSubclassOf(typeof(MonoInstaller)))
+            {
+                _requiresInjectCache.Add(type, false);
+                return false;
+            }
+
+            var typeInfo = TypeAnalyzer.GetInfo(type);
+            if (typeInfo.IsInjectionRequired())
+            {
+                _requiresInjectCache.Add(type, true);
+                return true;
+            }
+            else
+            {
+                _requiresInjectCache.Add(type, false);
+                return false;
             }
         }
     }
