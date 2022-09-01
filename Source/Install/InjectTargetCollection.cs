@@ -32,5 +32,21 @@ namespace Zenject
             }
             Targets = null;
         }
+
+        public void QueueForInject(DiContainer container)
+        {
+            foreach (var target in Targets)
+            {
+                if (target is InjectTargetCollection injectTargetCollection)
+                {
+                    injectTargetCollection.QueueForInject(container);
+                }
+                else
+                {
+                    container.QueueForInject(target);
+                }
+            }
+            Targets = null;
+        }
     }
 }

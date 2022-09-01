@@ -28,7 +28,7 @@ namespace Zenject
                 zenjectBindingCollection.Bind(Container);
 
             if (gameObject.TryGetComponent(out InjectTargetCollection injectTargetCollection))
-                Container.QueueForInject(injectTargetCollection.Targets);
+                injectTargetCollection.QueueForInject(Container);
 
             if (ExtraBindingsInstallMethod != null)
             {
