@@ -427,19 +427,19 @@ namespace Zenject
             }, provider, arguments, nonLazy);
         }
 
-        public void BindInterfacesTo(Type type, int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
+        public void BindInterfacesTo(Type type, int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
             RegisterProvider(new BindSpec
             {
                 ConcreteType = type,
                 Identifier = identifier,
                 BindInterfaces = true,
-            }, null, arguments, nonLazy: nonLazy);
+            }, provider, arguments, nonLazy);
         }
 
-        public void BindInterfacesTo<T>(int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
+        public void BindInterfacesTo<T>(int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
-            BindInterfacesTo(typeof(T), identifier, arguments, nonLazy);
+            BindInterfacesTo(typeof(T), identifier, provider, arguments, nonLazy);
         }
 
         public void BindInterfacesTo(object instance, int identifier = 0)
