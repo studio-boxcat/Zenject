@@ -84,6 +84,20 @@ namespace Zenject
             return false;
         }
 
+        public bool TryGetValueWithType<T>(out T value)
+        {
+            if (TryGetValueWithType(typeof(T), out var valueObj))
+            {
+                value = (T) valueObj;
+                return true;
+            }
+            else
+            {
+                value = default;
+                return false;
+            }
+        }
+
         public static implicit operator ArgumentArray((object, object) tuple)
         {
             return new ArgumentArray(tuple.Item1, tuple.Item2);
