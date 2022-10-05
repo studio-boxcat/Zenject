@@ -98,6 +98,17 @@ namespace Zenject
             }
         }
 
+        public static ArgumentArray Concat(ArgumentArray arr, object arg)
+        {
+            return arr.Length switch
+            {
+                0 => new ArgumentArray(arg),
+                1 => new ArgumentArray(arr.Arg1, arg),
+                2 => new ArgumentArray(arr.Arg1, arr.Arg2, arg),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+
         public static implicit operator ArgumentArray((object, object) tuple)
         {
             return new ArgumentArray(tuple.Item1, tuple.Item2);
