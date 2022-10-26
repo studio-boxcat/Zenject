@@ -42,7 +42,7 @@ namespace Zenject
             Length = length;
         }
 
-        public bool TryGetValueWithType(Type injectedFieldType, out object value)
+        public bool TryGetValueWithType(Type type, out object value)
         {
             if (Length < 1)
             {
@@ -50,7 +50,7 @@ namespace Zenject
                 return false;
             }
 
-            if (injectedFieldType.IsInstanceOfType(Arg1))
+            if (type.IsInstanceOfType(Arg1))
             {
                 value = Arg1;
                 return true;
@@ -62,7 +62,7 @@ namespace Zenject
                 return false;
             }
 
-            if (injectedFieldType.IsInstanceOfType(Arg2))
+            if (type.IsInstanceOfType(Arg2))
             {
                 value = Arg2;
                 return true;
@@ -74,7 +74,7 @@ namespace Zenject
                 return false;
             }
 
-            if (injectedFieldType.IsInstanceOfType(Arg3))
+            if (type.IsInstanceOfType(Arg3))
             {
                 value = Arg3;
                 return true;
