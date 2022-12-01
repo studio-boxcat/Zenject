@@ -3,22 +3,30 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
+    [Flags]
+    public enum BindFlag : byte
+    {
+        Primary = 1 << 0,
+        Interfaces = 1 << 1,
+        PrimaryAndInterfaces = Primary | Interfaces,
+    }
+
     public struct BindSpec
     {
-        public Type ConcreteType;
+        public Type PrimaryType;
         public int Identifier;
-        public bool BindConcreteType;
-        public bool BindInterfaces;
+        public BindFlag BindFlag;
 
 
         public TypeArray BakeContractTypes()
         {
-            Assert.IsTrue(BindConcreteType || BindInterfaces);
-            if (!BindInterfaces)
-                return new TypeArray(ConcreteType);
-            if (!BindConcreteType)
-                return new TypeArray(ConcreteType.GetInterfaces());
-            return new TypeArray(ConcreteType, ConcreteType.GetInterfaces());
+            Assert.IsTrue(BindFlag != default);
+            if (BindFlag == BindFlag.Primary)
+                return new TypeArray(PrimaryType);
+            if (BindFlag == BindFlag.Interfaces)
+                return new TypeArray(PrimaryType.GetInterfaces());
+            Assert.IsTrue(BindFlag == BindFlag.PrimaryAndInterfaces);
+            return new TypeArray(PrimaryType, PrimaryType.GetInterfaces());
         }
     }
 }

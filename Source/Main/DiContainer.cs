@@ -74,7 +74,7 @@ namespace Zenject
             var identifier = bindSpec.Identifier;
 
             provider ??= (container, concreteType, args) => container.Instantiate(concreteType, args);
-            var providerIndex = ProviderRepo.Register(contractTypes, identifier, provider, bindSpec.ConcreteType, extraArgument);
+            var providerIndex = ProviderRepo.Register(contractTypes, identifier, provider, bindSpec.PrimaryType, extraArgument);
             if (nonLazy) _nonLazyProviders.Add(providerIndex);
         }
 
@@ -377,9 +377,9 @@ namespace Zenject
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = type,
+                PrimaryType = type,
                 Identifier = identifier,
-                BindConcreteType = true,
+                BindFlag = BindFlag.Primary,
             }, provider, arguments, nonLazy);
         }
 
@@ -392,8 +392,17 @@ namespace Zenject
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = instance.GetType(),
-                BindConcreteType = true,
+                PrimaryType = instance.GetType(),
+                BindFlag = BindFlag.Primary,
+            }, instance);
+        }
+
+        public void Bind(Type type, object instance)
+        {
+            RegisterProvider(new BindSpec
+            {
+                PrimaryType = type,
+                BindFlag = BindFlag.Primary,
             }, instance);
         }
 
@@ -401,9 +410,9 @@ namespace Zenject
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = instance.GetType(),
+                PrimaryType = instance.GetType(),
                 Identifier = id,
-                BindConcreteType = true,
+                BindFlag = BindFlag.Primary,
             }, instance);
         }
 
@@ -411,9 +420,9 @@ namespace Zenject
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = instance.GetType(),
+                PrimaryType = instance.GetType(),
                 Identifier = Hasher.Hash(id),
-                BindConcreteType = true,
+                BindFlag = BindFlag.Primary,
             }, instance);
         }
 
@@ -421,9 +430,9 @@ namespace Zenject
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = type,
+                PrimaryType = type,
                 Identifier = Hasher.Hash(id),
-                BindConcreteType = true,
+                BindFlag = BindFlag.Primary,
             }, provider, arguments, nonLazy);
         }
 
@@ -431,9 +440,9 @@ namespace Zenject
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = type,
+                PrimaryType = type,
                 Identifier = identifier,
-                BindInterfaces = true,
+                BindFlag = BindFlag.Interfaces,
             }, provider, arguments, nonLazy);
         }
 
@@ -446,9 +455,9 @@ namespace Zenject
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = instance.GetType(),
+                PrimaryType = instance.GetType(),
                 Identifier = identifier,
-                BindInterfaces = true,
+                BindFlag = BindFlag.Interfaces,
             }, instance);
         }
 
@@ -456,10 +465,9 @@ namespace Zenject
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = type,
+                PrimaryType = type,
                 Identifier = identifier,
-                BindConcreteType = true,
-                BindInterfaces = true,
+                BindFlag = BindFlag.PrimaryAndInterfaces,
             }, null, arguments, nonLazy: nonLazy);
         }
 
@@ -472,10 +480,9 @@ namespace Zenject
         {
             RegisterProvider(new BindSpec
             {
-                ConcreteType = instance.GetType(),
+                PrimaryType = instance.GetType(),
                 Identifier = identifier,
-                BindConcreteType = true,
-                BindInterfaces = true,
+                BindFlag = BindFlag.PrimaryAndInterfaces,
             }, instance);
         }
     }
