@@ -390,6 +390,8 @@ namespace Zenject
 
         public void Bind(object instance)
         {
+            Assert.IsNotNull(instance);
+
             RegisterProvider(new BindSpec
             {
                 PrimaryType = instance.GetType(),
@@ -399,6 +401,9 @@ namespace Zenject
 
         public void Bind(Type type, object instance)
         {
+            Assert.IsNotNull(instance);
+            Assert.IsTrue(type.IsInstanceOfType(instance));
+
             RegisterProvider(new BindSpec
             {
                 PrimaryType = type,
