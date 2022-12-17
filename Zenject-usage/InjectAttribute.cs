@@ -3,8 +3,9 @@ using System;
 namespace Zenject
 {
     [AttributeUsage(
-        AttributeTargets.Parameter
-        | AttributeTargets.Field)]
+        AttributeTargets.Constructor
+        | AttributeTargets.Field
+        | AttributeTargets.Parameter)]
     public class InjectAttribute : InjectAttributeBase
     {
         public InjectAttribute()
