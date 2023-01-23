@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Zenject
 {
@@ -95,6 +96,18 @@ namespace Zenject
             {
                 value = default;
                 return false;
+            }
+        }
+
+        public T GetValueWithType<T>()
+        {
+            if (TryGetValueWithType(typeof(T), out var valueObj))
+            {
+                return (T) valueObj;
+            }
+            else
+            {
+                throw new KeyNotFoundException(typeof(T).Name);
             }
         }
 
