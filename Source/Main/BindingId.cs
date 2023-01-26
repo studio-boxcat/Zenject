@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using JetBrains.Annotations;
 using ModestTree;
 
 namespace Zenject
@@ -11,7 +12,7 @@ namespace Zenject
         public readonly Type Type;
         public readonly int Identifier;
 
-        public BindingId(Type type, int identifier)
+        public BindingId([NotNull] Type type, int identifier)
         {
             Type = type;
             Identifier = identifier;

@@ -85,7 +85,7 @@ namespace Zenject
                     continue;
 
                 var fieldType = field.FieldType;
-                if (fieldType.IsArray)
+                if (fieldType.IsGenericType)
                     continue;
 
                 var injectAttr = field.GetCustomAttribute<InjectAttributeBase>();

@@ -78,14 +78,27 @@ namespace Zenject
             if (nonLazy) _nonLazyProviders.Add(providerIndex);
         }
 
+        static readonly Stack<List<object>> _listPool = new();
+
         public IList ResolveAll(Type type, int identifier, InjectSources sourceType)
         {
-            Assert.IsTrue(type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>));
+            // XXX: IsClassType 으로 체크하는 경우, interface 가 false 로 취급됨.
+            Assert.IsTrue(type.IsArray && type.GetElementType()!.IsValueType == false);
 
-            var list = (IList) Activator.CreateInstance(type);
-            var elementType = type.GetGenericArguments()[0];
+            if (_listPool.TryPop(out var list) == false)
+                list = new List<object>();
+            Assert.AreEqual(0, list.Count);
+
+            var elementType = type.GetElementType()!;
             _providerChain.ResolveAll(new BindingId(elementType, identifier), sourceType, list);
-            return list;
+
+            var result = Array.CreateInstance(elementType, list.Count);
+            for (var i = 0; i < list.Count; i++)
+                result.SetValue(list[i], i);
+
+            list.Clear();
+            _listPool.Push(list);
+            return result;
         }
 
         // Don't use this unless you know what you're doing
@@ -274,8 +287,7 @@ namespace Zenject
 
         public bool TryResolve(Type type, int identifier, InjectSources sourceType, out object instance)
         {
-            // If it's a generic list then try matching multiple instances to its generic type
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            if (type.IsArray)
             {
                 instance = ResolveAll(type, identifier, sourceType);
                 return true;
