@@ -88,15 +88,10 @@ namespace Zenject
             {
                 var assemblyName = type.Assembly.GetName().Name;
                 var isBaseInitializable = typeof(IZenject_Initializable).IsAssignableFrom(type.BaseType);
-                var injectFields = TypeAnalyzer.GetFieldInfos(type, isBaseInitializable);
-                var injectMethod = TypeAnalyzer.GetMethodInfo(type, true);
-                if (injectFields.Length == 0 && injectMethod.MethodInfo == null)
-                    continue;
-
                 var typeDict = GetTypeDict(assemblyName);
                 var value = typeDict.GetValueOrDefault(type);
-                value.InjectFields = injectFields;
-                value.InjectMethod = injectMethod;
+                value.InjectFields = TypeAnalyzer.GetFieldInfos(type, isBaseInitializable);
+                value.InjectMethod = TypeAnalyzer.GetMethodInfo(type, true);
                 typeDict[type] = value;
             }
 
@@ -128,7 +123,7 @@ namespace Zenject
                 _sb.Append("public partial class ").Append(type.Name).AppendLine(" {");
                 if (constructor != null)
                     GenerateConstructor(type, constructor, _sb);
-                if (fields.Length > 0 || method.MethodInfo != null)
+                if (fields is {Length: > 0} || method.MethodInfo != null)
                     GenerateInitializer(type, fields, method, _sb);
                 _sb.AppendLine("}");
 
@@ -152,7 +147,9 @@ namespace Zenject
                 {
                     var paramType = parameter.ParameterType;
                     var injectAttr = parameter.GetCustomAttribute<InjectAttribute>();
-                    var injectSpec = new InjectSpec(paramType, injectAttr.Id, injectAttr.Source, injectAttr.Optional);
+                    var injectSpec = injectAttr != null
+                        ? new InjectSpec(paramType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
+                        : new InjectSpec(paramType, default, InjectSources.Any, false);
                     GenerateResolveType(injectSpec, sb);
                     sb.AppendLine(",");
                 }
@@ -173,11 +170,14 @@ namespace Zenject
                 if (isBaseInitializable)
                     sb.AppendLine("base.Initialize(dp);");
 
-                foreach (var field in fields)
+                if (fields != null)
                 {
-                    sb.Append(field.FieldInfo.Name).Append(" = ");
-                    GenerateResolveType(field.Info, sb);
-                    sb.AppendLine(";");
+                    foreach (var field in fields)
+                    {
+                        sb.Append(field.FieldInfo.Name).Append(" = ");
+                        GenerateResolveType(field.Info, sb);
+                        sb.AppendLine(";");
+                    }
                 }
 
                 if (method.MethodInfo != null)
