@@ -202,12 +202,24 @@ namespace Zenject
             static void GenerateResolveType(InjectSpec injectSpec, StringBuilder sb)
             {
                 var typeName = "global::" + injectSpec.Type.FullName;
-                sb.Append('(').Append(typeName).Append(')').Append("dp.")
-                    .Append(injectSpec.Optional ? "TryResolve(" : "Resolve(")
-                    .Append("typeof(").Append(typeName).Append(')')
-                    .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
-                    .Append(injectSpec.SourceType != 0 ? ", sourceType: InjectSources." + injectSpec.SourceType : "")
-                    .Append(')');
+
+                if (injectSpec.Optional)
+                {
+                    sb.Append("dp.TryResolve<").Append(typeName).Append(">(")
+                        .Append(injectSpec.Identifier != 0 ? "identifier: " + injectSpec.Identifier + "," : "")
+                        .Append(injectSpec.SourceType != 0 ? ", sourceType: InjectSources." + injectSpec.SourceType + "," : "");
+                    if (injectSpec.Identifier != 0 || injectSpec.SourceType != 0)
+                        sb.Length -= 1;
+                    sb.Append(')');
+                }
+                else
+                {
+                    sb.Append('(').Append(typeName).Append(')')
+                        .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
+                        .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
+                        .Append(injectSpec.SourceType != 0 ? ", sourceType: InjectSources." + injectSpec.SourceType : "")
+                        .Append(')');
+                }
             }
         }
     }

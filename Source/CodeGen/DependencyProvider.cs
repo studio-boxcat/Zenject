@@ -21,11 +21,11 @@ namespace Zenject
             return _diContainer.Resolve(type, identifier, sourceType);
         }
 
-        public object TryResolve(Type type, int identifier = default, InjectSources sourceType = default)
+        public T TryResolve<T>(int identifier = default, InjectSources sourceType = default)
         {
-            if (identifier == default && _extraArgs.TryGetValueWithType(type, out var inst))
-                return inst;
-            return _diContainer.TryResolve(type, identifier, sourceType, out inst) ? inst : null;
+            if (identifier == default && _extraArgs.TryGetValueWithType(out T obj))
+                return obj;
+            return _diContainer.TryResolve(identifier, sourceType, out obj) ? obj : default;
         }
     }
 
