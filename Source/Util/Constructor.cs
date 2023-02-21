@@ -22,7 +22,9 @@ namespace Zenject
                 return inst;
             }
 
+#if DEBUG
             Debug.Log("[Zenject] Analyze constructor with Reflection: " + concreteType.Name);
+#endif
 
             // If the constructor has no parameters, just invoke it.
             var constructorInfo = GetConstructorInfo(concreteType);

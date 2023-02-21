@@ -18,7 +18,9 @@ namespace Zenject
                 return;
             }
 
+#if DEBUG
             Debug.Log("[Zenject] Analyze initializer with Reflection: " + inst.GetType().Name);
+#endif
 
             var initializerInfo = GetInfo(inst.GetType());
 
