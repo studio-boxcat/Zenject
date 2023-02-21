@@ -128,52 +128,10 @@ namespace Zenject
 
             Assert.IsFalse(concreteType.IsAbstract, "Expected type '{0}' to be non-abstract".Fmt(concreteType));
 
-            object newObj;
-
-            var injectableInfo = TypeAnalyzer.GetInfo(concreteType);
-            var constructorInfo = injectableInfo.Constructor;
-            if (constructorInfo.Parameters.Length == 0)
-            {
-                newObj = constructorInfo.ConstructorInfo.Invoke(null);
-            }
-            else
-            {
-#if DEBUG
-                try
-#endif
-                {
-                    var paramValues = ParamArrayPool.Rent(constructorInfo.Parameters.Length);
-                    ResolveParamArray(this, constructorInfo.Parameters, paramValues, extraArgs);
-                    newObj = constructorInfo.ConstructorInfo.Invoke(paramValues);
-                    ParamArrayPool.Release(paramValues);
-                }
-#if DEBUG
-                catch (ParamResolveException e)
-                {
-                    throw new MethodInvokeException(constructorInfo.ConstructorInfo, e.ParamSpec, e.ParamIndex, e);
-                }
-#endif
-            }
-
+            var newObj = Constructor.Instantiate(concreteType, this, extraArgs);
             Assert.IsTrue(newObj.GetType() == concreteType);
-            Inject(newObj, injectableInfo, extraArgs);
+            Initializer.Initialize(newObj, this, extraArgs);
             return newObj;
-        }
-
-        static void ResolveParamArray(DiContainer container, InjectSpec[] paramSpecs, object[] paramValues, ArgumentArray extraArgs)
-        {
-            for (var i = 0; i < paramSpecs.Length; i++)
-            {
-                var paramSpec = paramSpecs[i];
-
-                if (!extraArgs.TryGetValueWithType(paramSpec.Type, out var value))
-                    value = container.Resolve(paramSpec);
-
-                if (value == null && !paramSpec.Optional)
-                    throw new ParamResolveException(paramSpec, i);
-
-                paramValues[i] = value;
-            }
         }
 
 #if !NOT_UNITY3D
@@ -215,74 +173,9 @@ namespace Zenject
 
 #endif
 
-        public void Inject(object injectable, InjectTypeInfo typeInfo, ArgumentArray extraArgs)
-        {
-            if (typeInfo.Fields != null)
-            {
-                foreach (var injectField in typeInfo.Fields)
-                    InjectMember(this, injectable, injectField, injectField.Info, extraArgs);
-            }
-
-            var method = typeInfo.Method;
-            if (method.MethodInfo != null)
-                InjectMethod(this, injectable, method, extraArgs);
-
-            static void InjectMember(DiContainer container,
-                object injectable, InjectTypeInfo.InjectFieldInfo setter,
-                InjectSpec injectSpec, ArgumentArray extraArgs)
-            {
-                if (extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
-                {
-                    setter.Invoke(injectable, value);
-                    return;
-                }
-
-#if DEBUG
-                try
-#endif
-                {
-                    value = container.Resolve(injectSpec);
-                }
-#if DEBUG
-                catch (Exception e)
-                {
-                    throw new FieldResolveException(injectable.GetType(), injectSpec, e);
-                }
-#endif
-
-                if (injectSpec.Optional && value == null)
-                {
-                    // Do not override in this case so it retains the hard-coded value
-                }
-                else
-                {
-                    setter.Invoke(injectable, value);
-                }
-            }
-
-            static void InjectMethod(DiContainer container, object injectable, InjectTypeInfo.InjectMethodInfo method, ArgumentArray extraArgs)
-            {
-#if DEBUG
-                try
-#endif
-                {
-                    var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
-                    ResolveParamArray(container, method.Parameters, paramValues, extraArgs);
-                    method.MethodInfo.Invoke(injectable, paramValues);
-                    ParamArrayPool.Release(paramValues);
-                }
-#if DEBUG
-                catch (ParamResolveException e)
-                {
-                    throw new MethodInvokeException(method.MethodInfo, e.ParamSpec, e.ParamIndex, e);
-                }
-#endif
-            }
-        }
-
         public void Inject(object injectable, ArgumentArray extraArgs = default)
         {
-            Inject(injectable, TypeAnalyzer.GetInfo(injectable.GetType()), extraArgs);
+            Initializer.Initialize(injectable, this, extraArgs);
         }
 
         public bool TryResolve(Type type, int identifier, InjectSources sourceType, out object instance)

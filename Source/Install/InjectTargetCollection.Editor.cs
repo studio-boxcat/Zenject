@@ -94,17 +94,9 @@ namespace Zenject
                 return false;
             }
 
-            var typeInfo = TypeAnalyzer.GetInfo(type);
-            if (typeInfo.IsInjectionRequired())
-            {
-                _requiresInjectCache.Add(type, true);
-                return true;
-            }
-            else
-            {
-                _requiresInjectCache.Add(type, false);
-                return false;
-            }
+            requiresInjection = Initializer.IsInjectionRequired(type);
+            _requiresInjectCache.Add(type, requiresInjection);
+            return requiresInjection;
         }
     }
 }

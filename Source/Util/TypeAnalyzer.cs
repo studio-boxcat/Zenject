@@ -8,39 +8,16 @@ namespace Zenject
 {
     public static class TypeAnalyzer
     {
-        static readonly Dictionary<Type, InjectTypeInfo> _typeInfo = new();
-        static readonly InjectSpec[] _emptyInjectableArray = Array.Empty<InjectSpec>();
-
-        public static InjectTypeInfo GetInfo(Type type)
+        public static InjectConstructorInfo GetConstructorInfo(Type type)
         {
-            if (_typeInfo.TryGetValue(type, out var typeInfo))
-                return typeInfo;
+            Assert.IsFalse(type.IsSubclassOf(typeof(UnityEngine.Object)));
 
-            typeInfo = AnalyzeType(type);
-            _typeInfo.Add(type, typeInfo);
-            return typeInfo;
-        }
+            var constructor = SelectConstructor(type);
+            var constructorInfo = new InjectConstructorInfo(
+                constructor, ParamUtils.BakeParams(constructor));
+            return constructorInfo;
 
-        static InjectTypeInfo AnalyzeType(Type type)
-        {
-            var fieldInfos = GetFieldInfos(type);
-            if (fieldInfos.Length == 0) fieldInfos = null;
-
-            return new InjectTypeInfo(
-                GetConstructorInfo(type),
-                GetMethodInfo(type),
-                fieldInfos);
-        }
-
-        static InjectTypeInfo.InjectConstructorInfo GetConstructorInfo(Type type)
-        {
-            if (type.IsSubclassOf(typeof(UnityEngine.Object)))
-                return default;
-
-            var constructor = TryGetInjectConstructor(type);
-            return new InjectTypeInfo.InjectConstructorInfo(constructor, BakeInjectParameterInfos(constructor));
-
-            static ConstructorInfo TryGetInjectConstructor(Type type)
+            static ConstructorInfo SelectConstructor(Type type)
             {
                 var constructors = type.GetConstructors(
                     BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
@@ -57,22 +34,23 @@ namespace Zenject
                         return constructor;
                 }
 
-                throw new Exception("이용가능한 생성자가 2개 이상입니다.");
+                throw new Exception("There are multiple constructors but none are marked with [Inject]");
             }
         }
 
-        static InjectTypeInfo.InjectMethodInfo GetMethodInfo(Type type)
+        public static InjectMethodInfo GetMethodInfo(Type type)
         {
             var methodInfo = type.GetMethod("Zenject_Constructor",
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             return methodInfo != null
-                ? new InjectTypeInfo.InjectMethodInfo(methodInfo, BakeInjectParameterInfos(methodInfo))
+                ? new InjectMethodInfo(methodInfo, ParamUtils.BakeParams(methodInfo))
                 : default;
         }
 
-        static readonly List<InjectTypeInfo.InjectFieldInfo> _fieldInfoBuffer = new();
+        static readonly List<InjectFieldInfo> _fieldInfoBuffer = new();
+        static readonly InjectFieldInfo[] _emptyFieldInfoArray = Array.Empty<InjectFieldInfo>();
 
-        static InjectTypeInfo.InjectFieldInfo[] GetFieldInfos(Type type)
+        public static InjectFieldInfo[] GetFieldInfos(Type type)
         {
             _fieldInfoBuffer.Clear();
 
@@ -92,36 +70,19 @@ namespace Zenject
                 if (injectAttr == null)
                     continue;
 
-                var fieldInfo = new InjectTypeInfo.InjectFieldInfo(field, GetInjectableInfoForMember(field, injectAttr));
+                var fieldInfo = new InjectFieldInfo(field, GetInjectableInfoForMember(field, injectAttr));
                 _fieldInfoBuffer.Add(fieldInfo);
             }
 
-            return _fieldInfoBuffer.ToArray();
+            return _fieldInfoBuffer.Count > 0
+                ? _fieldInfoBuffer.ToArray()
+                : _emptyFieldInfoArray;
 
             static InjectSpec GetInjectableInfoForMember(FieldInfo fieldInfo, InjectAttributeBase injectAttr)
             {
                 return injectAttr != null
                     ? new InjectSpec(fieldInfo.FieldType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
                     : new InjectSpec(fieldInfo.FieldType, 0, InjectSources.Any);
-            }
-        }
-
-        static InjectSpec[] BakeInjectParameterInfos(MethodBase methodInfo)
-        {
-            var paramInfos = methodInfo.GetParameters();
-            if (paramInfos.Length == 0) return _emptyInjectableArray;
-
-            var injectParamInfos = new InjectSpec[paramInfos.Length];
-            for (var i = 0; i < paramInfos.Length; i++)
-                injectParamInfos[i] = CreateInjectableInfoForParam(paramInfos[i]);
-            return injectParamInfos;
-
-            static InjectSpec CreateInjectableInfoForParam(ParameterInfo paramInfo)
-            {
-                var injectAttr = paramInfo.GetCustomAttribute<InjectAttributeBase>();
-                return injectAttr != null
-                    ? new InjectSpec(paramInfo.ParameterType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
-                    : new InjectSpec(paramInfo.ParameterType, 0, InjectSources.Any);
             }
         }
     }

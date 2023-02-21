@@ -2,9 +2,7 @@ using System;
 
 namespace Zenject
 {
-    [AttributeUsage(
-        AttributeTargets.Constructor
-        | AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Method)]
     public class InjectMethodAttribute : InjectAttributeBase
     {
     }
