@@ -38,13 +38,15 @@ namespace Zenject
             }
         }
 
-        public static InjectMethodInfo GetMethodInfo(Type type)
+        public static InjectMethodInfo GetMethodInfo(Type type, bool excludeNonDeclaringFields)
         {
             var methodInfo = type.GetMethod("Zenject_Constructor",
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            return methodInfo != null
-                ? new InjectMethodInfo(methodInfo, ParamUtils.BakeParams(methodInfo))
-                : default;
+            if (methodInfo == null)
+                return default;
+            if (excludeNonDeclaringFields && methodInfo.DeclaringType != type)
+                return default;
+            return new InjectMethodInfo(methodInfo, ParamUtils.BakeParams(methodInfo));
         }
 
         static readonly List<InjectFieldInfo> _fieldInfoBuffer = new();

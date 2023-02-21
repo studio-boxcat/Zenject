@@ -6,19 +6,19 @@ namespace Zenject
 {
     public readonly struct InitializerInfo
     {
-        public readonly InjectMethodInfo Method;
         [CanBeNull] public readonly InjectFieldInfo[] Fields;
+        public readonly InjectMethodInfo Method;
 
 
         public InitializerInfo(
-            InjectMethodInfo method,
-            InjectFieldInfo[] fields)
+            InjectFieldInfo[] fields,
+            InjectMethodInfo method)
         {
-            Assert.AreEqual(method.MethodInfo == null, method.Parameters == null);
             Assert.IsTrue(fields == null || fields.Length > 0);
+            Assert.AreEqual(method.MethodInfo == null, method.Parameters == null);
 
-            Method = method;
             Fields = fields;
+            Method = method;
         }
 
         public bool IsInjectionRequired()

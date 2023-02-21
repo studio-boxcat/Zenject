@@ -41,10 +41,10 @@ namespace Zenject
             if (_initializers.TryGetValue(type, out var initializer))
                 return initializer;
 
-            var methodInfo = TypeAnalyzer.GetMethodInfo(type);
             var fieldInfos = TypeAnalyzer.GetFieldInfos(type, false);
             if (fieldInfos.Length == 0) fieldInfos = null;
-            initializer = new InitializerInfo(methodInfo, fieldInfos);
+            var methodInfo = TypeAnalyzer.GetMethodInfo(type, false);
+            initializer = new InitializerInfo(fieldInfos, methodInfo);
             _initializers.Add(type, initializer);
             return initializer;
         }

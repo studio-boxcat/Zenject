@@ -66,9 +66,9 @@ namespace Zenject
             }
         }
 
-        static Dictionary<string, Dictionary<Type, (MethodInfo Constructor, bool Initializer)>> AnalyzeAllTypes()
+        static Dictionary<string, Dictionary<Type, (MethodInfo Constructor, InjectFieldInfo[] InjectFields, InjectMethodInfo InjectMethod)>> AnalyzeAllTypes()
         {
-            var assemblyDict = new Dictionary<string, Dictionary<Type, (MethodInfo Constructor, bool Initializer)>>();
+            var assemblyDict = new Dictionary<string, Dictionary<Type, (MethodInfo, InjectFieldInfo[], InjectMethodInfo)>>();
 
             var methods = TypeCache.GetMethodsWithAttribute<InjectConstructorAttribute>();
             var initializableTypes = TypeCache.GetTypesDerivedFrom<IZenject_Initializable>();
@@ -87,33 +87,39 @@ namespace Zenject
             foreach (var type in initializableTypes)
             {
                 var assemblyName = type.Assembly.GetName().Name;
-                var typeDict = GetTypeDict(assemblyName);
+                var isBaseInitializable = typeof(IZenject_Initializable).IsAssignableFrom(type.BaseType);
+                var injectFields = TypeAnalyzer.GetFieldInfos(type, isBaseInitializable);
+                var injectMethod = TypeAnalyzer.GetMethodInfo(type, true);
+                if (injectFields.Length == 0 && injectMethod.MethodInfo == null)
+                    continue;
 
+                var typeDict = GetTypeDict(assemblyName);
                 var value = typeDict.GetValueOrDefault(type);
-                value.Initializer = true;
+                value.InjectFields = injectFields;
+                value.InjectMethod = injectMethod;
                 typeDict[type] = value;
             }
 
             return assemblyDict;
 
-            Dictionary<Type, (MethodInfo Constructor, bool Initializer)> GetTypeDict(string assemblyName)
+            Dictionary<Type, (MethodInfo Constructor, InjectFieldInfo[] InjectFields, InjectMethodInfo InjectMethod)> GetTypeDict(string assemblyName)
             {
                 if (assemblyDict.TryGetValue(assemblyName, out var typeDict))
                     return typeDict;
 
-                typeDict = new Dictionary<Type, (MethodInfo, bool)>();
+                typeDict = new Dictionary<Type, (MethodInfo, InjectFieldInfo[], InjectMethodInfo)>();
                 assemblyDict.Add(assemblyName, typeDict);
                 return typeDict;
             }
         }
 
-        static readonly StringBuilder _sb = new StringBuilder();
+        static readonly StringBuilder _sb = new();
 
-        static string GenerateCode(Dictionary<Type, (MethodInfo Constructor, bool Initializer)> typeDict)
+        static string GenerateCode(Dictionary<Type, (MethodInfo Constructor, InjectFieldInfo[] InjectFields, InjectMethodInfo InjectMethod)> typeDict)
         {
             _sb.AppendLine("using Zenject;");
 
-            foreach (var (type, (constructor, initializer)) in typeDict)
+            foreach (var (type, (constructor, fields, method)) in typeDict)
             {
                 var namespaceName = type.Namespace;
                 if (string.IsNullOrEmpty(namespaceName) == false)
@@ -122,8 +128,8 @@ namespace Zenject
                 _sb.Append("public partial class ").Append(type.Name).AppendLine(" {");
                 if (constructor != null)
                     GenerateConstructor(type, constructor, _sb);
-                if (initializer)
-                    GenerateInitializer(type, _sb);
+                if (fields.Length > 0 || method.MethodInfo != null)
+                    GenerateInitializer(type, fields, method, _sb);
                 _sb.AppendLine("}");
 
                 if (string.IsNullOrEmpty(namespaceName) == false)
@@ -157,7 +163,7 @@ namespace Zenject
                 sb.AppendLine("){}");
             }
 
-            static void GenerateInitializer(Type type, StringBuilder sb)
+            static void GenerateInitializer(Type type, InjectFieldInfo[] fields, InjectMethodInfo method, StringBuilder sb)
             {
                 var isBaseInitializable = typeof(IZenject_Initializable).IsAssignableFrom(type.BaseType);
                 sb.AppendLine(isBaseInitializable
@@ -167,7 +173,6 @@ namespace Zenject
                 if (isBaseInitializable)
                     sb.AppendLine("base.Initialize(dp);");
 
-                var fields = TypeAnalyzer.GetFieldInfos(type, isBaseInitializable);
                 foreach (var field in fields)
                 {
                     sb.Append(field.FieldInfo.Name).Append(" = ");
@@ -175,7 +180,6 @@ namespace Zenject
                     sb.AppendLine(";");
                 }
 
-                var method = TypeAnalyzer.GetMethodInfo(type);
                 if (method.MethodInfo != null)
                 {
                     sb.Append("Zenject_Constructor(");
