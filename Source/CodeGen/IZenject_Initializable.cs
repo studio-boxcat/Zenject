@@ -5,7 +5,7 @@ namespace Zenject
     /// </summary>
     public interface IZenject_Initializable
     {
-        void Initialize(DependencyProvider dependencyProvider)
+        void Initialize(DependencyProvider dp)
         {
         }
     }

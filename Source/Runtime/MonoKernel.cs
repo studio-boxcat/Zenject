@@ -4,13 +4,20 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public class MonoKernel : MonoBehaviour
+    public class MonoKernel : MonoBehaviour, IZenject_Initializable
     {
-        [InjectLocal] readonly ITickable[] _tickables;
-        [InjectLocal] readonly ILateTickable[] _lateTickables;
-        [InjectLocal] readonly IDisposable[] _disposables;
+        [InjectLocal] ITickable[] _tickables;
+        [InjectLocal] ILateTickable[] _lateTickables;
+        [InjectLocal] IDisposable[] _disposables;
 
         bool _disposed;
+
+        void IZenject_Initializable.Initialize(DependencyProvider dp)
+        {
+            _tickables = (ITickable[]) dp.Resolve(typeof(ITickable[]), sourceType: InjectSources.Local);
+            _lateTickables = (ILateTickable[]) dp.Resolve(typeof(ILateTickable[]), sourceType: InjectSources.Local);
+            _disposables = (IDisposable[]) dp.Resolve(typeof(IDisposable[]), sourceType: InjectSources.Local);
+        }
 
         void OnDestroy()
         {

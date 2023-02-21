@@ -23,14 +23,14 @@ namespace Zenject
                     BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
                 Assert.AreNotEqual(0, constructors.Length, type.Name);
-                Assert.IsTrue(constructors.Count(x => x.IsDefined(typeof(InjectAttributeBase))) <= 1, type.Name);
+                Assert.IsTrue(constructors.Count(x => x.IsDefined(typeof(InjectConstructorAttribute))) <= 1, type.Name);
 
                 if (constructors.Length == 1)
                     return constructors[0];
 
                 foreach (var constructor in constructors)
                 {
-                    if (constructor.IsDefined(typeof(InjectAttributeBase)))
+                    if (constructor.IsDefined(typeof(InjectConstructorAttribute)))
                         return constructor;
                 }
 
@@ -50,7 +50,7 @@ namespace Zenject
         static readonly List<InjectFieldInfo> _fieldInfoBuffer = new();
         static readonly InjectFieldInfo[] _emptyFieldInfoArray = Array.Empty<InjectFieldInfo>();
 
-        public static InjectFieldInfo[] GetFieldInfos(Type type)
+        public static InjectFieldInfo[] GetFieldInfos(Type type, bool excludeNonDeclaringFields)
         {
             _fieldInfoBuffer.Clear();
 
@@ -59,11 +59,12 @@ namespace Zenject
                 var fieldAttributes = field.Attributes;
                 if ((fieldAttributes & FieldAttributes.Static) != default)
                     continue;
-                if ((fieldAttributes & FieldAttributes.InitOnly) == default)
-                    continue;
 
                 var fieldType = field.FieldType;
                 if (fieldType.IsGenericType)
+                    continue;
+
+                if (excludeNonDeclaringFields && field.DeclaringType != type)
                     continue;
 
                 var injectAttr = field.GetCustomAttribute<InjectAttributeBase>();

@@ -189,6 +189,15 @@ namespace Zenject
             return _providerChain.TryResolve(new BindingId(type, identifier), sourceType, out instance);
         }
 
+        [CanBeNull]
+        public object TryResolve(Type type, int identifier, InjectSources sourceType)
+        {
+            if (type.IsArray)
+                return ResolveAll(type, identifier, sourceType);
+            return _providerChain.TryResolve(new BindingId(type, identifier), sourceType, out var instance)
+                ? instance : null;
+        }
+
         public bool TryResolve<TContract>(int identifier, InjectSources sourceType, out TContract instance)
         {
             if (TryResolve(typeof(TContract), identifier, sourceType, out var instance2))

@@ -2,10 +2,7 @@ using System;
 
 namespace Zenject
 {
-    [AttributeUsage(
-        AttributeTargets.Constructor
-        | AttributeTargets.Field
-        | AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter)]
     public class InjectAttribute : InjectAttributeBase
     {
         public InjectAttribute()
