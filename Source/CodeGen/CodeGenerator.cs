@@ -140,7 +140,7 @@ namespace Zenject
 
             static void GenerateConstructor(Type type, MethodInfo constructor, StringBuilder sb)
             {
-                sb.Append("public ").Append(type.Name).AppendLine("(DependencyProviderRef dp) : this(");
+                sb.Append("[UnityEngine.Scripting.Preserve] public ").Append(type.Name).AppendLine("(DependencyProviderRef dp) : this(");
 
                 var parameters = constructor.GetParameters();
                 foreach (var parameter in parameters)
@@ -151,7 +151,7 @@ namespace Zenject
                         ? new InjectSpec(paramType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
                         : new InjectSpec(paramType, default, InjectSources.Any, false);
                     GenerateResolveType(injectSpec, sb);
-                    sb.AppendLine(",");
+                    sb.Append(",");
                 }
 
                 if (parameters.Length > 0)
