@@ -151,11 +151,11 @@ namespace Zenject
                         ? new InjectSpec(paramType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
                         : new InjectSpec(paramType, default, InjectSources.Any, false);
                     GenerateResolveType(injectSpec, sb);
-                    sb.Append(",");
+                    sb.AppendLine(",");
                 }
 
                 if (parameters.Length > 0)
-                    sb.Length--;
+                    sb.Length -= 2;
 
                 sb.AppendLine("){}");
             }
@@ -187,11 +187,11 @@ namespace Zenject
                     foreach (var paramSpec in method.Parameters)
                     {
                         GenerateResolveType(paramSpec, sb);
-                        sb.Append(",");
+                        sb.AppendLine(",");
                     }
 
                     if (method.Parameters.Length > 0)
-                        sb.Length--;
+                        sb.Length -= 2;
 
                     sb.AppendLine(");");
                 }
