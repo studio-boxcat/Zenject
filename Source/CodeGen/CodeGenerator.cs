@@ -128,7 +128,7 @@ namespace Zenject
                 _sb.AppendLine("}");
 
                 if (string.IsNullOrEmpty(namespaceName) == false)
-                    _sb.AppendLine("}");
+                    _sb.AppendLine("}").AppendLine();
             }
 
             var content = _sb.ToString();
