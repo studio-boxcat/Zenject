@@ -18,11 +18,12 @@ namespace Zenject
                 return;
             }
 
-#if DEBUG
-            Debug.Log("[Zenject] Analyze initializer with Reflection: " + inst.GetType().Name);
-#endif
-
             var initializerInfo = GetInfo(inst.GetType());
+
+#if DEBUG
+            if (initializerInfo.Fields is {Length: > 0} || initializerInfo.Method.MethodInfo != null)
+                Debug.Log("[Zenject] Analyzed initializer: " + inst.GetType().Name);
+#endif
 
             if (initializerInfo.Fields != null)
             {
