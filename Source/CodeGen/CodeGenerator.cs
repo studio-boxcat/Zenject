@@ -201,7 +201,7 @@ namespace Zenject
 
             static void GenerateResolveType(InjectSpec injectSpec, StringBuilder sb)
             {
-                var typeName = injectSpec.Type.FullName;
+                var typeName = "global::" + injectSpec.Type.FullName;
                 sb.Append('(').Append(typeName).Append(')').Append("dp.")
                     .Append(injectSpec.Optional ? "TryResolve(" : "Resolve(")
                     .Append("typeof(").Append(typeName).Append(')')
