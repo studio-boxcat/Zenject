@@ -135,7 +135,7 @@ namespace Zenject
             _sb.Clear();
 
             // No need to explicitly write out the namespace Zenject.
-            content = content.Replace("Zenject.", "");
+            content = content.Replace("global::Zenject.", "");
             return content;
 
             static void GenerateConstructor(Type type, MethodInfo constructor, StringBuilder sb)
