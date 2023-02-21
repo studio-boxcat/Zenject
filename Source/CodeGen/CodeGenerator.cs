@@ -14,6 +14,7 @@ namespace Zenject
         [MenuItem("Tools/Zenject/Generate Code #G")]
         public static void Generate()
         {
+            var dirty = false;
             var assemblyDict = AnalyzeAllTypes();
 
             foreach (var (assemblyName, typeDict) in assemblyDict)
@@ -23,10 +24,18 @@ namespace Zenject
                 if (TryGetCorrespondingRootForAssembly(assemblyName, out var rootDir) == false)
                     continue;
 
-                File.WriteAllText(rootDir + "Zenject_CodeGen.cs", GenerateCode(typeDict));
+                var codeGenPath = rootDir + "Zenject_CodeGen.cs";
+                var orgContent = File.Exists(codeGenPath) ? File.ReadAllText(codeGenPath) : "";
+                var newContent = GenerateCode(typeDict);
+                if (orgContent != newContent)
+                {
+                    File.WriteAllText(codeGenPath, newContent);
+                    dirty = true;
+                }
             }
 
-            AssetDatabase.Refresh();
+            if (dirty)
+                AssetDatabase.Refresh();
         }
 
         static readonly Dictionary<string, string> _assemblyNameToDir = new();
@@ -190,7 +199,7 @@ namespace Zenject
             {
                 var typeName = injectSpec.Type.FullName;
                 sb.Append('(').Append(typeName).Append(')').Append("dp.")
-                    .Append(injectSpec.Optional ? "Resolve(" : "TryResolve(")
+                    .Append(injectSpec.Optional ? "TryResolve(" : "Resolve(")
                     .Append("typeof(").Append(typeName).Append(')')
                     .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
                     .Append(injectSpec.SourceType != 0 ? ", sourceType: InjectSources." + injectSpec.SourceType : "")
