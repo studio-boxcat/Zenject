@@ -36,10 +36,10 @@ namespace Zenject
                 InjectMethod(inst, diContainer, method, extraArgs);
         }
 
-        public static bool IsInjectionRequired(object inst)
+        public static bool IsInjectionRequired(Type type)
         {
-            return inst is IZenject_Initializable
-                   || GetInfo(inst.GetType()).IsInjectionRequired();
+            return typeof(IZenject_Initializable).IsAssignableFrom(type)
+                   || GetInfo(type).IsInjectionRequired();
         }
 
         static InitializerInfo GetInfo(Type type)
