@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Zenject.Internal;
 
 namespace Zenject
@@ -16,6 +17,8 @@ namespace Zenject
                 initializable.Initialize(new DependencyProvider(diContainer, extraArgs));
                 return;
             }
+
+            Debug.Log("[Zenject] Analyze initializer with Reflection: " + inst.GetType().Name);
 
             var initializerInfo = GetInfo(inst.GetType());
 

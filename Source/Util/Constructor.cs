@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.Assertions;
 using Zenject.Internal;
 
@@ -21,6 +22,7 @@ namespace Zenject
                 return inst;
             }
 
+            Debug.Log("[Zenject] Analyze constructor with Reflection: " + concreteType.Name);
 
             // If the constructor has no parameters, just invoke it.
             var constructorInfo = GetConstructorInfo(concreteType);
