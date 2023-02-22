@@ -75,7 +75,7 @@ namespace Zenject
 
 #if DEBUG
             if (constructorInfo.Parameters.Length > 0)
-                Debug.Log("[Zenject] Found constructor with param: " + type.PrettyName());
+                Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
 #endif
 
             return constructorInfo;

@@ -51,7 +51,7 @@ namespace Zenject
 
 #if DEBUG
             if (initializer.Fields is {Length: > 0} || initializer.Method.MethodInfo != null)
-                Debug.Log("[Zenject] Analyzed initializer: " + type.PrettyName());
+                Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
 #endif
 
             return initializer;
