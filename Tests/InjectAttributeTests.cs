@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using NUnit.Framework;
 using UnityEditor;
@@ -56,6 +58,36 @@ namespace Zenject.Tests
                     return true;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Check all type with InjectAttributeBase fields or methods are implemented IZenject_Initializable.
+        /// </summary>
+        [Test]
+        public void Test_InjectionTypeInitializable()
+        {
+            var violatingTypes = new List<Type>();
+
+            var fieldInfos = TypeCache.GetFieldsWithAttribute<InjectAttributeBase>();
+            foreach (var fieldInfo in fieldInfos)
+            {
+                var type = fieldInfo.DeclaringType;
+                if (typeof(IZenject_Initializable).IsAssignableFrom(type) == false)
+                    violatingTypes.Add(type);
+            }
+
+            var methodInfos = TypeCache.GetMethodsWithAttribute<InjectMethodAttribute>();
+            foreach (var methodInfo in methodInfos)
+            {
+                var type = methodInfo.DeclaringType;
+                if (typeof(IZenject_Initializable).IsAssignableFrom(type) == false)
+                    violatingTypes.Add(type);
+            }
+
+            foreach (var violatingType in violatingTypes.Distinct())
+                _sb.AppendLine(violatingType.PrettyName());
+            if (_sb.Length > 0)
+                Assert.Fail("The following types are missing IZenject_Initializable:\n" + _sb.ToString());
         }
     }
 }
