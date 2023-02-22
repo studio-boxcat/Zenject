@@ -1,20 +1,25 @@
-using System.Reflection;
+using System;
+using System.Text;
 using NUnit.Framework;
 using UnityEditor;
-using Zenject;
 
-namespace Tests
+namespace Zenject.Tests
 {
     public class InjectAttributeTests
     {
+        static readonly StringBuilder _sb = new();
+
         [Test]
         public void Test_AllMethodInjection()
         {
             var methods = TypeCache.GetMethodsWithAttribute<InjectMethodAttribute>();
             foreach (var methodInfo in methods)
             {
-                var message = $"{methodInfo.DeclaringType.Name}:{methodInfo.Name}";
+                var message = _sb.Append(methodInfo.DeclaringType.Name).Append(':').Append(methodInfo.Name).ToString();
+                _sb.Clear();
+
                 Assert.IsFalse(methodInfo.IsStatic, message);
+                Assert.IsTrue(methodInfo.IsPrivate, message);
                 Assert.AreEqual("Zenject_Constructor", methodInfo.Name, message);
                 Assert.AreEqual(typeof(void), methodInfo.ReturnType, message);
             }
@@ -26,13 +31,30 @@ namespace Tests
             var fieldInfos = TypeCache.GetFieldsWithAttribute<InjectAttributeBase>();
             foreach (var fieldInfo in fieldInfos)
             {
-                var message = $"{fieldInfo.DeclaringType.Name}:{fieldInfo.Name}";
+                var message = _sb.Append(fieldInfo.DeclaringType.Name).Append(':').Append(fieldInfo.Name).ToString();
+                _sb.Clear();
+
                 Assert.IsFalse(fieldInfo.IsStatic, message);
                 Assert.IsFalse(fieldInfo.IsInitOnly, message);
                 Assert.IsFalse(fieldInfo.FieldType.IsGenericType, message);
 
-                var attr = fieldInfo.GetCustomAttribute<InjectAttributeBase>();
-                Assert.IsTrue(attr is InjectAttribute or InjectOptionalAttribute or InjectLocalAttribute, message);
+                // If the field could be serialized, it should be marked with NonSerializedAttribute.
+                var fieldType = fieldInfo.FieldType;
+                if (IsSerializableType(fieldInfo.DeclaringType) && fieldInfo.IsPublic && IsSerializableType(fieldType))
+                {
+                    Assert.IsTrue(fieldInfo.IsDefined(typeof(NonSerializedAttribute), false), message);
+                }
+            }
+
+            static bool IsSerializableType(Type type)
+            {
+                if (type.IsPrimitive)
+                    return true;
+                if (typeof(UnityEngine.Object).IsAssignableFrom(type))
+                    return true;
+                if (type.IsDefined(typeof(SerializableAttribute), true))
+                    return true;
+                return false;
             }
         }
     }
