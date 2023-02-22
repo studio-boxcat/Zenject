@@ -319,10 +319,11 @@ namespace Zenject
 
         static GameObject InstantiateGameObjectInactive(GameObject prefab, Transform parent)
         {
-            Assert.IsTrue(prefab != null, "Null prefab found when instantiating game object");
-            prefab.SetActive(false);
-            var inst = Object.Instantiate(prefab, parent);
-            prefab.SetActive(true);
+            Assert.IsNotNull(prefab, "Null prefab found when instantiating game object");
+
+            var inst = Object.Instantiate(prefab, Stage.Get(), false);
+            inst.SetActive(false);
+            inst.transform.SetParent(parent, false);
             return inst;
         }
 
