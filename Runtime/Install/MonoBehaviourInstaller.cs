@@ -6,7 +6,6 @@ namespace Zenject
     [DebuggerStepThrough]
     public abstract class MonoBehaviourInstaller : MonoBehaviour, IInstaller
     {
-        public DiContainer Container { get; set; }
-        public abstract void InstallBindings();
+        public abstract void InstallBindings(DiContainer container);
     }
 }

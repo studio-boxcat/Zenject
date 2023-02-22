@@ -1,7 +1,6 @@
 using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -47,9 +46,6 @@ namespace Zenject
 
             static void InjectAndInstallBindings(DiContainer container, IInstaller installer)
             {
-                Assert.IsNull(installer.Container);
-                installer.Container = container;
-
 #if DEBUG
                 try
 #endif
@@ -70,7 +66,7 @@ namespace Zenject
 #endif
                 {
                     // Log.Debug("InstallBindings: " + installer.name);
-                    installer.InstallBindings();
+                    installer.InstallBindings(container);
                 }
 #if DEBUG
                 catch (Exception)
