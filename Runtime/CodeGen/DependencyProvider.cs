@@ -27,6 +27,17 @@ namespace Zenject
                 return obj;
             return _diContainer.TryResolve(identifier, sourceType, out obj) ? obj : default;
         }
+
+        public void TryResolve<T>(int identifier, InjectSources sourceType, out T value)
+        {
+            if (identifier == default && _extraArgs.TryGetValueWithType(out value))
+                return;
+            _diContainer.TryResolve(identifier, sourceType, out value);
+        }
+
+        public void TryResolve<T>(int identifier, out T value) => TryResolve(identifier, default, out value);
+        public void TryResolve<T>(InjectSources sourceType, out T value) => TryResolve(default, sourceType, out value);
+        public void TryResolve<T>(out T value) => TryResolve(default, default, out value);
     }
 
     public class DependencyProviderRef

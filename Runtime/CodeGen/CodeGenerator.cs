@@ -173,11 +173,7 @@ namespace Zenject
                 if (fields != null)
                 {
                     foreach (var field in fields)
-                    {
-                        sb.Append(field.FieldInfo.Name).Append(" = ");
-                        GenerateResolveType(field.Info, sb);
-                        sb.AppendLine(";");
-                    }
+                        GenerateAssignField(field, sb);
                 }
 
                 if (method.MethodInfo != null)
@@ -219,6 +215,30 @@ namespace Zenject
                         .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
                         .Append(injectSpec.SourceType != 0 ? ", sourceType: InjectSources." + injectSpec.SourceType : "")
                         .Append(')');
+                }
+            }
+
+            static void GenerateAssignField(InjectFieldInfo field, StringBuilder sb)
+            {
+                var injectSpec = field.Info;
+                var typeName = "global::" + injectSpec.Type.FullName;
+
+                if (injectSpec.Optional)
+                {
+                    sb.Append("dp.TryResolve(")
+                        .Append(injectSpec.Identifier != 0 ? injectSpec.Identifier + "," : "")
+                        .Append(injectSpec.SourceType != 0 ? "InjectSources." + injectSpec.SourceType + "," : "")
+                        .Append("out ").Append(field.FieldInfo.Name)
+                        .AppendLine(");");
+                }
+                else
+                {
+                    sb.Append(field.FieldInfo.Name).Append(" = ")
+                        .Append('(').Append(typeName).Append(')')
+                        .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
+                        .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
+                        .Append(injectSpec.SourceType != 0 ? ", sourceType: InjectSources." + injectSpec.SourceType : "")
+                        .AppendLine(");");
                 }
             }
         }
