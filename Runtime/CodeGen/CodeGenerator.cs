@@ -228,7 +228,7 @@ namespace Zenject
                     sb.Append("dp.TryResolve(")
                         .Append(injectSpec.Identifier != 0 ? injectSpec.Identifier + "," : "")
                         .Append(injectSpec.SourceType != 0 ? "InjectSources." + injectSpec.SourceType + "," : "")
-                        .Append("out ").Append(field.FieldInfo.Name)
+                        .Append("ref ").Append(field.FieldInfo.Name)
                         .AppendLine(");");
                 }
                 else
