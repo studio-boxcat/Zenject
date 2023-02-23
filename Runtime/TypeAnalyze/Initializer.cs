@@ -49,7 +49,7 @@ namespace Zenject
             initializer = new InitializerInfo(fieldInfos, methodInfo);
             _initializers.Add(type, initializer);
 
-#if DEBUG
+#if DEBUG && ZENJECT_REFLECTION_BAKING
             if (initializer.Fields is {Length: > 0} || initializer.Method.MethodInfo != null)
                 Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
 #endif

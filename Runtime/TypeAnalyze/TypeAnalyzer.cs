@@ -73,20 +73,14 @@ namespace Zenject
                 if (injectAttr == null)
                     continue;
 
-                var fieldInfo = new InjectFieldInfo(field, GetInjectableInfoForMember(field, injectAttr));
+                var injectSpec = new InjectSpec(field.FieldType, injectAttr.Id, injectAttr.Source, injectAttr.Optional);
+                var fieldInfo = new InjectFieldInfo(field, injectSpec);
                 _fieldInfoBuffer.Add(fieldInfo);
             }
 
             return _fieldInfoBuffer.Count > 0
                 ? _fieldInfoBuffer.ToArray()
                 : _emptyFieldInfoArray;
-
-            static InjectSpec GetInjectableInfoForMember(FieldInfo fieldInfo, InjectAttributeBase injectAttr)
-            {
-                return injectAttr != null
-                    ? new InjectSpec(fieldInfo.FieldType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
-                    : new InjectSpec(fieldInfo.FieldType, 0, InjectSources.Any);
-            }
         }
     }
 }
