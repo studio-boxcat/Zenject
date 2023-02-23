@@ -17,7 +17,7 @@ namespace Zenject
         }
 
         [Button("Collect", ButtonSizes.Medium)]
-        void Editor_Collect()
+        public void Editor_Collect()
         {
             Targets = gameObject.TryGetComponent<SceneContext>(out _)
                 ? Internal_CollectInScene()
