@@ -43,7 +43,7 @@ namespace Zenject
 
             DontDestroyOnLoad(gameObject);
 
-            _installers.InjectAndInstall(Container);
+            _installers.InjectAndInstall(Container, default);
 
             GetComponent<Kernel>().RegisterServices(Container);
 

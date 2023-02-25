@@ -21,7 +21,7 @@ namespace Zenject
             _monoInstallers = monoInstallers;
         }
 
-        public void InjectAndInstall(DiContainer container)
+        public void InjectAndInstall(DiContainer container, ArgumentArray extraArgs)
         {
             for (var index = 0; index < _scriptableObjectInstallers.Length; index++)
             {
@@ -30,7 +30,7 @@ namespace Zenject
                 if (installer == null)
                     Debug.LogError("ScriptableObjectInstaller is null at index: " + index);
 #endif
-                InjectAndInstallBindings(container, installer);
+                InjectAndInstallBindings(container, extraArgs, installer);
             }
 
             for (var index = 0; index < _monoInstallers.Length; index++)
@@ -40,20 +40,20 @@ namespace Zenject
                 if (installer == null)
                     Debug.LogError("MonoBehaviourInstaller is null at index: " + index);
 #endif
-                InjectAndInstallBindings(container, installer);
+                InjectAndInstallBindings(container, extraArgs, installer);
             }
 
             _scriptableObjectInstallers = default;
             _monoInstallers = default;
 
-            static void InjectAndInstallBindings(DiContainer container, IInstaller installer)
+            static void InjectAndInstallBindings(DiContainer container, ArgumentArray extraArgs, IInstaller installer)
             {
 #if DEBUG
                 try
 #endif
                 {
                     // Log.Debug("Inject: " + installer.name);
-                    container.Inject(installer);
+                    container.Inject(installer, extraArgs);
                 }
 #if DEBUG
                 catch (Exception)

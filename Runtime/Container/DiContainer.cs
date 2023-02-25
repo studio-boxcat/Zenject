@@ -186,7 +186,7 @@ namespace Zenject
             }, instance);
         }
 
-        public void Inject(object injectable, ArgumentArray extraArgs = default)
+        public void Inject(object injectable, ArgumentArray extraArgs)
         {
             Initializer.Initialize(injectable, this, extraArgs);
         }
@@ -356,7 +356,8 @@ namespace Zenject
         public GameObject InstantiatePrefab(GameObject prefab, Transform parent, ArgumentArray extraArgs = default)
         {
             var inst = InstantiateGameObjectInactive(prefab, parent);
-            InjectTargetCollection.TryInject(inst, this, extraArgs);
+            if (GameObjectContext.TryInject(inst, this, extraArgs) == false)
+                InjectTargetCollection.TryInject(inst, this, extraArgs);
             inst.SetActive(true);
             return inst;
         }

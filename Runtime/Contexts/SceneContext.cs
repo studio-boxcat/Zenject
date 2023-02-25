@@ -28,7 +28,7 @@ namespace Zenject
 
             ZenjectBindingCollection.TryBind(gameObject, Container);
 
-            _installers.InjectAndInstall(Container);
+            _installers.InjectAndInstall(Container, default);
 
             GetComponent<Kernel>().RegisterServices(Container);
 
