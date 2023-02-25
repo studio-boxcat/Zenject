@@ -1,7 +1,6 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Serialization;
 
 namespace Zenject
 {
@@ -24,7 +23,6 @@ namespace Zenject
 
         public readonly DiContainer Container = new();
 
-        [FormerlySerializedAs("InstallerCollection")]
         [SerializeField, InlineProperty, HideLabel]
         InstallerCollection _installers;
 
@@ -46,11 +44,10 @@ namespace Zenject
             DontDestroyOnLoad(gameObject);
 
             _installers.InjectAndInstall(Container);
-            _installers = default;
 
             GetComponent<Kernel>().RegisterServices(Container);
 
-            Container.ResolveRoots();
+            Container.ResolveNonLazyProviders();
         }
 
         void OnDestroy()

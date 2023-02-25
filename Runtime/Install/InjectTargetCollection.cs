@@ -5,7 +5,7 @@ using Object = UnityEngine.Object;
 namespace Zenject
 {
     [HideMonoScript, DisallowMultipleComponent]
-    public partial class InjectTargetCollection : MonoBehaviour
+    public partial class InjectTargetCollection : MonoBehaviour, IZenjectInjectable
     {
         [ListDrawerSettings(IsReadOnly = true)]
         [ValidateInput("Validate_Targets")]
@@ -17,37 +17,15 @@ namespace Zenject
                 injectTargets.Inject(diContainer, extraArgs);
         }
 
+        void IZenjectInjectable.Inject(DependencyProvider dp)
+        {
+            Inject(dp.Container, dp.ExtraArgs);
+        }
+
         void Inject(DiContainer diContainer, ArgumentArray extraArgs)
         {
             foreach (var target in Targets)
-            {
-                if (target is InjectTargetCollection injectTargets)
-                {
-                    injectTargets.Inject(diContainer, extraArgs);
-                }
-                else
-                {
-                    diContainer.Inject(target, extraArgs);
-                }
-            }
-
-            Targets = null;
-        }
-
-        public void QueueForInject(DiContainer container)
-        {
-            foreach (var target in Targets)
-            {
-                if (target is InjectTargetCollection injectTargets)
-                {
-                    injectTargets.QueueForInject(container);
-                }
-                else
-                {
-                    container.QueueForInject(target);
-                }
-            }
-
+                diContainer.Inject(target, extraArgs);
             Targets = null;
         }
     }

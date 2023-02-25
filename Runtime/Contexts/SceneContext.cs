@@ -1,7 +1,6 @@
 using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Zenject
 {
@@ -12,7 +11,6 @@ namespace Zenject
 
         public DiContainer Container;
 
-        [FormerlySerializedAs("InstallerCollection")]
         [SerializeField, InlineProperty, HideLabel]
         InstallerCollection _installers;
 
@@ -22,24 +20,21 @@ namespace Zenject
 
             Container = new DiContainer(ProjectContext.Instance.Container);
 
-            if (gameObject.TryGetComponent(out ZenjectBindingCollection zenjectBindings))
-                zenjectBindings.Bind(Container);
-
-            if (gameObject.TryGetComponent(out InjectTargetCollection injectTargets))
-                injectTargets.QueueForInject(Container);
-
             if (ExtraBindingsInstallMethod != null)
             {
                 ExtraBindingsInstallMethod(Container);
                 ExtraBindingsInstallMethod = null;
             }
 
+            ZenjectBindingCollection.TryBind(gameObject, Container);
+
             _installers.InjectAndInstall(Container);
-            _installers = default;
 
             GetComponent<Kernel>().RegisterServices(Container);
 
-            Container.ResolveRoots();
+            Container.ResolveNonLazyProviders();
+
+            InjectTargetCollection.TryInject(gameObject, Container, default);
         }
 
         void OnDestroy()

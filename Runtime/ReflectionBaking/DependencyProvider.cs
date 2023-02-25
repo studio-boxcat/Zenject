@@ -14,6 +14,9 @@ namespace Zenject
             _extraArgs = extraArgs;
         }
 
+        public DiContainer Container => _diContainer;
+        public ArgumentArray ExtraArgs => _extraArgs;
+
         public object Resolve(Type type, int identifier = default, InjectSources sourceType = default)
         {
             if (identifier == default && _extraArgs.TryGetValueWithType(type, out var inst))
@@ -59,6 +62,9 @@ namespace Zenject
             _diContainer = diContainer;
             _extraArgs = extraArgs;
         }
+
+        public DiContainer Container => _diContainer;
+        public ArgumentArray ExtraArgs => _extraArgs;
 
         public void Reset(DiContainer diContainer, ArgumentArray extraArgs)
         {

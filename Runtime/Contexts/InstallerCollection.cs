@@ -9,7 +9,6 @@ namespace Zenject
     {
         [SerializeField, Required]
         ScriptableObjectInstaller[] _scriptableObjectInstallers;
-
         [SerializeField, Required]
         MonoBehaviourInstaller[] _monoInstallers;
 
@@ -39,10 +38,13 @@ namespace Zenject
                 var installer = _monoInstallers[index];
 #if DEBUG
                 if (installer == null)
-                    Debug.LogError("MonoInstaller is null at index: " + index);
+                    Debug.LogError("MonoBehaviourInstaller is null at index: " + index);
 #endif
                 InjectAndInstallBindings(container, installer);
             }
+
+            _scriptableObjectInstallers = default;
+            _monoInstallers = default;
 
             static void InjectAndInstallBindings(DiContainer container, IInstaller installer)
             {
@@ -71,7 +73,8 @@ namespace Zenject
 #if DEBUG
                 catch (Exception)
                 {
-                    Debug.LogError("Failed to Install Bindings of Installer: " + installer, (UnityEngine.Object) installer);
+                    Debug.LogError("Failed to Install Bindings of Installer: " + installer,
+                        (UnityEngine.Object) installer);
                     throw;
                 }
 #endif

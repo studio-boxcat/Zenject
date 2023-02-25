@@ -17,32 +17,59 @@ namespace Zenject
         [Button("Collect", ButtonSizes.Medium)]
         void Editor_Collect()
         {
-            Bindings = gameObject.TryGetComponent<SceneContext>(out _)
-                ? Internal_CollectInScene()
-                : Internal_CollectUnderGameObject(gameObject);
+            Bindings = Internal_Collect().ToArray();
         }
 
         bool Validate_Bindings()
         {
-            if (Application.isPlaying) return true;
+            // When playing, we don't want to validate the targets.
+            if (Bindings == null) return true;
 
-            var compare = gameObject.TryGetComponent<SceneContext>(out _)
-                ? Internal_CollectInScene()
-                : Internal_CollectUnderGameObject(gameObject);
-            return Bindings.SequenceEqual(compare);
+            return Bindings.SequenceEqual(Internal_Collect());
         }
 
-        static ZenjectBindingBase[] Internal_CollectInScene()
+        List<ZenjectBindingBase> Internal_Collect()
         {
-            var output = new List<ZenjectBindingBase>();
-            foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
-                output.AddRange(rootObj.GetComponentsInChildren<ZenjectBindingBase>(true));
-            return output.ToArray();
+            var targets = new List<ZenjectBindingBase>();
+
+            if (gameObject.TryGetComponent<SceneContext>(out _))
+            {
+                foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
+                    targets.AddRange(rootObj.GetComponentsInChildren<ZenjectBindingBase>(true));
+            }
+            else
+            {
+                GetBindingsUnderGameObject(gameObject.transform, targets);
+            }
+
+            return targets;
         }
 
-        static ZenjectBindingBase[] Internal_CollectUnderGameObject(GameObject gameObject)
+        static readonly List<ZenjectBindingBase> _bindingBuf = new();
+
+        static void GetBindingsUnderGameObject(
+            Transform transform, List<ZenjectBindingBase> output)
         {
-            return gameObject.GetComponentsInChildren<ZenjectBindingBase>(true);
+            // Find all bindings on this game object.
+            transform.GetComponents(_bindingBuf);
+            output.AddRange(_bindingBuf);
+
+            // Visit all children.
+            var childCount = transform.childCount;
+            for (var i = 0; i < childCount; i++)
+            {
+                var child = transform.GetChild(i);
+
+                // If the child has a GameObjectContext component then let it handle its own children.
+                if (child.TryGetComponent(out GameObjectContext _))
+                    continue;
+
+                // If the child has an ZenjectBindingCollection component then let it handle its own children.
+                if (child.TryGetComponent(out ZenjectBindingCollection _))
+                    continue;
+
+                GetBindingsUnderGameObject(child, output);
+            }
         }
     }
 }

@@ -12,6 +12,7 @@ namespace Zenject
 
         public void RegisterServices(DiContainer diContainer)
         {
+            // TODO: Should resolve all object regardless of the identifier.
             diContainer.ResolveAll(default, InjectSources.Local, _tickables);
             diContainer.ResolveAll(default, InjectSources.Local, _lateTickables);
             diContainer.ResolveAll(default, InjectSources.Local, _disposables);

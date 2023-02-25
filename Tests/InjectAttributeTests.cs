@@ -61,10 +61,10 @@ namespace Zenject.Tests
         }
 
         /// <summary>
-        /// Check all type with InjectAttributeBase fields or methods are implemented IZenject_Initializable.
+        /// Check all type with InjectAttributeBase fields or methods are implemented IZenjectInjectable.
         /// </summary>
         [Test]
-        public void Test_InjectionTypeInitializable()
+        public void Test_InjectionTypeInjectable()
         {
             var violatingTypes = new List<Type>();
 
@@ -72,7 +72,7 @@ namespace Zenject.Tests
             foreach (var fieldInfo in fieldInfos)
             {
                 var type = fieldInfo.DeclaringType;
-                if (typeof(IZenject_Initializable).IsAssignableFrom(type) == false)
+                if (typeof(IZenjectInjectable).IsAssignableFrom(type) == false)
                     violatingTypes.Add(type);
             }
 
@@ -80,14 +80,14 @@ namespace Zenject.Tests
             foreach (var methodInfo in methodInfos)
             {
                 var type = methodInfo.DeclaringType;
-                if (typeof(IZenject_Initializable).IsAssignableFrom(type) == false)
+                if (typeof(IZenjectInjectable).IsAssignableFrom(type) == false)
                     violatingTypes.Add(type);
             }
 
             foreach (var violatingType in violatingTypes.Distinct())
                 _sb.AppendLine(violatingType.PrettyName());
             if (_sb.Length > 0)
-                Assert.Fail("The following types are missing IZenject_Initializable:\n" + _sb.ToString());
+                Assert.Fail("The following types are missing IZenjectInjectable:\n" + _sb.ToString());
         }
     }
 }

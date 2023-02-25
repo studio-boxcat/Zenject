@@ -12,10 +12,10 @@ namespace Zenject
 
         public static void Initialize(object inst, DiContainer diContainer, ArgumentArray extraArgs)
         {
-            // If the object implements IZenject_Initializable, then we call Initialize.
-            if (inst is IZenject_Initializable initializable)
+            // If the object implements IZenjectInjectable, then we call Initialize.
+            if (inst is IZenjectInjectable injectable)
             {
-                initializable.Initialize(new DependencyProvider(diContainer, extraArgs));
+                injectable.Inject(new DependencyProvider(diContainer, extraArgs));
                 return;
             }
 
@@ -34,7 +34,7 @@ namespace Zenject
 
         public static bool IsInjectionRequired(Type type)
         {
-            return typeof(IZenject_Initializable).IsAssignableFrom(type)
+            return typeof(IZenjectInjectable).IsAssignableFrom(type)
                    || GetInfo(type).IsInjectionRequired();
         }
 

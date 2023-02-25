@@ -19,7 +19,6 @@ namespace Zenject
         public readonly ProviderRepo ProviderRepo;
 
         readonly ProviderChain _providerChain;
-        readonly LazyInstanceInjector _lazyInjector;
         readonly List<int> _nonLazyProviders = new();
 
         public DiContainer(
@@ -30,23 +29,15 @@ namespace Zenject
             ProviderRepo = new ProviderRepo(this);
 
             _providerChain = new ProviderChain(this);
-            _lazyInjector = new LazyInstanceInjector(this);
 
             Bind(this);
         }
 
-        public void ResolveRoots()
+        public void ResolveNonLazyProviders()
         {
             foreach (var providerIndex in _nonLazyProviders)
                 ProviderRepo.Resolve(providerIndex);
             _nonLazyProviders.Clear();
-
-            _lazyInjector.LazyInjectAll();
-        }
-
-        public void QueueForInject(object instance)
-        {
-            _lazyInjector.AddInstance(instance);
         }
 
         public void RegisterProvider(BindSpec bindSpec, object instance)

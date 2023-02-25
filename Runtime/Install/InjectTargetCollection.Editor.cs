@@ -19,65 +19,95 @@ namespace Zenject
         [Button("Collect", ButtonSizes.Medium)]
         public void Editor_Collect()
         {
-            Targets = gameObject.TryGetComponent<SceneContext>(out _)
-                ? Internal_CollectInScene()
-                : Internal_CollectUnderGameObject(gameObject);
+            Targets = Internal_Collect().ToArray();
         }
 
         bool Validate_Targets()
         {
-            if (Application.isPlaying) return true;
+            // When playing, we don't want to validate the targets.
+            if (Targets == null) return true;
 
-            var compare = gameObject.TryGetComponent<SceneContext>(out _)
-                ? Internal_CollectInScene()
-                : Internal_CollectUnderGameObject(gameObject);
-            return Targets.SequenceEqual(compare);
+            return Targets.SequenceEqual(Internal_Collect());
         }
 
-        static Object[] Internal_CollectInScene()
+        List<Object> Internal_Collect()
         {
-            var output = new List<Object>();
-            foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
-                GetInjectableMonoBehavioursUnderGameObject(rootObj.transform, output);
-            return output.ToArray();
+            var targets = new List<Object>();
+
+            // First collect all injectables on this gameObject.
+            CollectInjectableComponents(gameObject, targets);
+            targets.Remove(this); // Remove this object from the list of targets so that we don't inject it twice.
+            CollectInjectablesInChildren(gameObject.transform, targets);
+
+            if (gameObject.TryGetComponent<SceneContext>(out _))
+            {
+                foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
+                {
+                    if (ReferenceEquals(rootObj, gameObject)) continue;
+                    CollectInjectablesFromNonRootGameObject(rootObj, targets);
+                }
+            }
+            else if (gameObject.TryGetComponent<GameObjectContext>(out var gameObjectContext))
+            {
+                targets.Remove(gameObjectContext);
+            }
+
+            return targets;
         }
 
-        static Object[] Internal_CollectUnderGameObject(GameObject gameObject)
+        static Object TryGetInjectionIntermediary(GameObject target)
         {
-            var output = new List<Object>();
-            GetInjectableMonoBehavioursUnderGameObject(gameObject.transform, output);
-            return output.ToArray();
+            // If the gameObject has a GameObjectContext component then let it handle its own children.
+            if (target.TryGetComponent(out GameObjectContext context))
+                return context;
+
+            // If the gameObject has an InjectTargetCollection component then let it handle its own children.
+            if (target.TryGetComponent(out InjectTargetCollection injectTargets))
+                return injectTargets;
+
+            return null;
         }
 
         static readonly List<MonoBehaviour> _monoBehaviourBuf = new();
 
-        static void GetInjectableMonoBehavioursUnderGameObject(
-            Transform transform, List<Object> injectableComponents)
+        /// <summary>
+        /// Collects all injectable components on the given gameObject.
+        /// </summary>
+        static void CollectInjectableComponents(GameObject gameObject, List<Object> output)
         {
-            // 대상에 붙어있는 컴포넌트 중 인젝션이 필요한 것을 찾음.
-            transform.GetComponents(_monoBehaviourBuf);
+            gameObject.GetComponents(_monoBehaviourBuf);
             foreach (var monoBehaviour in _monoBehaviourBuf)
             {
-                var type = monoBehaviour.GetType();
-                if (RequiresInject(type))
-                    injectableComponents.Add(monoBehaviour);
+                if (RequiresInject(monoBehaviour.GetType()))
+                    output.Add(monoBehaviour);
             }
+        }
 
-            // 자식을 순회하면서 인젝션이 필요한 것을 찾음.
+        static void CollectInjectablesInChildren(Transform transform, List<Object> output)
+        {
             var childCount = transform.childCount;
             for (var i = 0; i < childCount; i++)
             {
                 var child = transform.GetChild(i);
-
-                // 자식에게 InjectTargetCollection 가 부착되어있는 경우, 인젝션 대상을 찾지 않음.
-                if (child.TryGetComponent(out InjectTargetCollection injectTargetCollection))
-                {
-                    injectableComponents.Add(injectTargetCollection);
-                    continue;
-                }
-
-                GetInjectableMonoBehavioursUnderGameObject(child, injectableComponents);
+                CollectInjectablesFromNonRootGameObject(child.gameObject, output);
             }
+        }
+
+        /// <summary>
+        /// Collects all injectable components on the given gameObject and its children.
+        /// Since the given gameObject is not a root gameObject, it will add only the InjectionIntermediary if it exists.
+        /// </summary>
+        static void CollectInjectablesFromNonRootGameObject(GameObject gameObject, List<Object> output)
+        {
+            var injectionIntermediary = TryGetInjectionIntermediary(gameObject);
+            if (injectionIntermediary is not null)
+            {
+                output.Add(injectionIntermediary);
+                return;
+            }
+
+            CollectInjectableComponents(gameObject, output);
+            CollectInjectablesInChildren(gameObject.transform, output);
         }
 
         static readonly Dictionary<Type, bool> _requiresInjectCache = new();

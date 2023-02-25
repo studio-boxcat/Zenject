@@ -17,7 +17,7 @@ namespace Zenject
         {
             var dirty = false;
             var typeDict = AnalyzeAllTypes();
-            var initializableTypes = BuildInitializableTypes(typeDict);
+            var injectableTypes = BuildInjectableTypes(typeDict);
 
             // Group types by assembly.
             var assemblyDict = new Dictionary<string, List<InjectionInfo>>();
@@ -48,7 +48,7 @@ namespace Zenject
 
                 var codeGenPath = rootDir + "Zenject_CodeGen.cs";
                 var orgContent = File.Exists(codeGenPath) ? File.ReadAllText(codeGenPath) : "";
-                var newContent = GenerateCode(injectionInfos, initializableTypes);
+                var newContent = GenerateCode(injectionInfos, injectableTypes);
                 if (orgContent != newContent)
                 {
                     File.WriteAllText(codeGenPath, newContent);
@@ -136,26 +136,26 @@ namespace Zenject
             return typeDict;
         }
 
-        static HashSet<Type> BuildInitializableTypes(Dictionary<Type, InjectionInfo> typeDict)
+        static HashSet<Type> BuildInjectableTypes(Dictionary<Type, InjectionInfo> typeDict)
         {
-            var initializableTypes = new HashSet<Type>();
+            var injectableTypes = new HashSet<Type>();
             foreach (var (type, injectionInfo) in typeDict)
             {
-                // Check if this type implements IInitializable
-                if (injectionInfo.ShouldImplementInitializable())
+                // Check if this type implements IZenjectInjectable
+                if (injectionInfo.ShouldImplementInjectable())
                 {
-                    initializableTypes.Add(type);
+                    injectableTypes.Add(type);
                     continue;
                 }
 
-                // Check if any base types implement IInitializable
+                // Check if any base types implement IZenjectInjectable
                 var baseType = type.BaseType;
                 while (baseType != typeof(object))
                 {
                     if (typeDict.TryGetValue(baseType, out var baseTypeInjectionInfo)
-                        && baseTypeInjectionInfo.ShouldImplementInitializable())
+                        && baseTypeInjectionInfo.ShouldImplementInjectable())
                     {
-                        initializableTypes.Add(type);
+                        injectableTypes.Add(type);
                         break;
                     }
 
@@ -163,12 +163,12 @@ namespace Zenject
                 }
             }
 
-            return initializableTypes;
+            return injectableTypes;
         }
 
         static readonly StringBuilder _sb = new();
 
-        static string GenerateCode(List<InjectionInfo> injectionInfos, HashSet<Type> initializableTypes)
+        static string GenerateCode(List<InjectionInfo> injectionInfos, HashSet<Type> injectableTypes)
         {
             _sb.AppendLine("#if ZENJECT_REFLECTION_BAKING");
             _sb.AppendLine("using Zenject;");
@@ -188,16 +188,16 @@ namespace Zenject
                         _sb.Append("namespace ").Append(type.Namespace).AppendLine(" {").AppendLine();
                 }
 
-                var shouldImplementInitializable = injectionInfo.ShouldImplementInitializable();
+                var shouldImplementInjectable = injectionInfo.ShouldImplementInjectable();
                 _sb.Append("public partial class ").Append(type.Name)
-                    .Append(shouldImplementInitializable ? " : IZenject_Initializable" : "")
+                    .Append(shouldImplementInjectable ? " : IZenjectInjectable" : "")
                     .AppendLine(" {");
 
                 if (injectionInfo.Constructor != null)
                     GenerateConstructor(type, injectionInfo.Constructor, _sb);
 
-                if (shouldImplementInitializable)
-                    GenerateInitializer(type, injectionInfo.Fields, injectionInfo.Method, initializableTypes, _sb);
+                if (shouldImplementInjectable)
+                    GenerateInjectMethod(type, injectionInfo.Fields, injectionInfo.Method, injectableTypes, _sb);
 
                 _sb.AppendLine("}").AppendLine();
 
@@ -234,16 +234,16 @@ namespace Zenject
                 sb.AppendLine("){}");
             }
 
-            static void GenerateInitializer(
-                Type type, List<FieldInfo> fields, MethodInfo method, HashSet<Type> initializableTypes, StringBuilder sb)
+            static void GenerateInjectMethod(
+                Type type, List<FieldInfo> fields, MethodInfo method, HashSet<Type> injectableTypes, StringBuilder sb)
             {
-                var isBaseInitializable = initializableTypes.Contains(type.BaseType);
-                sb.AppendLine(isBaseInitializable
-                    ? "public override void Initialize(DependencyProvider dp) {"
-                    : "public void Initialize(DependencyProvider dp) {");
+                var isBaseInjectable = injectableTypes.Contains(type.BaseType);
+                sb.AppendLine(isBaseInjectable
+                    ? "public override void Inject(DependencyProvider dp) {"
+                    : "public void Inject(DependencyProvider dp) {");
 
-                if (isBaseInitializable)
-                    sb.AppendLine("base.Initialize(dp);");
+                if (isBaseInjectable)
+                    sb.AppendLine("base.Inject(dp);");
 
                 if (fields != null)
                 {
@@ -347,7 +347,7 @@ namespace Zenject
                 Type = type;
             }
 
-            public bool ShouldImplementInitializable() => Fields != null || Method != null;
+            public bool ShouldImplementInjectable() => Fields != null || Method != null;
         }
     }
 }

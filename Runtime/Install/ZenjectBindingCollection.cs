@@ -12,8 +12,8 @@ namespace Zenject
 
         public static void TryBind(GameObject gameObject, DiContainer diContainer)
         {
-            if (gameObject.TryGetComponent(out ZenjectBindingCollection zenjectBindingCollection))
-                zenjectBindingCollection.Bind(diContainer);
+            if (gameObject.TryGetComponent(out ZenjectBindingCollection zenjectBindings))
+                zenjectBindings.Bind(diContainer);
         }
 
         public void Bind(DiContainer diContainer)
