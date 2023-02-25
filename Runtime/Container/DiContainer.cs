@@ -308,16 +308,6 @@ namespace Zenject
             _providerChain.ResolveAll(new BindingId(typeof(T), identifier), sourceType, (IList) instances);
         }
 
-        static GameObject InstantiateGameObjectInactive(GameObject prefab, Transform parent)
-        {
-            Assert.IsNotNull(prefab, "Null prefab found when instantiating game object");
-
-            var inst = Object.Instantiate(prefab, Stage.Get(), false);
-            inst.SetActive(false);
-            inst.transform.SetParent(parent, false);
-            return inst;
-        }
-
         public T Instantiate<T>(ArgumentArray extraArgs = default)
         {
             return (T) Instantiate(typeof(T), extraArgs);
@@ -353,12 +343,20 @@ namespace Zenject
             return monoBehaviour;
         }
 
-        public GameObject InstantiatePrefab(GameObject prefab, Transform parent, ArgumentArray extraArgs = default)
+        public GameObject InstantiatePrefabToStage(GameObject prefab, ArgumentArray extraArgs = default)
         {
-            var inst = InstantiateGameObjectInactive(prefab, parent);
+            Assert.IsNotNull(prefab, "Null prefab found when instantiating game object");
+
+            var inst = Object.Instantiate(prefab, Stage.Get(), false);
             if (GameObjectContext.TryInject(inst, this, extraArgs) == false)
                 InjectTargetCollection.TryInject(inst, this, extraArgs);
-            inst.SetActive(true);
+            return inst;
+        }
+
+        public GameObject InstantiatePrefab(GameObject prefab, Transform parent, ArgumentArray extraArgs = default)
+        {
+            var inst = InstantiatePrefabToStage(prefab, extraArgs);
+            inst.transform.SetParent(parent, false);
             return inst;
         }
     }
