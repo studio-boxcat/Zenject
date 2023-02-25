@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using JetBrains.Annotations;
-using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
