@@ -250,7 +250,7 @@ namespace Zenject
                     foreach (var field in fields)
                     {
                         var injectAttr = field.GetCustomAttribute<InjectAttributeBase>();
-                        var injectSpec = new InjectSpec(field.FieldType, injectAttr.Id, injectAttr.Source, injectAttr.Optional);
+                        var injectSpec = new InjectSpec(field.FieldType, injectAttr.Id, injectAttr.Optional);
                         GenerateAssignField(field, injectSpec, sb);
                     }
                 }
@@ -283,9 +283,8 @@ namespace Zenject
                 if (injectSpec.Optional)
                 {
                     sb.Append("dp.TryResolve<").Append(typeName).Append(">(")
-                        .Append(injectSpec.Identifier != 0 ? "identifier: " + injectSpec.Identifier + "," : "")
-                        .Append(injectSpec.SourceType != 0 ? ", sourceType: InjectSources." + injectSpec.SourceType + "," : "");
-                    if (injectSpec.Identifier != 0 || injectSpec.SourceType != 0)
+                        .Append(injectSpec.Identifier != 0 ? "identifier: " + injectSpec.Identifier + "," : "");
+                    if (injectSpec.Identifier != 0)
                         sb.Length -= 1;
                     sb.Append(')');
                 }
@@ -294,7 +293,6 @@ namespace Zenject
                     sb.Append('(').Append(typeName).Append(')')
                         .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
                         .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
-                        .Append(injectSpec.SourceType != 0 ? ", sourceType: InjectSources." + injectSpec.SourceType : "")
                         .Append(')');
                 }
             }
@@ -307,7 +305,6 @@ namespace Zenject
                 {
                     sb.Append("dp.TryResolve(")
                         .Append(injectSpec.Identifier != 0 ? injectSpec.Identifier + "," : "")
-                        .Append(injectSpec.SourceType != 0 ? "InjectSources." + injectSpec.SourceType + "," : "")
                         .Append("ref ").Append(field.Name)
                         .AppendLine(");");
                 }
@@ -317,7 +314,6 @@ namespace Zenject
                         .Append('(').Append(typeName).Append(')')
                         .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
                         .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
-                        .Append(injectSpec.SourceType != 0 ? ", sourceType: InjectSources." + injectSpec.SourceType : "")
                         .AppendLine(");");
                 }
             }
@@ -328,8 +324,8 @@ namespace Zenject
             var paramType = parameter.ParameterType;
             var injectAttr = parameter.GetCustomAttribute<InjectAttribute>();
             return injectAttr != null
-                ? new InjectSpec(paramType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
-                : new InjectSpec(paramType, default, InjectSources.Any, false);
+                ? new InjectSpec(paramType, injectAttr.Id, injectAttr.Optional)
+                : new InjectSpec(paramType, default);
         }
 
         class InjectionInfo

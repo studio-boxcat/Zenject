@@ -73,7 +73,7 @@ namespace Zenject
                 if (injectAttr == null)
                     continue;
 
-                var injectSpec = new InjectSpec(field.FieldType, injectAttr.Id, injectAttr.Source, injectAttr.Optional);
+                var injectSpec = new InjectSpec(field.FieldType, injectAttr.Id, injectAttr.Optional);
                 var fieldInfo = new InjectFieldInfo(field, injectSpec);
                 _fieldInfoBuffer.Add(fieldInfo);
             }

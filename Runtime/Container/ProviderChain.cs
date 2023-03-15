@@ -3,16 +3,12 @@ using JetBrains.Annotations;
 
 namespace Zenject
 {
-    public struct ProviderChain
+    public readonly struct ProviderChain
     {
-        readonly ProviderRepo _self;
-        readonly ProviderRepo _parent;
         readonly ProviderRepo[] _containerChain;
 
         public ProviderChain(DiContainer container)
         {
-            _self = container.ProviderRepo;
-            _parent = container.ParentContainer?.ProviderRepo;
             _containerChain = BuildProviderChain(container);
         }
 
@@ -40,14 +36,8 @@ namespace Zenject
         }
 
         [Pure]
-        public bool HasBinding(BindingId bindingId, InjectSources sourceType)
+        public bool HasBinding(BindingId bindingId)
         {
-            if (sourceType == InjectSources.Local)
-                return _self.HasBinding(bindingId);
-
-            if (sourceType == InjectSources.Parent)
-                return _parent.HasBinding(bindingId);
-
             foreach (var currentContainer in _containerChain)
             {
                 if (currentContainer.HasBinding(bindingId))
@@ -57,33 +47,15 @@ namespace Zenject
             return false;
         }
 
-        public readonly void ResolveAll(BindingId bindingId, InjectSources sourceType, IList buffer)
+        public void ResolveAll(BindingId bindingId, IList buffer)
         {
-            if (sourceType == InjectSources.Local)
-            {
-                _self.ResolveAll(bindingId, buffer);
-                return;
-            }
-
-            if (sourceType == InjectSources.Parent)
-            {
-                _parent.ResolveAll(bindingId, buffer);
-                return;
-            }
-
             foreach (var container in _containerChain)
                 container.ResolveAll(bindingId, buffer);
         }
 
         [Pure]
-        public bool TryResolve(BindingId bindingId, InjectSources sourceType, out object instance)
+        public bool TryResolve(BindingId bindingId, out object instance)
         {
-            if (sourceType == InjectSources.Local)
-                return _self.TryResolve(bindingId, out instance);
-
-            if (sourceType == InjectSources.Parent)
-                return _parent.TryResolve(bindingId, out instance);
-
             foreach (var container in _containerChain)
             {
                 if (container.TryResolve(bindingId, out instance))

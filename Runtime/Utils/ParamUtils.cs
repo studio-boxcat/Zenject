@@ -21,8 +21,8 @@ namespace Zenject
             {
                 var injectAttr = paramInfo.GetCustomAttribute<InjectAttributeBase>();
                 return injectAttr != null
-                    ? new InjectSpec(paramInfo.ParameterType, injectAttr.Id, injectAttr.Source, injectAttr.Optional)
-                    : new InjectSpec(paramInfo.ParameterType, 0, InjectSources.Any);
+                    ? new InjectSpec(paramInfo.ParameterType, injectAttr.Id, injectAttr.Optional)
+                    : new InjectSpec(paramInfo.ParameterType, 0);
             }
         }
 

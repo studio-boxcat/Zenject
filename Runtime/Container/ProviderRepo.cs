@@ -12,13 +12,15 @@ namespace Zenject
     public class ProviderRepo
     {
         readonly DiContainer _container;
-        readonly List<ProviderInfo> _providers = new(128);
-        readonly Dictionary<BindingId, int> _primaryProviderMap = new(128, BindingId.Comparer);
+        readonly List<ProviderInfo> _providers;
+        readonly Dictionary<BindingId, int> _primaryProviderMap;
 
 
-        public ProviderRepo(DiContainer container)
+        public ProviderRepo(DiContainer container, int capacity)
         {
             _container = container;
+            _providers = new List<ProviderInfo>(capacity);
+            _primaryProviderMap = new Dictionary<BindingId, int>(capacity);
         }
 
         public int Register(TypeArray contractTypes, int identifier, ProvideDelegate provider, Type concreteType, ArgumentArray extraArguments)

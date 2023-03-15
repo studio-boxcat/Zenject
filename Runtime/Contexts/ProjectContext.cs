@@ -21,7 +21,7 @@ namespace Zenject
 
         public static bool HasInstance => _instance is not null;
 
-        public readonly DiContainer Container = new();
+        public readonly DiContainer Container = new(null, 64);
 
         [SerializeField, InlineProperty, HideLabel]
         InstallerCollection _installers;

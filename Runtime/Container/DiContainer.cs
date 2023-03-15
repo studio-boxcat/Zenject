@@ -22,14 +22,11 @@ namespace Zenject
         readonly List<int> _nonLazyProviders = new();
 
         public DiContainer(
-            [CanBeNull] DiContainer parentContainer = null)
+            [CanBeNull] DiContainer parentContainer, int capacity)
         {
             ParentContainer = parentContainer;
-
-            ProviderRepo = new ProviderRepo(this);
-
+            ProviderRepo = new ProviderRepo(this, capacity);
             _providerChain = new ProviderChain(this);
-
             Bind(this);
         }
 
@@ -57,15 +54,15 @@ namespace Zenject
             if (nonLazy) _nonLazyProviders.Add(providerIndex);
         }
 
-        public bool HasBinding(Type type, int identifier = 0, InjectSources sourceType = InjectSources.Any)
+        public bool HasBinding(Type type, int identifier = 0)
         {
-            return HasBinding(new InjectSpec(type, identifier, sourceType));
+            return HasBinding(new InjectSpec(type, identifier));
         }
 
         // You shouldn't need to use this
         public bool HasBinding(InjectSpec injectSpec)
         {
-            return _providerChain.HasBinding(injectSpec.BindingId, injectSpec.SourceType);
+            return _providerChain.HasBinding(injectSpec.BindingId);
         }
 
         public void Bind(Type type, int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
@@ -191,20 +188,20 @@ namespace Zenject
             Initializer.Initialize(injectable, this, extraArgs);
         }
 
-        public bool TryResolve(Type type, int identifier, InjectSources sourceType, out object instance)
+        public bool TryResolve(Type type, int identifier, out object instance)
         {
             if (type.IsArray)
             {
-                instance = ResolveAll(type, identifier, sourceType);
+                instance = ResolveAll(type, identifier);
                 return true;
             }
 
-            return _providerChain.TryResolve(new BindingId(type, identifier), sourceType, out instance);
+            return _providerChain.TryResolve(new BindingId(type, identifier), out instance);
         }
 
-        public bool TryResolve<TContract>(int identifier, InjectSources sourceType, out TContract instance)
+        public bool TryResolve<TContract>(int identifier, out TContract instance)
         {
-            if (TryResolve(typeof(TContract), identifier, sourceType, out var instance2))
+            if (TryResolve(typeof(TContract), identifier, out var instance2))
             {
                 instance = (TContract) instance2;
                 return true;
@@ -218,17 +215,17 @@ namespace Zenject
 
         public bool TryResolve(Type type, out object instance)
         {
-            return TryResolve(type, 0, InjectSources.Any, out instance);
+            return TryResolve(type, 0, out instance);
         }
 
         public bool TryResolve<TContract>(string identifier, out TContract instance)
         {
-            return TryResolve(Hasher.Hash(identifier), InjectSources.Any, out instance);
+            return TryResolve(Hasher.Hash(identifier), out instance);
         }
 
         public bool TryResolve<TContract>(out TContract instance)
         {
-            return TryResolve(0, InjectSources.Any, out instance);
+            return TryResolve(0, out instance);
         }
 
         // Resolve<> - Lookup a value in the container.
@@ -253,28 +250,28 @@ namespace Zenject
             return Resolve<TContract>(Hasher.Hash(identifier));
         }
 
-        public object Resolve(Type contractType, int identifier = 0, InjectSources sourceType = InjectSources.Any)
+        public object Resolve(Type contractType, int identifier = 0)
         {
-            if (TryResolve(contractType, identifier, sourceType, out var instance))
+            if (TryResolve(contractType, identifier, out var instance))
             {
                 return instance;
             }
             else
             {
-                throw new Exception($"Failed to Resolve: {contractType.Name}, {Hasher.ToHumanReadableString(identifier)}, {sourceType}");
+                throw new Exception($"Failed to Resolve: {contractType.Name}, {Hasher.ToHumanReadableString(identifier)}");
             }
         }
 
         public object Resolve(InjectSpec injectSpec)
         {
-            if (TryResolve(injectSpec.Type, injectSpec.Identifier, injectSpec.SourceType, out var instance))
+            if (TryResolve(injectSpec.Type, injectSpec.Identifier, out var instance))
             {
                 return instance;
             }
 
             if (injectSpec.Optional == false)
             {
-                throw new Exception($"Failed to Resolve: {injectSpec.Type.Name}, {Hasher.ToHumanReadableString(injectSpec.Identifier)}, {injectSpec.SourceType}");
+                throw new Exception($"Failed to Resolve: {injectSpec.Type.Name}, {Hasher.ToHumanReadableString(injectSpec.Identifier)}");
             }
 
             return null;
@@ -282,7 +279,7 @@ namespace Zenject
 
         static readonly Stack<List<object>> _listPool = new();
 
-        public Array ResolveAll(Type arrayType, int identifier, InjectSources sourceType)
+        public Array ResolveAll(Type arrayType, int identifier)
         {
             // XXX: IsClassType 으로 체크하는 경우, interface 가 false 로 취급됨.
             Assert.IsTrue(arrayType.IsArray && arrayType.GetElementType()!.IsValueType == false);
@@ -292,7 +289,7 @@ namespace Zenject
             Assert.AreEqual(0, list.Count);
 
             var elementType = arrayType.GetElementType()!;
-            _providerChain.ResolveAll(new BindingId(elementType, identifier), sourceType, list);
+            _providerChain.ResolveAll(new BindingId(elementType, identifier), list);
 
             var result = Array.CreateInstance(elementType, list.Count);
             for (var i = 0; i < list.Count; i++)
@@ -303,9 +300,9 @@ namespace Zenject
             return result;
         }
 
-        public void ResolveAll<T>(int identifier, InjectSources sourceType, IList<T> instances)
+        public void ResolveAll<T>(int identifier, IList<T> instances)
         {
-            _providerChain.ResolveAll(new BindingId(typeof(T), identifier), sourceType, (IList) instances);
+            _providerChain.ResolveAll(new BindingId(typeof(T), identifier), (IList) instances);
         }
 
         public T Instantiate<T>(ArgumentArray extraArgs = default)

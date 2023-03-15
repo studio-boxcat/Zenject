@@ -18,7 +18,7 @@ namespace Zenject
         {
             SceneContextRegistry.Add(this);
 
-            Container = new DiContainer(ProjectContext.Instance.Container);
+            Container = new DiContainer(ProjectContext.Instance.Container, 128);
 
             if (ExtraBindingsInstallMethod != null)
             {

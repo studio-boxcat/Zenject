@@ -24,7 +24,7 @@ namespace Zenject
 
         void IZenjectInjectable.Inject(DependencyProvider dp)
         {
-            Container = new DiContainer(dp.Container);
+            Container = new DiContainer(dp.Container, 32);
 
             ZenjectBindingCollection.TryBind(gameObject, Container);
 

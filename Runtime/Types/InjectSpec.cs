@@ -18,27 +18,22 @@ namespace Zenject
         //          public Foo([Inject(Id = "foo") Foo foo)
         public readonly int Identifier;
 
-        // When set to true, this will only look up dependencies in the local container and will not
-        // search in parent containers
-        public readonly InjectSources SourceType;
-
         // When optional, null is a valid value to be returned
         public readonly bool Optional;
 
         public BindingId BindingId => new(Type, Identifier);
 
 
-        public InjectSpec(Type type, int identifier, InjectSources sourceType, bool optional = false)
+        public InjectSpec(Type type, int identifier, bool optional = false)
         {
             Type = type;
             Identifier = identifier;
-            SourceType = sourceType;
             Optional = optional;
         }
 
         public override string ToString()
         {
-            return $"({Type.Name}, {Hasher.ToHumanReadableString(Identifier)}, {SourceType}, {Optional})";
+            return $"({Type.Name}, {Hasher.ToHumanReadableString(Identifier)}, {Optional})";
         }
     }
 }
