@@ -8,6 +8,7 @@ namespace Zenject
         public readonly object Arg1;
         public readonly object Arg2;
         public readonly object Arg3;
+        public readonly object Arg4;
         public readonly int Length;
 
 
@@ -16,6 +17,7 @@ namespace Zenject
             Arg1 = arg1;
             Arg2 = null;
             Arg3 = null;
+            Arg4 = null;
             Length = 1;
         }
 
@@ -24,6 +26,7 @@ namespace Zenject
             Arg1 = arg1;
             Arg2 = arg2;
             Arg3 = null;
+            Arg4 = null;
             Length = 2;
         }
 
@@ -32,15 +35,17 @@ namespace Zenject
             Arg1 = arg1;
             Arg2 = arg2;
             Arg3 = arg3;
+            Arg4 = null;
             Length = 3;
         }
 
-        public ArgumentArray(object arg1, object arg2, object arg3, int length)
+        public ArgumentArray(object arg1, object arg2, object arg3, object arg4)
         {
             Arg1 = arg1;
             Arg2 = arg2;
             Arg3 = arg3;
-            Length = length;
+            Arg4 = arg4;
+            Length = 4;
         }
 
         public bool TryGetValueWithType(Type type, out object value)
@@ -81,6 +86,18 @@ namespace Zenject
                 return true;
             }
 
+            if (Length < 4)
+            {
+                value = null;
+                return false;
+            }
+
+            if (type.IsInstanceOfType(Arg4))
+            {
+                value = Arg4;
+                return true;
+            }
+
             value = null;
             return false;
         }
@@ -111,13 +128,37 @@ namespace Zenject
             }
         }
 
-        public static ArgumentArray Concat(ArgumentArray arr, object arg)
+        public static ArgumentArray operator +(ArgumentArray arr, object arg)
         {
             return arr.Length switch
             {
                 0 => new ArgumentArray(arg),
                 1 => new ArgumentArray(arr.Arg1, arg),
                 2 => new ArgumentArray(arr.Arg1, arr.Arg2, arg),
+                3 => new ArgumentArray(arr.Arg1, arr.Arg2, arr.Arg3, arg),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
+
+        public static ArgumentArray operator +(ArgumentArray a, ArgumentArray b)
+        {
+            if (a.Length == 0) return b;
+            if (b.Length == 0) return a;
+            if (b.Length == 1) return a + b.Arg1;
+
+            return a.Length switch
+            {
+                1 => b.Length switch
+                {
+                    2 => new ArgumentArray(a.Arg1, b.Arg1, b.Arg2),
+                    3 => new ArgumentArray(a.Arg1, b.Arg1, b.Arg2, b.Arg3),
+                    _ => throw new ArgumentOutOfRangeException()
+                },
+                2 => b.Length switch
+                {
+                    2 => new ArgumentArray(a.Arg1, a.Arg2, b.Arg1, b.Arg2),
+                    _ => throw new ArgumentOutOfRangeException()
+                },
                 _ => throw new ArgumentOutOfRangeException()
             };
         }

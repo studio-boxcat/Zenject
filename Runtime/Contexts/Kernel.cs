@@ -14,9 +14,9 @@ namespace Zenject
         {
             // TODO: Should resolve all object regardless of the identifier.
             var providerRepo = diContainer.ProviderRepo;
-            providerRepo.ResolveAll(default, _tickables);
-            providerRepo.ResolveAll(default, _lateTickables);
-            providerRepo.ResolveAll(default, _disposables);
+            providerRepo.ResolveAll(new BindingId(typeof(ITickable)), _tickables);
+            providerRepo.ResolveAll(new BindingId(typeof(ILateTickable)), _lateTickables);
+            providerRepo.ResolveAll(new BindingId(typeof(IDisposable)), _disposables);
         }
 
         void OnDestroy()

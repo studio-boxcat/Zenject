@@ -14,7 +14,7 @@ namespace Zenject
     // - Instantiate new values via InstantiateX() methods
     public class DiContainer
     {
-        [CanBeNull] public readonly DiContainer ParentContainer;
+        [CanBeNull] public readonly DiContainer Parent;
 
         public readonly ProviderRepo ProviderRepo;
 
@@ -22,11 +22,13 @@ namespace Zenject
         readonly List<int> _nonLazyProviders = new();
 
         public DiContainer(
-            [CanBeNull] DiContainer parentContainer, int capacity)
+            [CanBeNull] DiContainer parent, int capacity)
         {
-            ParentContainer = parentContainer;
+            Parent = parent;
             ProviderRepo = new ProviderRepo(this, capacity);
-            _providerChain = new ProviderChain(this);
+            _providerChain = parent is not null
+                ? new ProviderChain(Parent._providerChain, ProviderRepo)
+                : new ProviderChain(ProviderRepo);
             Bind(this);
         }
 

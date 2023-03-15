@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using JetBrains.Annotations;
 
@@ -5,40 +6,26 @@ namespace Zenject
 {
     public readonly struct ProviderChain
     {
-        readonly ProviderRepo[] _containerChain;
+        readonly ProviderRepo[] _chain;
 
-        public ProviderChain(DiContainer container)
+        public ProviderChain(ProviderRepo provider)
         {
-            _containerChain = BuildProviderChain(container);
+            _chain = new ProviderRepo[1];
+            _chain[0] = provider;
         }
 
-        static ProviderRepo[] BuildProviderChain(DiContainer root)
+        public ProviderChain(ProviderChain chain, ProviderRepo provider)
         {
-            var containerCount = 1;
-            var targetContainer = root.ParentContainer;
-            while (targetContainer != null)
-            {
-                targetContainer = targetContainer.ParentContainer;
-                containerCount++;
-            }
-
-            var providerChain = new ProviderRepo[containerCount];
-            providerChain[0] = root.ProviderRepo;
-            var pointer = 1;
-            targetContainer = root.ParentContainer;
-            while (targetContainer != null)
-            {
-                providerChain[pointer++] = targetContainer.ProviderRepo;
-                targetContainer = targetContainer.ParentContainer;
-            }
-
-            return providerChain;
+            var baseChain = chain._chain;
+            _chain = new ProviderRepo[baseChain.Length + 1];
+            _chain[0] = provider;
+            Array.Copy(baseChain, 0, _chain, 1, baseChain.Length);
         }
 
         [Pure]
         public bool HasBinding(BindingId bindingId)
         {
-            foreach (var currentContainer in _containerChain)
+            foreach (var currentContainer in _chain)
             {
                 if (currentContainer.HasBinding(bindingId))
                     return true;
@@ -49,14 +36,14 @@ namespace Zenject
 
         public void ResolveAll(BindingId bindingId, IList buffer)
         {
-            foreach (var container in _containerChain)
+            foreach (var container in _chain)
                 container.ResolveAll(bindingId, buffer);
         }
 
         [Pure]
         public bool TryResolve(BindingId bindingId, out object instance)
         {
-            foreach (var container in _containerChain)
+            foreach (var container in _chain)
             {
                 if (container.TryResolve(bindingId, out instance))
                     return true;

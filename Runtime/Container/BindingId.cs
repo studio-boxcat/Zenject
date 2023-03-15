@@ -11,7 +11,7 @@ namespace Zenject
         public readonly Type Type;
         public readonly int Identifier;
 
-        public BindingId([NotNull] Type type, int identifier)
+        public BindingId([NotNull] Type type, int identifier = 0)
         {
             Type = type;
             Identifier = identifier;
