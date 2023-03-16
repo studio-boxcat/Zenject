@@ -74,7 +74,7 @@ namespace Zenject
 
 #if DEBUG && ZENJECT_REFLECTION_BAKING
             if (constructorInfo.Parameters.Length > 0)
-                Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
+                UnityEngine.Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
 #endif
 
             return constructorInfo;
