@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
@@ -20,6 +21,13 @@ namespace Zenject
         public void Editor_Collect()
         {
             Targets = Internal_Collect().ToArray();
+        }
+
+        [MenuItem("CONTEXT/InjectTargetCollection/Collect")]
+        static void Editor_Collect(MenuCommand cmd)
+        {
+            var target = (InjectTargetCollection) cmd.context;
+            target.Editor_Collect();
         }
 
         bool Validate_Targets()
