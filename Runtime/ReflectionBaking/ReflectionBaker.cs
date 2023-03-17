@@ -5,9 +5,9 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
-using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -278,6 +278,14 @@ namespace Zenject
 
             static void GenerateResolveType(InjectSpec injectSpec, StringBuilder sb)
             {
+                if (injectSpec.Type == typeof(DiContainer))
+                {
+                    Assert.IsFalse(injectSpec.Optional);
+                    Assert.AreEqual(0, injectSpec.Identifier);
+                    sb.Append("dp.Container");
+                    return;
+                }
+
                 var typeName = "global::" + injectSpec.Type.FullName;
 
                 if (injectSpec.Optional)
@@ -299,6 +307,14 @@ namespace Zenject
 
             static void GenerateAssignField(FieldInfo field, InjectSpec injectSpec, StringBuilder sb)
             {
+                if (injectSpec.Type == typeof(DiContainer))
+                {
+                    Assert.IsFalse(injectSpec.Optional);
+                    Assert.AreEqual(0, injectSpec.Identifier);
+                    sb.Append(field.Name).AppendLine(" = dp.Container;");
+                    return;
+                }
+
                 var typeName = "global::" + injectSpec.Type.FullName;
 
                 if (injectSpec.Optional)
