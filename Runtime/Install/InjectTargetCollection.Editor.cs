@@ -125,7 +125,7 @@ namespace Zenject
             if (_requiresInjectCache.TryGetValue(type, out var requiresInjection))
                 return requiresInjection;
 
-            // Do not inject on installers since these are always injected before they are installed
+            // Do not inject on installers since these are always injected just before they are installed.
             if (type.IsSubclassOf(typeof(MonoBehaviourInstaller)))
             {
                 _requiresInjectCache.Add(type, false);
