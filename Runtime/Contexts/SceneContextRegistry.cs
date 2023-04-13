@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
@@ -18,15 +17,6 @@ namespace Zenject
         {
             var removed = List.Remove(context);
             Assert.IsTrue(removed);
-        }
-
-        public static void ForceUnloadAllScenes()
-        {
-            for (var i = List.Count - 1; i >= 0; i--)
-            {
-                var sceneContext = List[i];
-                Object.Destroy(sceneContext.gameObject);
-            }
         }
     }
 }
