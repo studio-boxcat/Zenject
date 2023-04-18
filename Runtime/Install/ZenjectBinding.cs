@@ -1,17 +1,20 @@
 using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Zenject
 {
     public class ZenjectBinding : ZenjectBindingBase
+#if UNITY_EDITOR
+        , ISelfValidator
+#endif
     {
-        [ListDrawerSettings(IsReadOnly = true)]
-        [SerializeField, Required]
-        public Component[] Components = null;
+        [SerializeField, Required, ShowIf("@Target == null")]
+        public Object Target;
 
         [SerializeField]
-        [ValidateInput("Validate_Identifier")]
+        [ValidateInput("Identifier_Validate")]
         public string Identifier = string.Empty;
 
         [SerializeField]
@@ -30,37 +33,82 @@ namespace Zenject
             if (Identifier.Length > 0)
                 identifier = Hasher.Hash(Identifier);
 
-            foreach (var component in Components)
+            if (Target == null)
             {
-                var bindType = BindType;
-
-                if (component == null)
-                {
 #if DEBUG
-                    Debug.LogWarning($"Found null component in ZenjectBinding on object '{name}'");
+                Debug.LogWarning($"Found null component in ZenjectBinding on object '{name}'");
 #endif
-                    continue;
-                }
+                return;
+            }
 
-                switch (bindType)
-                {
-                    case BindTypes.Self:
-                        container.Bind(component, identifier);
-                        break;
-                    case BindTypes.AllInterfaces:
-                        container.BindInterfacesTo(component, identifier);
-                        break;
-                    case BindTypes.AllInterfacesAndSelf:
-                        container.BindInterfacesAndSelfTo(component, identifier);
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(bindType));
-                }
+            Bind(container, Target, BindType, identifier);
+        }
+
+        public static void Bind(DiContainer container, object target, BindTypes bindType, int identifier)
+        {
+            switch (bindType)
+            {
+                case BindTypes.Self:
+                    container.Bind(target, identifier);
+                    break;
+                case BindTypes.AllInterfaces:
+                    container.BindInterfacesTo(target, identifier);
+                    break;
+                case BindTypes.AllInterfacesAndSelf:
+                    container.BindInterfacesAndSelfTo(target, identifier);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(bindType));
             }
         }
 
 #if UNITY_EDITOR
-        bool Validate_Identifier(string identifier)
+        [ShowInInspector, LabelText("Target"), PropertyOrder(-2), ShowIf("@Target != null")]
+        GameObject _targetGameObject
+        {
+            get => Target is Component component ? component.gameObject : (GameObject) Target;
+            set => Target = value;
+        }
+
+        [ShowInInspector, LabelText("Component"), PropertyOrder(-1),
+         ShowIf("@Target != null"), ValueDropdown("Target_Dropdown")]
+        Object _targetDropdown
+        {
+            get => Target;
+            set => Target = value;
+        }
+
+        void ISelfValidator.Validate(SelfValidationResult result)
+        {
+            if (Target == null)
+                return;
+
+            if (BindType is BindTypes.AllInterfaces or BindTypes.AllInterfacesAndSelf)
+            {
+                var type = Target.GetType();
+                if (type.GetInterfaces().Length == 0)
+                    result.AddError("Target does not implement any interfaces");
+            }
+        }
+
+        ValueDropdownList<Object> Target_Dropdown()
+        {
+            if (Target == null)
+                return null;
+
+            var list = new ValueDropdownList<Object>();
+
+            var targetGO = _targetGameObject;
+            list.Add("GameObject", targetGO);
+
+            var components = targetGO.GetComponents<Component>();
+            foreach (var component in components)
+                list.Add(component.GetType().Name, component);
+
+            return list;
+        }
+
+        bool Identifier_Validate(string identifier)
         {
             return identifier.Trim() == identifier;
         }
