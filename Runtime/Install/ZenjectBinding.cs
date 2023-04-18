@@ -64,9 +64,9 @@ namespace Zenject
 
 #if UNITY_EDITOR
         [ShowInInspector, LabelText("Target"), PropertyOrder(-2), ShowIf("@Target != null")]
-        GameObject _targetGameObject
+        Object _target
         {
-            get => Target is Component component ? component.gameObject : (GameObject) Target;
+            get => Target;
             set => Target = value;
         }
 
@@ -98,7 +98,7 @@ namespace Zenject
 
             var list = new ValueDropdownList<Object>();
 
-            var targetGO = _targetGameObject;
+            var targetGO = Target is Component c ? c.gameObject : (GameObject) Target;
             list.Add("GameObject", targetGO);
 
             var components = targetGO.GetComponents<Component>();
