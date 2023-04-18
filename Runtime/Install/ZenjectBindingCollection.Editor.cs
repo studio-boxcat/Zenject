@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -18,6 +19,13 @@ namespace Zenject
         void Editor_Collect()
         {
             Bindings = Internal_Collect().ToArray();
+        }
+
+        [MenuItem("CONTEXT/ZenjectBindingCollection/Collect")]
+        static void Editor_Collect(MenuCommand cmd)
+        {
+            var target = (ZenjectBindingCollection) cmd.context;
+            target.Editor_Collect();
         }
 
         bool Validate_Bindings()
