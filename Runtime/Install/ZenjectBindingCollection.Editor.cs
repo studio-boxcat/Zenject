@@ -25,7 +25,9 @@ namespace Zenject
         static void Editor_Collect(MenuCommand cmd)
         {
             var target = (ZenjectBindingCollection) cmd.context;
+            Undo.RecordObject(target, "");
             target.Editor_Collect();
+            EditorUtility.SetDirty(target);
         }
 
         bool Validate_Bindings()
