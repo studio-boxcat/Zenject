@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -76,6 +78,35 @@ namespace Zenject
         {
             get => Target;
             set => Target = value;
+        }
+
+        [ShowInInspector, DisplayAsString]
+        string _bindingTypes
+        {
+            get
+            {
+                if (Target == null)
+                    return "";
+
+                var typeList = new List<Type>();
+                switch (BindType)
+                {
+                    case BindTypes.Self:
+                        typeList.Add(Target.GetType());
+                        break;
+                    case BindTypes.AllInterfaces:
+                        typeList.AddRange(Target.GetType().GetInterfaces());
+                        break;
+                    case BindTypes.AllInterfacesAndSelf:
+                        typeList.Add(Target.GetType());
+                        typeList.AddRange(Target.GetType().GetInterfaces());
+                        break;
+                    default:
+                        return "";
+                }
+
+                return string.Join(", ", typeList.Select(x => x.Name).ToArray());
+            }
         }
 
         void ISelfValidator.Validate(SelfValidationResult result)
