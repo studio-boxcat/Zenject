@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
-using JetBrains.Annotations;
 using UnityEngine.Assertions;
 
 namespace Zenject
@@ -11,19 +9,24 @@ namespace Zenject
         public static object Instantiate(Type concreteType, DiContainer container, ArgumentArray extraArgs)
         {
             // If the given type has generated constructor, use it.
-            var constructor = GetGeneratedConstructor(concreteType);
-            if (constructor != null)
+            var @params = RentGeneratedConstructorParams(container, extraArgs);
+            try
             {
-                var @params = RentGeneratedConstructorParams(container, extraArgs);
-                var inst = constructor.Invoke(parameters: @params);
+                return Activator.CreateInstance(concreteType, args: @params);
+            }
+            catch (MissingMethodException)
+            {
+            }
+            finally
+            {
                 ReturnGeneratedConstructorParams(@params);
-                return inst;
             }
 
-            // If the constructor has no parameters, just invoke it.
+            // If the constructor has no parameters, instantiate by Activator.
+            // Note that calling Activator.CreateInstance() is 2x faster than calling ConstructorInfo.Invoke().
             var constructorInfo = GetConstructorInfo(concreteType);
             if (constructorInfo.Parameters.Length == 0)
-                return constructorInfo.ConstructorInfo.Invoke(null);
+                return Activator.CreateInstance(concreteType);
 
             // Otherwise, resolve the parameters and invoke the constructor.
 #if DEBUG
@@ -42,22 +45,6 @@ namespace Zenject
                 throw new MethodInvokeException(constructorInfo.ConstructorInfo, e.ParamSpec, e.ParamIndex, e);
             }
 #endif
-        }
-
-        static readonly Dictionary<Type, ConstructorInfo> _generatedConstructorCache = new();
-        static readonly Type[] _generatedConstructorParamTypes = {typeof(DependencyProviderRef)};
-
-        [CanBeNull]
-        static ConstructorInfo GetGeneratedConstructor(Type type)
-        {
-            if (_generatedConstructorCache.TryGetValue(type, out var constructor))
-                return constructor;
-
-            constructor = type.GetConstructor(
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
-                null, _generatedConstructorParamTypes, null);
-            _generatedConstructorCache.Add(type, constructor);
-            return constructor;
         }
 
         static readonly Dictionary<Type, InjectConstructorInfo> _constructorCache = new();
