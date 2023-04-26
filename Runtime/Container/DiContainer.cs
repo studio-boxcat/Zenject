@@ -355,7 +355,9 @@ namespace Zenject
         public GameObject InstantiatePrefab(GameObject prefab, Transform parent, ArgumentArray extraArgs = default)
         {
             var inst = InstantiatePrefabToStage(prefab, extraArgs);
+            inst.SetActive(false); // Deactivate before SetParent to avoid OnTransformParentChanged callback.
             inst.transform.SetParent(parent, false);
+            inst.SetActive(true);
             return inst;
         }
     }
