@@ -1,18 +1,31 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
 using UnityEngine.Assertions;
 
 namespace Zenject
 {
     public static class Constructor
     {
+        static Binder _binder;
+        static CultureInfo _cultureInfo;
+
         public static object Instantiate(Type concreteType, DiContainer container, ArgumentArray extraArgs)
         {
+            _binder ??= Type.DefaultBinder;
+            _cultureInfo ??= CultureInfo.InvariantCulture;
+
             // If the given type has generated constructor, use it.
             var @params = RentGeneratedConstructorParams(container, extraArgs);
             try
             {
-                return Activator.CreateInstance(concreteType, args: @params);
+                return Activator.CreateInstance(
+                    concreteType,
+                    BindingFlags.CreateInstance | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                    _binder,
+                    @params,
+                    _cultureInfo);
             }
             catch (MissingMethodException)
             {
@@ -26,7 +39,14 @@ namespace Zenject
             // Note that calling Activator.CreateInstance() is 2x faster than calling ConstructorInfo.Invoke().
             var constructorInfo = GetConstructorInfo(concreteType);
             if (constructorInfo.Parameters.Length == 0)
-                return Activator.CreateInstance(concreteType);
+            {
+                return Activator.CreateInstance(
+                    concreteType,
+                    BindingFlags.CreateInstance | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+                    _binder,
+                    Array.Empty<object>(),
+                    _cultureInfo);
+            }
 
             // Otherwise, resolve the parameters and invoke the constructor.
 #if DEBUG
