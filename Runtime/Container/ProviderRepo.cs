@@ -32,8 +32,7 @@ namespace Zenject
             foreach (var contractType in contractTypes)
             {
                 var bindingId = new BindingId(contractType, identifier);
-                if (_primaryProviderMap.ContainsKey(bindingId) == false)
-                    _primaryProviderMap.Add(bindingId, providerIndex);
+                _primaryProviderMap.TryAdd(bindingId, providerIndex);
             }
 
             return providerIndex;
@@ -48,8 +47,7 @@ namespace Zenject
             foreach (var contractType in contractTypes)
             {
                 var bindingId = new BindingId(contractType, identifier);
-                if (_primaryProviderMap.ContainsKey(bindingId) == false)
-                    _primaryProviderMap.Add(bindingId, providerIndex);
+                _primaryProviderMap.TryAdd(bindingId, providerIndex);
             }
 
             return providerIndex;
