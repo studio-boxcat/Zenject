@@ -342,22 +342,19 @@ namespace Zenject
             return monoBehaviour;
         }
 
-        public GameObject InstantiatePrefabToStage(GameObject prefab, ArgumentArray extraArgs = default)
+        public GameObject InstantiatePrefab(GameObject prefab, Transform parent, ArgumentArray extraArgs = default)
         {
             Assert.IsNotNull(prefab, "Null prefab found when instantiating game object");
 
-            var inst = Object.Instantiate(prefab, Stage.Get(), false);
+            var orgActive = prefab.activeSelf;
+            prefab.SetActive(false);
+
+            var inst = Object.Instantiate(prefab, parent, false);
             if (GameObjectContext.TryInject(inst, this, extraArgs) == false)
                 InjectTargetCollection.TryInject(inst, this, extraArgs);
-            return inst;
-        }
 
-        public GameObject InstantiatePrefab(GameObject prefab, Transform parent, ArgumentArray extraArgs = default)
-        {
-            var inst = InstantiatePrefabToStage(prefab, extraArgs);
-            inst.SetActive(false); // Deactivate before SetParent to avoid OnTransformParentChanged callback.
-            inst.transform.SetParent(parent, false);
-            inst.SetActive(true);
+            prefab.SetActive(orgActive);
+            inst.SetActive(orgActive);
             return inst;
         }
     }
