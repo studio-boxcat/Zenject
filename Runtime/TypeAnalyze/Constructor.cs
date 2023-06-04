@@ -2,44 +2,37 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using JetBrains.Annotations;
 using UnityEngine.Assertions;
 
 namespace Zenject
 {
+    public interface IConstructorHook
+    {
+        bool TryCreateInstance(Type concreteType, DiContainer container, ArgumentArray extraArgs, out object instance);
+    }
+
     public static class Constructor
     {
+        [CanBeNull]
+        public static IConstructorHook Hook;
+
         static Binder _binder;
         static CultureInfo _cultureInfo;
 
         public static object Instantiate(Type concreteType, DiContainer container, ArgumentArray extraArgs)
         {
-            _binder ??= Type.DefaultBinder;
-            _cultureInfo ??= CultureInfo.InvariantCulture;
-
             // If the given type has generated constructor, use it.
-            var @params = RentGeneratedConstructorParams(container, extraArgs);
-            try
-            {
-                return Activator.CreateInstance(
-                    concreteType,
-                    BindingFlags.CreateInstance | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
-                    _binder,
-                    @params,
-                    _cultureInfo);
-            }
-            catch (MissingMethodException)
-            {
-            }
-            finally
-            {
-                ReturnGeneratedConstructorParams(@params);
-            }
+            if (Hook != null && Hook.TryCreateInstance(concreteType, container, extraArgs, out var instance))
+                return instance;
 
             // If the constructor has no parameters, instantiate by Activator.
             // Note that calling Activator.CreateInstance() is 2x faster than calling ConstructorInfo.Invoke().
             var constructorInfo = GetConstructorInfo(concreteType);
             if (constructorInfo.Parameters.Length == 0)
             {
+                _binder ??= Type.DefaultBinder;
+                _cultureInfo ??= CultureInfo.InvariantCulture;
                 return Activator.CreateInstance(
                     concreteType,
                     BindingFlags.CreateInstance | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -80,31 +73,10 @@ namespace Zenject
             _constructorCache.Add(type, constructorInfo);
 
 #if DEBUG && ZENJECT_REFLECTION_BAKING
-            if (constructorInfo.Parameters.Length > 0)
-                UnityEngine.Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
+            UnityEngine.Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
 #endif
 
             return constructorInfo;
-        }
-
-        static readonly Stack<object[]> _generatedConstructorParamsPool = new();
-
-        static object[] RentGeneratedConstructorParams(DiContainer container, ArgumentArray extraArgs)
-        {
-            if (_generatedConstructorParamsPool.Count == 0)
-                return new object[] {new DependencyProviderRef(container, extraArgs)};
-
-            var paramValues = _generatedConstructorParamsPool.Pop();
-            var dp = (DependencyProviderRef) paramValues[0];
-            dp.Reset(container, extraArgs);
-            return paramValues;
-        }
-
-        static void ReturnGeneratedConstructorParams(object[] paramValues)
-        {
-            var dp = (DependencyProviderRef) paramValues[0];
-            dp.Reset();
-            _generatedConstructorParamsPool.Push(paramValues);
         }
     }
 }

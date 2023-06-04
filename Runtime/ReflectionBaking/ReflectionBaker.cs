@@ -20,43 +20,67 @@ namespace Zenject
             var injectableTypes = BuildInjectableTypes(typeDict);
 
             // Group types by assembly.
-            var assemblyDict = new Dictionary<string, List<InjectionInfo>>();
+            var assemblyDict = new Dictionary<Assembly, List<TypeInfo>>();
             foreach (var typeInfo in typeDict.Values)
             {
                 var assembly = typeInfo.Type.Assembly;
 
-                // Skip if the assembly is marked with NoReflectionBaking.
-                if (assembly.IsDefined(typeof(NoReflectionBakingAttribute)))
+                if (ShouldIgnoreAssembly(assembly))
                     continue;
 
-                var assemblyName = assembly.GetName().Name;
-                if (assemblyDict.TryGetValue(assemblyName, out var typeList) == false)
+                // Add the type to the assembly.
+                if (assemblyDict.TryGetValue(assembly, out var typeList) == false)
                 {
-                    typeList = new List<InjectionInfo>();
-                    assemblyDict.Add(assemblyName, typeList);
+                    typeList = new List<TypeInfo>();
+                    assemblyDict.Add(assembly, typeList);
                 }
                 typeList.Add(typeInfo);
             }
 
-            // Generate code for each assembly.
-            foreach (var (assemblyName, injectionInfos) in assemblyDict)
+            // Generate injectables.
+            foreach (var (assembly, typeInfos) in assemblyDict)
             {
+                var assemblyName = assembly.GetName().Name;
                 Debug.Log($"Generating code for assembly '{assemblyName}'");
+                var newContent = GenerateCode_Injectable(typeInfos, injectableTypes);
+                var rootFound = TryGetCorrespondingRootForAssembly(assemblyName, out var rootDir);
+                Assert.IsTrue(rootFound, $"Root directory for assembly '{assemblyName}' not found");
+                dirty |= CompareAndWrite(rootDir + "Zenject_CodeGen.cs", newContent);
+            }
 
-                if (TryGetCorrespondingRootForAssembly(assemblyName, out var rootDir) == false)
-                    continue;
+            // Generate constructors.
+            {
+                var newContent = GenerateCode_Constructors(assemblyDict);
+                dirty |= CompareAndWrite("Assets/Zenject_CodeGen_Constructors.cs", newContent);
+            }
 
-                var codeGenPath = rootDir + "Zenject_CodeGen.cs";
-                var orgContent = File.Exists(codeGenPath) ? File.ReadAllText(codeGenPath) : "";
-                var newContent = GenerateCode(injectionInfos, injectableTypes);
-                if (orgContent != newContent)
-                {
-                    File.WriteAllText(codeGenPath, newContent);
-                    dirty = true;
-                }
+            static bool CompareAndWrite(string path, string content)
+            {
+                var orgContent = File.Exists(path) ? File.ReadAllText(path) : "";
+                var newContent = content;
+                if (orgContent == newContent) return false;
+                File.WriteAllText(path, newContent);
+                return true;
             }
 
             return dirty;
+        }
+
+        static readonly Dictionary<Assembly, bool> _assembliesToIgnore = new();
+
+        static bool ShouldIgnoreAssembly(Assembly assembly)
+        {
+            if (_assembliesToIgnore.TryGetValue(assembly, out var shouldIgnore))
+                return shouldIgnore;
+
+            // Skip if the assembly is marked with NoReflectionBaking.
+            if (assembly.IsDefined(typeof(NoReflectionBakingAttribute)))
+                return _assembliesToIgnore[assembly] = true;
+
+            // If the assembly is not in the Assets folder, skip it.
+            var assemblyName = assembly.GetName().Name;
+            shouldIgnore = TryGetCorrespondingRootForAssembly(assemblyName, out _) == false;
+            return _assembliesToIgnore[assembly] = shouldIgnore;
         }
 
         static readonly Dictionary<string, string> _assemblyNameToDir = new();
@@ -87,16 +111,16 @@ namespace Zenject
             }
         }
 
-        static Dictionary<Type, InjectionInfo> AnalyzeAllTypes()
+        static Dictionary<Type, TypeInfo> AnalyzeAllTypes()
         {
-            var typeDict = new Dictionary<Type, InjectionInfo>();
+            var typeDict = new Dictionary<Type, TypeInfo>();
             var ignoredTypes = new HashSet<Type>(TypeCache.GetTypesWithAttribute<NoReflectionBakingAttribute>());
 
-            InjectionInfo GetTypeInfo(Type type)
+            TypeInfo GetTypeInfo(Type type)
             {
                 if (typeDict.TryGetValue(type, out var typeInfo))
                     return typeInfo;
-                typeInfo = new InjectionInfo(type);
+                typeInfo = new TypeInfo(type);
                 typeDict.Add(type, typeInfo);
                 return typeInfo;
             }
@@ -136,13 +160,13 @@ namespace Zenject
             return typeDict;
         }
 
-        static HashSet<Type> BuildInjectableTypes(Dictionary<Type, InjectionInfo> typeDict)
+        static HashSet<Type> BuildInjectableTypes(Dictionary<Type, TypeInfo> typeDict)
         {
             var injectableTypes = new HashSet<Type>();
-            foreach (var (type, injectionInfo) in typeDict)
+            foreach (var (type, typeInfo) in typeDict)
             {
                 // Check if this type implements IZenjectInjectable
-                if (injectionInfo.ShouldImplementInjectable())
+                if (typeInfo.ShouldImplementInjectable())
                 {
                     injectableTypes.Add(type);
                     continue;
@@ -168,15 +192,18 @@ namespace Zenject
 
         static readonly StringBuilder _sb = new();
 
-        static string GenerateCode(List<InjectionInfo> injectionInfos, HashSet<Type> injectableTypes)
+        static string GenerateCode_Injectable(List<TypeInfo> typeInfos, HashSet<Type> injectableTypes)
         {
             _sb.AppendLine("#if ZENJECT_REFLECTION_BAKING");
             _sb.AppendLine("using Zenject;");
 
             var lastNamespaceName = "";
-            foreach (var injectionInfo in injectionInfos)
+            foreach (var typeInfo in typeInfos)
             {
-                var type = injectionInfo.Type;
+                if (typeInfo.ShouldImplementInjectable() == false)
+                    continue;
+
+                var type = typeInfo.Type;
                 var namespaceName = type.Namespace;
                 var namespaceChanged = lastNamespaceName != namespaceName;
 
@@ -188,16 +215,13 @@ namespace Zenject
                         _sb.Append("namespace ").Append(type.Namespace).AppendLine(" {").AppendLine();
                 }
 
-                var shouldImplementInjectable = injectionInfo.ShouldImplementInjectable();
+                var shouldImplementInjectable = typeInfo.ShouldImplementInjectable();
                 _sb.Append("public partial class ").Append(type.Name)
                     .Append(shouldImplementInjectable ? " : IZenjectInjectable" : "")
                     .AppendLine(" {");
 
-                if (injectionInfo.Constructor != null)
-                    GenerateConstructor(type, injectionInfo.Constructor, _sb);
-
                 if (shouldImplementInjectable)
-                    GenerateInjectMethod(type, injectionInfo.Fields, injectionInfo.Method, injectableTypes, _sb);
+                    GenerateInjectMethod(type, typeInfo.Fields, typeInfo.Method, injectableTypes, _sb);
 
                 _sb.AppendLine("}").AppendLine();
 
@@ -215,24 +239,6 @@ namespace Zenject
             // No need to explicitly write out the namespace Zenject.
             content = content.Replace("global::Zenject.", "");
             return content;
-
-            static void GenerateConstructor(Type type, MethodInfo constructor, StringBuilder sb)
-            {
-                sb.Append("[UnityEngine.Scripting.Preserve] public ").Append(type.Name).AppendLine("(DependencyProviderRef dp) : this(");
-
-                var parameters = constructor.GetParameters();
-                foreach (var parameter in parameters)
-                {
-                    var injectSpec = GetInjectSpecForParam(parameter);
-                    GenerateResolveType(injectSpec, sb);
-                    sb.AppendLine(",");
-                }
-
-                if (parameters.Length > 0)
-                    sb.Length -= 2;
-
-                sb.AppendLine("){}");
-            }
 
             static void GenerateInjectMethod(
                 Type type, List<FieldInfo> fields, MethodInfo method, HashSet<Type> injectableTypes, StringBuilder sb)
@@ -276,35 +282,6 @@ namespace Zenject
                 sb.AppendLine("}");
             }
 
-            static void GenerateResolveType(InjectSpec injectSpec, StringBuilder sb)
-            {
-                if (injectSpec.Type == typeof(DiContainer))
-                {
-                    Assert.IsFalse(injectSpec.Optional);
-                    Assert.AreEqual(0, injectSpec.Identifier);
-                    sb.Append("dp.Container");
-                    return;
-                }
-
-                var typeName = "global::" + injectSpec.Type.FullName;
-
-                if (injectSpec.Optional)
-                {
-                    sb.Append("dp.TryResolve<").Append(typeName).Append(">(")
-                        .Append(injectSpec.Identifier != 0 ? "identifier: " + injectSpec.Identifier + "," : "");
-                    if (injectSpec.Identifier != 0)
-                        sb.Length -= 1;
-                    sb.Append(')');
-                }
-                else
-                {
-                    sb.Append('(').Append(typeName).Append(')')
-                        .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
-                        .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
-                        .Append(')');
-                }
-            }
-
             static void GenerateAssignField(FieldInfo field, InjectSpec injectSpec, StringBuilder sb)
             {
                 if (injectSpec.Type == typeof(DiContainer))
@@ -335,6 +312,61 @@ namespace Zenject
             }
         }
 
+        static string GenerateCode_Constructors(Dictionary<Assembly, List<TypeInfo>> assemblyDict)
+        {
+            _sb.AppendLine("#if ZENJECT_REFLECTION_BAKING")
+                .AppendLine("using System;")
+                .AppendLine("using Zenject;")
+                .AppendLine("public class ConstructorHook : IConstructorHook {")
+                .AppendLine("public bool TryCreateInstance(Type concreteType, DiContainer container, ArgumentArray extraArgs, out object instance) {")
+                .AppendLine("var dp = new DependencyProvider(container, extraArgs);")
+                .AppendLine("if (false) {}");
+
+            foreach (var (_, typeInfos) in assemblyDict)
+            foreach (var typeInfo in typeInfos)
+            {
+                // For non-unity object, we generate a constructor even if there's no explicit constructor.
+                if (typeInfo.Constructor == null && typeof(UnityEngine.Object).IsAssignableFrom(typeInfo.Type))
+                    continue;
+
+                GenerateConstructor(typeInfo.Type, typeInfo.Constructor, _sb);
+            }
+
+            _sb.AppendLine("else { instance = null; return false; }")
+                .AppendLine("return true;")
+                .AppendLine("}")
+                .AppendLine("}")
+                .AppendLine("#endif");
+
+            var content = _sb.ToString();
+            _sb.Clear();
+            return content;
+
+            static void GenerateConstructor(Type type, [CanBeNull] MethodInfo constructor, StringBuilder sb)
+            {
+                var typeName = "global::" + type.FullName;
+
+                sb.Append("else if (concreteType == typeof(").Append(typeName).AppendLine(")) {")
+                    .Append("instance = new ").Append(typeName).AppendLine("(");
+
+                if (constructor != null)
+                {
+                    var parameters = constructor.GetParameters();
+                    foreach (var parameter in parameters)
+                    {
+                        var injectSpec = GetInjectSpecForParam(parameter);
+                        GenerateResolveType(injectSpec, sb);
+                        sb.AppendLine(",");
+                    }
+
+                    sb.Length -= 2;
+                }
+
+                sb.AppendLine(");")
+                    .AppendLine("}");
+            }
+        }
+
         static InjectSpec GetInjectSpecForParam(ParameterInfo parameter)
         {
             var paramType = parameter.ParameterType;
@@ -344,7 +376,36 @@ namespace Zenject
                 : new InjectSpec(paramType, default);
         }
 
-        class InjectionInfo
+        static void GenerateResolveType(InjectSpec injectSpec, StringBuilder sb)
+        {
+            if (injectSpec.Type == typeof(DiContainer))
+            {
+                Assert.IsFalse(injectSpec.Optional);
+                Assert.AreEqual(0, injectSpec.Identifier);
+                sb.Append("dp.Container");
+                return;
+            }
+
+            var typeName = "global::" + injectSpec.Type.FullName;
+
+            if (injectSpec.Optional)
+            {
+                sb.Append("dp.TryResolve<").Append(typeName).Append(">(")
+                    .Append(injectSpec.Identifier != 0 ? "identifier: " + injectSpec.Identifier + "," : "");
+                if (injectSpec.Identifier != 0)
+                    sb.Length -= 1;
+                sb.Append(')');
+            }
+            else
+            {
+                sb.Append('(').Append(typeName).Append(')')
+                    .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
+                    .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
+                    .Append(')');
+            }
+        }
+
+        class TypeInfo
         {
             public readonly Type Type;
             [CanBeNull]
@@ -354,7 +415,7 @@ namespace Zenject
             [CanBeNull]
             public List<FieldInfo> Fields;
 
-            public InjectionInfo(Type type)
+            public TypeInfo(Type type)
             {
                 Type = type;
             }

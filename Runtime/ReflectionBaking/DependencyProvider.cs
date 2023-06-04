@@ -47,46 +47,4 @@ namespace Zenject
 
         public void TryResolve<T>(ref T value) => TryResolve(default, ref value);
     }
-
-    public class DependencyProviderRef
-    {
-        DiContainer _diContainer;
-        ArgumentArray _extraArgs;
-
-
-        public DependencyProviderRef(DiContainer diContainer, ArgumentArray extraArgs)
-        {
-            _diContainer = diContainer;
-            _extraArgs = extraArgs;
-        }
-
-        public DiContainer Container => _diContainer;
-        public ArgumentArray ExtraArgs => _extraArgs;
-
-        public void Reset(DiContainer diContainer, ArgumentArray extraArgs)
-        {
-            _diContainer = diContainer;
-            _extraArgs = extraArgs;
-        }
-
-        public void Reset()
-        {
-            _diContainer = default;
-            _extraArgs = default;
-        }
-
-        public object Resolve(Type type, int identifier = default)
-        {
-            if (identifier == default && _extraArgs.TryGetValueWithType(type, out var inst))
-                return inst;
-            return _diContainer.Resolve(type, identifier);
-        }
-
-        public object TryResolve(Type type, int identifier = default)
-        {
-            if (identifier == default && _extraArgs.TryGetValueWithType(type, out var inst))
-                return inst;
-            return _diContainer.TryResolve(type, identifier, out inst) ? inst : null;
-        }
-    }
 }
