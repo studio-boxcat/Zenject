@@ -20,7 +20,7 @@ namespace Zenject
             var injectableTypes = BuildInjectableTypes(typeDict);
 
             // Group types by assembly.
-            var assemblyDict = new Dictionary<Assembly, List<TypeInfo>>();
+            var assemblyDict = new SortedList<Assembly, List<TypeInfo>>(new AssemblyComparer());
             foreach (var typeInfo in typeDict.Values)
             {
                 var assembly = typeInfo.Type.Assembly;
@@ -36,6 +36,10 @@ namespace Zenject
                 }
                 typeList.Add(typeInfo);
             }
+
+            // Sort typeInfos by name.
+            foreach (var typeList in assemblyDict.Values)
+                typeList.Sort((a, b) => a.Type.FullName.CompareTo(b.Type.FullName));
 
             // Generate injectables.
             foreach (var (assembly, typeInfos) in assemblyDict)
@@ -312,7 +316,7 @@ namespace Zenject
             }
         }
 
-        static string GenerateCode_Constructors(Dictionary<Assembly, List<TypeInfo>> assemblyDict)
+        static string GenerateCode_Constructors(SortedList<Assembly, List<TypeInfo>> assemblyDict)
         {
             _sb.AppendLine("#if ZENJECT_REFLECTION_BAKING")
                 .AppendLine("using System;")
@@ -421,6 +425,12 @@ namespace Zenject
             }
 
             public bool ShouldImplementInjectable() => Fields != null || Method != null;
+        }
+
+        class AssemblyComparer : IComparer<Assembly>
+        {
+            public int Compare(Assembly x, Assembly y)
+                => x.FullName.CompareTo(y.FullName);
         }
     }
 }
