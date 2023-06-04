@@ -161,6 +161,10 @@ namespace Zenject
                 typeInfo.Fields.Add(fieldInfo);
             }
 
+            // Sort FieldInfos by name.
+            foreach (var typeInfo in typeDict.Values)
+                typeInfo.Fields?.Sort((a, b) => a.Name.CompareTo(b.Name));
+
             return typeDict;
         }
 
