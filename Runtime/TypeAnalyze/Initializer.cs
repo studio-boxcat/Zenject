@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
@@ -49,9 +48,9 @@ namespace Zenject
             initializer = new InitializerInfo(fieldInfos, methodInfo);
             _initializers.Add(type, initializer);
 
-#if DEBUG && ZENJECT_REFLECTION_BAKING
+#if DEBUG && !UNITY_EDITOR
             if (initializer.Fields is {Length: > 0} || initializer.Method.MethodInfo != null)
-                Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
+                UnityEngine.Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
 #endif
 
             return initializer;

@@ -202,7 +202,7 @@ namespace Zenject
 
         static string GenerateCode_Injectable(List<TypeInfo> typeInfos, HashSet<Type> injectableTypes)
         {
-            _sb.AppendLine("#if ZENJECT_REFLECTION_BAKING");
+            _sb.AppendLine("#if !UNITY_EDITOR");
             _sb.AppendLine("using Zenject;");
 
             var lastNamespaceName = "";
@@ -322,7 +322,7 @@ namespace Zenject
 
         static string GenerateCode_Constructors(SortedList<Assembly, List<TypeInfo>> assemblyDict)
         {
-            _sb.AppendLine("#if ZENJECT_REFLECTION_BAKING")
+            _sb.AppendLine("#if !UNITY_EDITOR")
                 .AppendLine("using System;")
                 .AppendLine("using Zenject;")
                 .AppendLine("public class ConstructorHook : IConstructorHook {")

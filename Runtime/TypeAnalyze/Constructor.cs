@@ -72,7 +72,7 @@ namespace Zenject
             constructorInfo = TypeAnalyzer.GetConstructorInfo(type);
             _constructorCache.Add(type, constructorInfo);
 
-#if DEBUG && ZENJECT_REFLECTION_BAKING
+#if DEBUG && !UNITY_EDITOR
             UnityEngine.Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
 #endif
 
