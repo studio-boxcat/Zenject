@@ -41,5 +41,16 @@ namespace Zenject
         {
             SceneContextRegistry.Remove(this);
         }
+
+#if UNITY_EDITOR
+        [Button("Collect", ButtonSizes.Medium)]
+        void Editor_Collect()
+        {
+            if (TryGetComponent<ZenjectBindingCollection>(out var zenjectBindings))
+                zenjectBindings.Editor_Collect();
+            if (TryGetComponent<InjectTargetCollection>(out var injectTargets))
+                injectTargets.Editor_Collect();
+        }
+#endif
     }
 }

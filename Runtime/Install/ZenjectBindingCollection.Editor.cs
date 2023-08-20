@@ -16,7 +16,7 @@ namespace Zenject
         }
 
         [Button("Collect", ButtonSizes.Medium)]
-        void Editor_Collect()
+        public void Editor_Collect()
         {
             Bindings = Internal_Collect().ToArray();
         }
