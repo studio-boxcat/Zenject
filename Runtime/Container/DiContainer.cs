@@ -22,7 +22,7 @@ namespace Zenject
         readonly List<int> _nonLazyProviders = new();
 
         public DiContainer(
-            [CanBeNull] DiContainer parent, int capacity)
+            [CanBeNull] DiContainer parent = null, int capacity = 16)
         {
             Parent = parent;
             ProviderRepo = new ProviderRepo(this, capacity);
