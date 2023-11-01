@@ -3,24 +3,6 @@ using System.Reflection;
 
 namespace Zenject
 {
-    public class FieldResolveException : Exception
-    {
-        public readonly Type InjectableType;
-        public readonly InjectSpec FieldSpec;
-
-        public FieldResolveException(Type injectableType, InjectSpec fieldSpec, Exception innerException)
-            : base(FormatMessage(injectableType, fieldSpec), innerException)
-        {
-            InjectableType = injectableType;
-            FieldSpec = fieldSpec;
-        }
-
-        static string FormatMessage(Type injectableType, InjectSpec fieldSpec)
-        {
-            return $"Failed to Resolve Field: injectableType={injectableType.Name}, fieldSpec={fieldSpec.ToString()}";
-        }
-    }
-
     public class ParamResolveException : Exception
     {
         public readonly InjectSpec ParamSpec;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
@@ -74,7 +75,8 @@ namespace Zenject
 #if DEBUG
             catch (Exception e)
             {
-                throw new FieldResolveException(inst.GetType(), injectSpec, e);
+                Debug.LogError($"Failed to resolve field: {injectSpec.ToString()}", inst as UnityEngine.Object);
+                Debug.LogException(e, inst as UnityEngine.Object);
             }
 #endif
 
