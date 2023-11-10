@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Zenject
 {
     [DisallowMultipleComponent]
-    public partial class ZenjectBindingCollection : MonoBehaviour
+    public partial class ZenjectBindingCollection : ZenjectBindingBase
     {
         [ListDrawerSettings(IsReadOnly = true)]
         [ValidateInput("Validate_Bindings")]
@@ -16,7 +16,7 @@ namespace Zenject
                 zenjectBindings.Bind(diContainer);
         }
 
-        public void Bind(DiContainer diContainer)
+        public override void Bind(DiContainer diContainer)
         {
             foreach (var binding in Bindings)
                 binding.Bind(diContainer);

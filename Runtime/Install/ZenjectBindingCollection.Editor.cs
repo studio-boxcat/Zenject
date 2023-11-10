@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
@@ -30,12 +31,27 @@ namespace Zenject
             EditorUtility.SetDirty(target);
         }
 
-        bool Validate_Bindings()
+        [UsedImplicitly]
+        bool Validate_Bindings(ref string errorMessage)
         {
             // When playing, we don't want to validate the targets.
-            if (Bindings == null) return true;
+            if (Bindings == null)
+                return true;
 
-            return Bindings.SequenceEqual(Internal_Collect());
+            // Bindings must not contain self.
+            if (Bindings.Contains(this))
+            {
+                errorMessage = "Bindings must not contain self.";
+                return false;
+            }
+
+            if (Bindings.SequenceEqual(Internal_Collect()) == false)
+            {
+                errorMessage = "Bindings must match the collected bindings.";
+                return false;
+            }
+
+            return true;
         }
 
         List<ZenjectBindingBase> Internal_Collect()
@@ -45,12 +61,16 @@ namespace Zenject
             if (gameObject.TryGetComponent<SceneContext>(out _))
             {
                 foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
-                    targets.AddRange(rootObj.GetComponentsInChildren<ZenjectBindingBase>(true));
+                {
+                    GetBindingsUnderGameObject(rootObj.transform, rootObj == gameObject, targets);
+                }
             }
             else
             {
-                GetBindingsUnderGameObject(gameObject.transform, targets);
+                GetBindingsUnderGameObject(gameObject.transform, true, targets);
             }
+
+            targets.Remove(this);
 
             return targets;
         }
@@ -58,27 +78,29 @@ namespace Zenject
         static readonly List<ZenjectBindingBase> _bindingBuf = new();
 
         static void GetBindingsUnderGameObject(
-            Transform transform, List<ZenjectBindingBase> output)
+            Transform transform, bool self, List<ZenjectBindingBase> output)
         {
+            // If the transform has a ZenjectBindingCollection component then let it handle its own children.
+            if (self == false && transform.TryGetComponent<ZenjectBindingCollection>(out var bindings))
+            {
+                output.Add(bindings);
+                return;
+            }
+
             // Find all bindings on this game object.
             transform.GetComponents(_bindingBuf);
-            output.AddRange(_bindingBuf);
+            foreach (var binding in _bindingBuf)
+            {
+                if (binding is not ZenjectBindingCollection)
+                    output.Add(binding);
+            }
 
             // Visit all children.
             var childCount = transform.childCount;
             for (var i = 0; i < childCount; i++)
             {
                 var child = transform.GetChild(i);
-
-                // If the child has a GameObjectContext component then let it handle its own children.
-                if (child.TryGetComponent(out GameObjectContext _))
-                    continue;
-
-                // If the child has an ZenjectBindingCollection component then let it handle its own children.
-                if (child.TryGetComponent(out ZenjectBindingCollection _))
-                    continue;
-
-                GetBindingsUnderGameObject(child, output);
+                GetBindingsUnderGameObject(child, false, output);
             }
         }
     }
