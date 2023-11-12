@@ -78,5 +78,10 @@ namespace Zenject
 
             return constructorInfo;
         }
+
+        public static void ClearCache()
+        {
+            _constructorCache.Clear();
+        }
     }
 }

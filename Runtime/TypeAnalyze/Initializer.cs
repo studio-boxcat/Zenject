@@ -8,7 +8,7 @@ namespace Zenject
 {
     public static class Initializer
     {
-        static readonly Dictionary<Type, InitializerInfo> _initializers = new();
+        static readonly Dictionary<Type, InitializerInfo> _initializerCache = new();
 
         public static void Initialize(object inst, DiContainer diContainer, ArgumentArray extraArgs)
         {
@@ -40,14 +40,14 @@ namespace Zenject
 
         static InitializerInfo GetInfo(Type type)
         {
-            if (_initializers.TryGetValue(type, out var initializer))
+            if (_initializerCache.TryGetValue(type, out var initializer))
                 return initializer;
 
             var fieldInfos = TypeAnalyzer.GetFieldInfos(type, false);
             if (fieldInfos.Length == 0) fieldInfos = null;
             var methodInfo = TypeAnalyzer.GetMethodInfo(type, false);
             initializer = new InitializerInfo(fieldInfos, methodInfo);
-            _initializers.Add(type, initializer);
+            _initializerCache.Add(type, initializer);
 
 #if DEBUG && !UNITY_EDITOR
             if (initializer.Fields is {Length: > 0} || initializer.Method.MethodInfo != null)
@@ -55,6 +55,11 @@ namespace Zenject
 #endif
 
             return initializer;
+        }
+
+        public static void ClearCache()
+        {
+            _initializerCache.Clear();
         }
 
         static void InjectMember(
