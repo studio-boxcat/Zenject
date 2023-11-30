@@ -36,5 +36,12 @@ namespace Zenject
             foreach (var tickable in _lateTickables)
                 tickable.LateTick();
         }
+
+        public void ForceDispose()
+        {
+            foreach (var disposable in _disposables)
+                disposable.Dispose();
+            _disposables.Clear();
+        }
     }
 }
