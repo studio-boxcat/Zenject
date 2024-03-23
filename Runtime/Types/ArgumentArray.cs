@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -14,6 +15,8 @@ namespace Zenject
 
         public ArgumentArray(object arg1)
         {
+            Assert.IsNotNull(arg1, "Argument 1 is null");
+
             Arg1 = arg1;
             Arg2 = null;
             Arg3 = null;
@@ -23,6 +26,10 @@ namespace Zenject
 
         public ArgumentArray(object arg1, object arg2)
         {
+            Assert.IsNotNull(arg1, "Argument 1 is null");
+            Assert.IsNotNull(arg2, "Argument 2 is null");
+            Assert.AreNotEqual(arg1.GetType(), arg2.GetType(), "Argument 1 and 2 have the same type");
+
             Arg1 = arg1;
             Arg2 = arg2;
             Arg3 = null;
@@ -32,6 +39,13 @@ namespace Zenject
 
         public ArgumentArray(object arg1, object arg2, object arg3)
         {
+            Assert.IsNotNull(arg1, "Argument 1 is null");
+            Assert.IsNotNull(arg2, "Argument 2 is null");
+            Assert.IsNotNull(arg3, "Argument 3 is null");
+            Assert.AreNotEqual(arg1.GetType(), arg2.GetType(), "Argument 1 and 2 have the same type");
+            Assert.AreNotEqual(arg1.GetType(), arg3.GetType(), "Argument 1 and 3 have the same type");
+            Assert.AreNotEqual(arg2.GetType(), arg3.GetType(), "Argument 2 and 3 have the same type");
+
             Arg1 = arg1;
             Arg2 = arg2;
             Arg3 = arg3;
@@ -41,6 +55,17 @@ namespace Zenject
 
         public ArgumentArray(object arg1, object arg2, object arg3, object arg4)
         {
+            Assert.IsNotNull(arg1, "Argument 1 is null");
+            Assert.IsNotNull(arg2, "Argument 2 is null");
+            Assert.IsNotNull(arg3, "Argument 3 is null");
+            Assert.IsNotNull(arg4, "Argument 4 is null");
+            Assert.AreNotEqual(arg1.GetType(), arg2.GetType(), "Argument 1 and 2 have the same type");
+            Assert.AreNotEqual(arg1.GetType(), arg3.GetType(), "Argument 1 and 3 have the same type");
+            Assert.AreNotEqual(arg1.GetType(), arg4.GetType(), "Argument 1 and 4 have the same type");
+            Assert.AreNotEqual(arg2.GetType(), arg3.GetType(), "Argument 2 and 3 have the same type");
+            Assert.AreNotEqual(arg2.GetType(), arg4.GetType(), "Argument 2 and 4 have the same type");
+            Assert.AreNotEqual(arg3.GetType(), arg4.GetType(), "Argument 3 and 4 have the same type");
+
             Arg1 = arg1;
             Arg2 = arg2;
             Arg3 = arg3;
