@@ -1,6 +1,7 @@
 using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Zenject
 {
@@ -45,38 +46,41 @@ namespace Zenject
 
             _scriptableObjectInstallers = default;
             _monoInstallers = default;
+            return;
 
             static void InjectAndInstallBindings(DiContainer container, ArgumentArray extraArgs, IInstaller installer)
             {
 #if DEBUG
                 try
-#endif
                 {
-                    // Log.Debug("Inject: " + installer.name);
+                    L.I("Inject: " + GetDebugName(installer), (Object) installer);
                     container.Inject(installer, extraArgs);
                 }
-#if DEBUG
                 catch (Exception)
                 {
-                    Debug.LogError("Failed to Inject to Installer: " + installer, (UnityEngine.Object) installer);
+                    L.E("Failed to Inject to Installer: " + GetDebugName(installer), (Object) installer);
                     throw;
                 }
-#endif
 
-#if DEBUG
                 try
-#endif
                 {
-                    // Log.Debug("InstallBindings: " + installer.name);
+                    L.I("InstallBindings: " + GetDebugName(installer), (Object) installer);
                     installer.InstallBindings(container);
                 }
-#if DEBUG
                 catch (Exception)
                 {
-                    Debug.LogError("Failed to Install Bindings of Installer: " + installer,
-                        (UnityEngine.Object) installer);
+                    L.E("Failed to Install Bindings of Installer: " + ((Object) installer).name, (Object) installer);
                     throw;
                 }
+
+                static string GetDebugName(IInstaller installer)
+                {
+                    var obj = (Object) installer;
+                    return $"{obj.name} ({obj.GetType().Name})";
+                }
+#else
+                container.Inject(installer, extraArgs);
+                installer.InstallBindings(container);
 #endif
             }
         }
