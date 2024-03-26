@@ -1,6 +1,6 @@
 namespace Zenject
 {
-    public static class Hasher
+    static class Hasher
     {
 #if DEBUG
         static readonly System.Collections.Generic.Dictionary<int, string> _inverseHash = new();
