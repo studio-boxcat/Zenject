@@ -32,7 +32,7 @@ namespace Zenject
             {
                 var paramSpec = paramSpecs[i];
 
-                if (!extraArgs.TryGetValueWithType(paramSpec.Type, out var value))
+                if (!extraArgs.TryGet(paramSpec.Type, out var value))
                     value = container.Resolve(paramSpec);
 
                 if (value == null && !paramSpec.Optional)

@@ -65,7 +65,7 @@ namespace Zenject
         static void InjectMember(
             object inst, DiContainer container, InjectFieldInfo setter, InjectSpec injectSpec, ArgumentArray extraArgs)
         {
-            if (extraArgs.TryGetValueWithType(injectSpec.Type, out var value))
+            if (extraArgs.TryGet(injectSpec.Type, out var value))
             {
                 setter.Invoke(inst, value);
                 return;

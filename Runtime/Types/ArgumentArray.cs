@@ -73,7 +73,7 @@ namespace Zenject
             Length = 4;
         }
 
-        public bool TryGetValueWithType(Type type, out object value)
+        public bool TryGet(Type type, out object value)
         {
             if (Length < 1)
             {
@@ -127,9 +127,9 @@ namespace Zenject
             return false;
         }
 
-        public bool TryGetValueWithType<T>(out T value)
+        public bool TryGet<T>(out T value)
         {
-            if (TryGetValueWithType(typeof(T), out var valueObj))
+            if (TryGet(typeof(T), out var valueObj))
             {
                 value = (T) valueObj;
                 return true;
@@ -141,9 +141,9 @@ namespace Zenject
             }
         }
 
-        public T GetValueWithType<T>()
+        public T Get<T>()
         {
-            if (TryGetValueWithType(typeof(T), out var valueObj))
+            if (TryGet(typeof(T), out var valueObj))
             {
                 return (T) valueObj;
             }
