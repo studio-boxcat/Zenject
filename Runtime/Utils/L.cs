@@ -9,12 +9,12 @@ namespace Zenject
         [Conditional("DEBUG")]
         public static void I(string message, Object context)
         {
-            Debug.Log(message, context);
+            Debug.Log("[Zenject] " + message, context);
         }
 
         public static void E(string message, Object context)
         {
-            Debug.LogError(message, context);
+            Debug.LogError("[Zenject] " + message, context);
         }
     }
 }

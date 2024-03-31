@@ -344,6 +344,8 @@ namespace Zenject
 
         public GameObject InstantiatePrefabDeactivated(GameObject prefab, Transform parent, ArgumentArray extraArgs = default)
         {
+            L.I($"Instantiating prefab '{prefab.name}'", prefab);
+
             Assert.IsNotNull(prefab, "Null prefab found when instantiating game object");
 
             var orgActive = prefab.activeSelf;
