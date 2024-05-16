@@ -45,7 +45,7 @@ namespace Zenject
             foreach (var (assembly, typeInfos) in assemblyDict)
             {
                 var assemblyName = assembly.GetName().Name;
-                Debug.Log($"Generating code for assembly '{assemblyName}'");
+                L.I("Generating code for assembly: " + assemblyName);
                 var newContent = GenerateCode_Injectable(typeInfos, injectableTypes);
                 var rootFound = TryGetCorrespondingRootForAssembly(assemblyName, out var rootDir);
                 Assert.IsTrue(rootFound, $"Root directory for assembly '{assemblyName}' not found");
