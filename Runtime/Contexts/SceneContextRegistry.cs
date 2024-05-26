@@ -9,6 +9,8 @@ namespace Zenject
     {
         public static readonly List<SceneContext> List = new();
 
+        public static SceneContext Last => List[^1];
+
         public static void Add(SceneContext context)
         {
             Assert.IsFalse(List.Contains(context));
