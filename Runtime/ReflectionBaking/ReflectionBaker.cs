@@ -224,7 +224,7 @@ namespace Zenject
                 }
 
                 var shouldImplementInjectable = typeInfo.ShouldImplementInjectable();
-                _sb.Append("public partial class ").Append(type.Name)
+                _sb.Append(GetAccessModifier(type)).Append(" partial class ").Append(type.Name)
                     .Append(shouldImplementInjectable ? " : IZenjectInjectable" : "")
                     .AppendLine(" {");
 
@@ -411,6 +411,17 @@ namespace Zenject
                     .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
                     .Append(')');
             }
+        }
+
+        static string GetAccessModifier(Type type)
+        {
+            if (type.IsPublic) return "public";
+            if (type.IsNestedPublic) return "public";
+            if (type.IsNestedFamily) return "protected";
+            if (type.IsNestedFamORAssem) return "protected internal";
+            if (type.IsNestedAssembly) return "internal";
+            if (type.IsNestedPrivate) return "private";
+            return "internal";
         }
 
         class TypeInfo
