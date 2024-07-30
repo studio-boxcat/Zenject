@@ -187,10 +187,5 @@ namespace Zenject
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
-
-        public static implicit operator ArgumentArray((object, object) tuple)
-        {
-            return new ArgumentArray(tuple.Item1, tuple.Item2);
-        }
     }
 }
