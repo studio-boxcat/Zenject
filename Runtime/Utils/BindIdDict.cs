@@ -11,23 +11,14 @@ namespace Zenject
     {
         static Dictionary<BindId, string> _dictBacking;
         static Dictionary<BindId, string> _dict => _dictBacking ??= Build();
-
+        public static Dictionary<BindId, string>.KeyCollection Keys => _dict.Keys;
         public static Dictionary<BindId, string>.ValueCollection Values => _dict.Values;
 
         static HashSet<BindId> _validSet;
-
         public static bool Contains(BindId bindId)
         {
             _validSet ??= new HashSet<BindId>(_dict.Keys);
             return _validSet.Contains(bindId);
-        }
-
-        public static ValueDropdownList<BindId> BuildDropdownList()
-        {
-            var list = new ValueDropdownList<BindId> { { "None", default } };
-            foreach (var pair in _dict)
-                list.Add(pair.Value, pair.Key);
-            return list;
         }
 
         static Dictionary<BindId, string> Build()
