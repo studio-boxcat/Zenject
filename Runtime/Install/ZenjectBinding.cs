@@ -133,11 +133,6 @@ namespace Zenject
 
             return list;
         }
-
-        bool Identifier_Validate(string identifier)
-        {
-            return identifier.Trim() == identifier;
-        }
 #endif
     }
 }
