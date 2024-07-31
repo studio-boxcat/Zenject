@@ -25,9 +25,9 @@ namespace Zenject
         [Pure]
         public bool HasBinding(BindPath bindPath)
         {
-            foreach (var currentContainer in _chain)
+            foreach (var repo in _chain)
             {
-                if (currentContainer.HasBinding(bindPath))
+                if (repo.HasBinding(bindPath))
                     return true;
             }
 
@@ -36,16 +36,16 @@ namespace Zenject
 
         public void ResolveAll(BindPath bindPath, IList result)
         {
-            foreach (var container in _chain)
-                container.ResolveAll(bindPath, result);
+            foreach (var repo in _chain)
+                repo.ResolveAll(bindPath, result);
         }
 
         [Pure]
         public bool TryResolve(BindPath bindPath, out object instance)
         {
-            foreach (var container in _chain)
+            foreach (var repo in _chain)
             {
-                if (container.TryResolve(bindPath, out instance))
+                if (repo.TryResolve(bindPath, out instance))
                     return true;
             }
 
