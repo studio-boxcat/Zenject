@@ -26,12 +26,12 @@ namespace Zenject.Tests
 
                 // Check if BindId is valid.
                 var attr = methodInfo.GetCustomAttribute<InjectAttributeBase>();
-                Assert.IsTrue(BindIdDict.Contains(attr.Id), message);
+                Assert.IsTrue(BindIdDict.Valid(attr.Id), message);
                 foreach (var paramInfo in methodInfo.GetParameters())
                 {
                     var paramInjectAttr = paramInfo.GetCustomAttribute<InjectAttributeBase>();
                     if (paramInjectAttr == null) continue;
-                    Assert.IsTrue(BindIdDict.Contains(paramInjectAttr.Id), message);
+                    Assert.IsTrue(BindIdDict.Valid(paramInjectAttr.Id), message);
                 }
             }
         }
@@ -58,7 +58,7 @@ namespace Zenject.Tests
 
                 // Check if BindId is valid.
                 var attr = fieldInfo.GetCustomAttribute<InjectAttributeBase>();
-                Assert.IsTrue(BindIdDict.Contains(attr.Id), message);
+                Assert.IsTrue(BindIdDict.Valid(attr.Id), message);
             }
             return;
 

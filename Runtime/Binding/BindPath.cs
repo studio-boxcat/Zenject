@@ -9,7 +9,7 @@ namespace Zenject
     readonly struct BindPath : IEquatable<BindPath>
     {
         public readonly Type Type;
-        public readonly BindId Id; // 0 means wildcard.
+        public readonly BindId Id; // 0 means default.
 
         public BindPath([NotNull] Type type, BindId id = 0)
         {

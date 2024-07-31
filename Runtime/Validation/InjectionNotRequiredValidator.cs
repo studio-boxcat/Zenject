@@ -1,10 +1,11 @@
+#if UNITY_EDITOR
 using Sirenix.OdinInspector.Editor.Validation;
 using UnityEngine;
 
-[assembly: RegisterValidator(typeof(Zenject.Editor.InjectionNotRequiredValidator_GameObject))]
-[assembly: RegisterValidator(typeof(Zenject.Editor.InjectionNotRequiredValidator_Component<>))]
+[assembly: RegisterValidator(typeof(Zenject.InjectionNotRequiredValidator_GameObject))]
+[assembly: RegisterValidator(typeof(Zenject.InjectionNotRequiredValidator_Component<>))]
 
-namespace Zenject.Editor
+namespace Zenject
 {
     class InjectionNotRequiredValidator_GameObject : AttributeValidator<InjectionNotRequiredAttribute, GameObject>
     {
@@ -43,3 +44,4 @@ namespace Zenject.Editor
         }
     }
 }
+#endif

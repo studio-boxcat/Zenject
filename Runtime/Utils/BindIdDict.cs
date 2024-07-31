@@ -14,8 +14,9 @@ namespace Zenject
         public static Dictionary<BindId, string>.ValueCollection Values => _dict.Values;
 
         static HashSet<BindId> _validSet;
-        public static bool Contains(BindId bindId)
+        public static bool Valid(BindId bindId)
         {
+            if (bindId == default) return true; // 0 means default.
             _validSet ??= new HashSet<BindId>(_dict.Keys);
             return _validSet.Contains(bindId);
         }
