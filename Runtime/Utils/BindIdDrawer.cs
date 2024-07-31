@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Zenject
 {
     [UsedImplicitly]
-    public class BindIdDrawer : OdinValueDrawer<BindId>
+    class BindIdDrawer : OdinValueDrawer<BindId>
     {
         static BindId[] _ids;
         static string[] _names;

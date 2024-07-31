@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Zenject.Editor
 {
-    public class InjectionNotRequiredValidator_GameObject : AttributeValidator<InjectionNotRequiredAttribute, GameObject>
+    class InjectionNotRequiredValidator_GameObject : AttributeValidator<InjectionNotRequiredAttribute, GameObject>
     {
         protected override void Validate(ValidationResult result)
         {
@@ -32,7 +32,7 @@ namespace Zenject.Editor
         }
     }
 
-    public class InjectionNotRequiredValidator_Component<TComponent> : AttributeValidator<InjectionNotRequiredAttribute, TComponent>
+    class InjectionNotRequiredValidator_Component<TComponent> : AttributeValidator<InjectionNotRequiredAttribute, TComponent>
         where TComponent : Component
     {
         protected override void Validate(ValidationResult result)

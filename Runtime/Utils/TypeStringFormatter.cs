@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Zenject
 {
-    public static class TypeStringFormatter
+    static class TypeStringFormatter
     {
         static readonly Dictionary<Type, string> _prettyNameCache = new();
 

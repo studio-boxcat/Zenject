@@ -1,13 +1,12 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Reflection;
-using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public static class BindIdDict
+    static class BindIdDict
     {
         static Dictionary<BindId, string> _dictBacking;
         static Dictionary<BindId, string> _dict => _dictBacking ??= Build();

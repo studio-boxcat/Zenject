@@ -263,9 +263,10 @@ namespace Zenject
             return result;
         }
 
-        internal void ResolveAll<T>(List<T> instances)
+        internal void ResolveAllFromSelf<T>(List<T> instances)
         {
-            _providerChain.ResolveAll(new BindPath(typeof(T)), instances);
+            // XXX: Intentionally used _providerRepo instead of _providerChain.
+            _providerRepo.ResolveAll(new BindPath(typeof(T)), instances);
         }
 
         public T Instantiate<T>(ArgumentArray extraArgs = default)

@@ -2,7 +2,7 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public static class ParamArrayPool
+    static class ParamArrayPool
     {
         static readonly Container[] _containers = new Container[16];
 

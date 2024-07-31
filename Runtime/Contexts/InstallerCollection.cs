@@ -6,7 +6,7 @@ using Object = UnityEngine.Object;
 namespace Zenject
 {
     [Serializable]
-    public struct InstallerCollection
+    struct InstallerCollection
     {
         [SerializeField, Required]
         ScriptableObjectInstaller[] _scriptableObjectInstallers;
