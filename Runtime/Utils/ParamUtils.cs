@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Zenject
 {
-    public static class ParamUtils
+    static class ParamUtils
     {
         static readonly InjectSpec[] _emptyInjectableArray = Array.Empty<InjectSpec>();
 

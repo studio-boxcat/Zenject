@@ -9,7 +9,7 @@ namespace Zenject
     public delegate object ProvideDelegate(DiContainer container, Type concreteType, ArgumentArray extraArguments);
 
 
-    public class ProviderRepo
+    readonly struct ProviderRepo
     {
         readonly DiContainer _container;
         readonly List<ProviderInfo> _providers;
@@ -21,6 +21,9 @@ namespace Zenject
             _container = container;
             _providers = new List<ProviderInfo>(capacity);
             _primaryProviderMap = new Dictionary<BindingId, int>(capacity);
+#if DEBUG
+            _resolvesInProgress = new HashSet<int>();
+#endif
         }
 
         public int Register(TypeArray contractTypes, int identifier, ProvideDelegate provider, Type concreteType, ArgumentArray extraArguments)
@@ -114,11 +117,11 @@ namespace Zenject
         }
 
 #if DEBUG
-        readonly HashSet<int> _resolvesInProgress = new();
+        readonly HashSet<int> _resolvesInProgress;
 #endif
 
         [Conditional("DEBUG")]
-        public void MarkResolvesInProgress(int providerIndex)
+        void MarkResolvesInProgress(int providerIndex)
         {
 #if DEBUG
             if (!_resolvesInProgress.Add(providerIndex))
@@ -127,7 +130,7 @@ namespace Zenject
         }
 
         [Conditional("DEBUG")]
-        public void UnmarkResolvesInProgress(int providerIndex)
+        void UnmarkResolvesInProgress(int providerIndex)
         {
 #if DEBUG
             var removed = _resolvesInProgress.Remove(providerIndex);

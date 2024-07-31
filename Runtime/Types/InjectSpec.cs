@@ -4,7 +4,7 @@ namespace Zenject
 {
     // An injectable is a field or property with [Inject] attribute
     // Or a constructor parameter
-    public readonly struct InjectSpec
+    readonly struct InjectSpec
     {
         // The type of the constructor parameter, field or property
         public readonly Type Type;

@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Zenject
 {
-    public class ParamResolveException : Exception
+    class ParamResolveException : Exception
     {
         public readonly InjectSpec ParamSpec;
         public readonly int ParamIndex;
@@ -21,7 +21,7 @@ namespace Zenject
         }
     }
 
-    public class MethodInvokeException : Exception
+    class MethodInvokeException : Exception
     {
         public readonly MethodBase MethodBase;
         public readonly InjectSpec ParamSpec;

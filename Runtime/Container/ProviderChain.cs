@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 
 namespace Zenject
 {
-    public readonly struct ProviderChain
+    readonly struct ProviderChain
     {
         readonly ProviderRepo[] _chain;
 

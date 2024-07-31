@@ -6,7 +6,7 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public static class TypeAnalyzer
+    static class TypeAnalyzer
     {
         public static InjectConstructorInfo GetConstructorInfo(Type type)
         {

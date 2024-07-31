@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace Zenject
 {
-    public readonly struct InjectConstructorInfo
+    readonly struct InjectConstructorInfo
     {
         [NotNull]
         public readonly ConstructorInfo ConstructorInfo;
@@ -16,7 +16,7 @@ namespace Zenject
         }
     }
 
-    public readonly struct InjectMethodInfo
+    readonly struct InjectMethodInfo
     {
         [CanBeNull]
         public readonly MethodInfo MethodInfo;
@@ -29,7 +29,7 @@ namespace Zenject
         }
     }
 
-    public readonly struct InjectFieldInfo
+    readonly struct InjectFieldInfo
     {
         public readonly FieldInfo FieldInfo;
         public readonly InjectSpec Info;

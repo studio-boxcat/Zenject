@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using Object = UnityEngine.Object;
@@ -14,28 +13,24 @@ namespace Zenject
     // - Instantiate new values via InstantiateX() methods
     public class DiContainer
     {
-        [CanBeNull] public readonly DiContainer Parent;
-
-        public readonly ProviderRepo ProviderRepo;
-
+        readonly ProviderRepo _providerRepo;
         readonly ProviderChain _providerChain;
         readonly List<int> _nonLazyProviders = new();
 
         public DiContainer(
             [CanBeNull] DiContainer parent = null, int capacity = 16)
         {
-            Parent = parent;
-            ProviderRepo = new ProviderRepo(this, capacity);
+            _providerRepo = new ProviderRepo(this, capacity);
             _providerChain = parent is not null
-                ? new ProviderChain(Parent._providerChain, ProviderRepo)
-                : new ProviderChain(ProviderRepo);
+                ? new ProviderChain(parent._providerChain, _providerRepo)
+                : new ProviderChain(_providerRepo);
             Bind(this);
         }
 
         public void ResolveNonLazyProviders()
         {
             foreach (var providerIndex in _nonLazyProviders)
-                ProviderRepo.Resolve(providerIndex);
+                _providerRepo.Resolve(providerIndex);
             _nonLazyProviders.Clear();
         }
 
@@ -43,7 +38,7 @@ namespace Zenject
         {
             var contractTypes = bindSpec.BakeContractTypes();
             var identifier = bindSpec.Identifier;
-            ProviderRepo.Register(contractTypes, identifier, instance);
+            _providerRepo.Register(contractTypes, identifier, instance);
         }
 
         public void RegisterProvider(BindSpec bindSpec, ProvideDelegate provider, ArgumentArray extraArgument, bool nonLazy)
@@ -52,20 +47,16 @@ namespace Zenject
             var identifier = bindSpec.Identifier;
 
             provider ??= (container, concreteType, args) => container.Instantiate(concreteType, args);
-            var providerIndex = ProviderRepo.Register(contractTypes, identifier, provider, bindSpec.PrimaryType, extraArgument);
+            var providerIndex = _providerRepo.Register(contractTypes, identifier, provider, bindSpec.PrimaryType, extraArgument);
             if (nonLazy) _nonLazyProviders.Add(providerIndex);
         }
 
         public bool HasBinding(Type type, int identifier = 0)
         {
-            return HasBinding(new InjectSpec(type, identifier));
+            return _providerChain.HasBinding(new BindingId(type, identifier));
         }
 
         // You shouldn't need to use this
-        public bool HasBinding(InjectSpec injectSpec)
-        {
-            return _providerChain.HasBinding(injectSpec.BindingId);
-        }
 
         public void Bind(Type type, int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
@@ -264,14 +255,14 @@ namespace Zenject
             }
         }
 
-        public object Resolve(InjectSpec injectSpec)
+        internal object Resolve(InjectSpec injectSpec)
         {
             if (TryResolve(injectSpec.Type, injectSpec.Identifier, out var instance))
             {
                 return instance;
             }
 
-            if (injectSpec.Optional == false)
+            if (injectSpec.Optional is false)
             {
                 throw new Exception($"Failed to Resolve: {injectSpec.Type.Name}, {Hasher.ToHumanReadableString(injectSpec.Identifier)}");
             }
@@ -302,9 +293,9 @@ namespace Zenject
             return result;
         }
 
-        public void ResolveAll<T>(int identifier, IList<T> instances)
+        public void ResolveAll<T>(BindingId bindingId, List<T> instances)
         {
-            _providerChain.ResolveAll(new BindingId(typeof(T), identifier), (IList) instances);
+            _providerChain.ResolveAll(bindingId, instances);
         }
 
         public T Instantiate<T>(ArgumentArray extraArgs = default)
