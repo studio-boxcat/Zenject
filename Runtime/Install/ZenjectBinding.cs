@@ -16,8 +16,7 @@ namespace Zenject
         public Object Target;
 
         [SerializeField]
-        [ValidateInput("Identifier_Validate")]
-        public string Identifier = string.Empty;
+        public BindId Identifier;
 
         [SerializeField]
         public BindTypes BindType = BindTypes.Self;
@@ -31,10 +30,6 @@ namespace Zenject
 
         public override void Bind(DiContainer container)
         {
-            var identifier = 0;
-            if (Identifier.Length > 0)
-                identifier = Hasher.Hash(Identifier);
-
             if (Target == null)
             {
 #if DEBUG
@@ -43,10 +38,10 @@ namespace Zenject
                 return;
             }
 
-            Bind(container, Target, BindType, identifier);
+            Bind(container, Target, BindType, Identifier);
         }
 
-        public static void Bind(DiContainer container, object target, BindTypes bindType, int identifier)
+        public static void Bind(DiContainer container, object target, BindTypes bindType, BindId identifier)
         {
             switch (bindType)
             {

@@ -51,14 +51,14 @@ namespace Zenject
             if (nonLazy) _nonLazyProviders.Add(providerIndex);
         }
 
-        public bool HasBinding(Type type, int identifier = 0)
+        public bool HasBinding(Type type, BindId identifier = 0)
         {
-            return _providerChain.HasBinding(new BindingId(type, identifier));
+            return _providerChain.HasBinding(new BindPath(type, identifier));
         }
 
         // You shouldn't need to use this
 
-        public void Bind(Type type, int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
+        public void Bind(Type type, BindId identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
             RegisterProvider(new BindSpec
             {
@@ -68,7 +68,7 @@ namespace Zenject
             }, provider, arguments, nonLazy);
         }
 
-        public void Bind<TContract>(int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
+        public void Bind<TContract>(BindId identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
             Bind(typeof(TContract), identifier, provider, arguments, nonLazy);
         }
@@ -96,7 +96,7 @@ namespace Zenject
             }, instance);
         }
 
-        public void Bind(object instance, int id)
+        public void Bind(object instance, BindId id)
         {
             RegisterProvider(new BindSpec
             {
@@ -106,27 +106,7 @@ namespace Zenject
             }, instance);
         }
 
-        public void Bind(object instance, string id)
-        {
-            RegisterProvider(new BindSpec
-            {
-                PrimaryType = instance.GetType(),
-                Identifier = Hasher.Hash(id),
-                BindFlag = BindFlag.Primary,
-            }, instance);
-        }
-
-        public void Bind(Type type, string id, ProvideDelegate provider, ArgumentArray arguments = default, bool nonLazy = false)
-        {
-            RegisterProvider(new BindSpec
-            {
-                PrimaryType = type,
-                Identifier = Hasher.Hash(id),
-                BindFlag = BindFlag.Primary,
-            }, provider, arguments, nonLazy);
-        }
-
-        public void BindInterfacesTo(Type type, int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
+        public void BindInterfacesTo(Type type, BindId identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
             RegisterProvider(new BindSpec
             {
@@ -136,12 +116,12 @@ namespace Zenject
             }, provider, arguments, nonLazy);
         }
 
-        public void BindInterfacesTo<T>(int identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
+        public void BindInterfacesTo<T>(BindId identifier = 0, ProvideDelegate provider = null, ArgumentArray arguments = default, bool nonLazy = false)
         {
             BindInterfacesTo(typeof(T), identifier, provider, arguments, nonLazy);
         }
 
-        public void BindInterfacesTo(object instance, int identifier = 0)
+        public void BindInterfacesTo(object instance, BindId identifier = 0)
         {
             RegisterProvider(new BindSpec
             {
@@ -151,7 +131,7 @@ namespace Zenject
             }, instance);
         }
 
-        public void BindInterfacesAndSelfTo(Type type, int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
+        public void BindInterfacesAndSelfTo(Type type, BindId identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
         {
             RegisterProvider(new BindSpec
             {
@@ -161,12 +141,12 @@ namespace Zenject
             }, null, arguments, nonLazy: nonLazy);
         }
 
-        public void BindInterfacesAndSelfTo<T>(int identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
+        public void BindInterfacesAndSelfTo<T>(BindId identifier = 0, ArgumentArray arguments = default, bool nonLazy = false)
         {
             BindInterfacesAndSelfTo(typeof(T), identifier, arguments, nonLazy);
         }
 
-        public void BindInterfacesAndSelfTo(object instance, int identifier = 0)
+        public void BindInterfacesAndSelfTo(object instance, BindId identifier = 0)
         {
             RegisterProvider(new BindSpec
             {
@@ -181,7 +161,7 @@ namespace Zenject
             Initializer.Initialize(injectable, this, extraArgs);
         }
 
-        public bool TryResolve(Type type, int identifier, out object instance)
+        public bool TryResolve(Type type, BindId identifier, out object instance)
         {
             if (type.IsArray)
             {
@@ -189,10 +169,10 @@ namespace Zenject
                 return true;
             }
 
-            return _providerChain.TryResolve(new BindingId(type, identifier), out instance);
+            return _providerChain.TryResolve(new BindPath(type, identifier), out instance);
         }
 
-        public bool TryResolve<TContract>(int identifier, out TContract instance)
+        public bool TryResolve<TContract>(BindId identifier, out TContract instance)
         {
             if (TryResolve(typeof(TContract), identifier, out var instance2))
             {
@@ -209,11 +189,6 @@ namespace Zenject
         public bool TryResolve(Type type, out object instance)
         {
             return TryResolve(type, 0, out instance);
-        }
-
-        public bool TryResolve<TContract>(string identifier, out TContract instance)
-        {
-            return TryResolve(Hasher.Hash(identifier), out instance);
         }
 
         public bool TryResolve<TContract>(out TContract instance)
@@ -233,17 +208,12 @@ namespace Zenject
             return (TContract) Resolve(typeof(TContract));
         }
 
-        public TContract Resolve<TContract>(int identifier)
+        public TContract Resolve<TContract>(BindId identifier)
         {
             return (TContract) Resolve(typeof(TContract), identifier);
         }
 
-        public TContract Resolve<TContract>(string identifier)
-        {
-            return Resolve<TContract>(Hasher.Hash(identifier));
-        }
-
-        public object Resolve(Type contractType, int identifier = 0)
+        public object Resolve(Type contractType, BindId identifier = 0)
         {
             if (TryResolve(contractType, identifier, out var instance))
             {
@@ -251,20 +221,20 @@ namespace Zenject
             }
             else
             {
-                throw new Exception($"Failed to Resolve: {contractType.Name}, {Hasher.ToHumanReadableString(identifier)}");
+                throw new Exception($"Failed to Resolve: {contractType.Name}, {identifier}");
             }
         }
 
         internal object Resolve(InjectSpec injectSpec)
         {
-            if (TryResolve(injectSpec.Type, injectSpec.Identifier, out var instance))
+            if (TryResolve(injectSpec.Type, injectSpec.Id, out var instance))
             {
                 return instance;
             }
 
             if (injectSpec.Optional is false)
             {
-                throw new Exception($"Failed to Resolve: {injectSpec.Type.Name}, {Hasher.ToHumanReadableString(injectSpec.Identifier)}");
+                throw new Exception($"Failed to Resolve: {injectSpec.Type.Name}, {injectSpec.Id}");
             }
 
             return null;
@@ -272,7 +242,7 @@ namespace Zenject
 
         static readonly Stack<List<object>> _listPool = new();
 
-        public Array ResolveAll(Type arrayType, int identifier)
+        Array ResolveAll(Type arrayType, BindId identifier)
         {
             // XXX: IsClassType 으로 체크하는 경우, interface 가 false 로 취급됨.
             Assert.IsTrue(arrayType.IsArray && arrayType.GetElementType()!.IsValueType == false);
@@ -282,7 +252,7 @@ namespace Zenject
             Assert.AreEqual(0, list.Count);
 
             var elementType = arrayType.GetElementType()!;
-            _providerChain.ResolveAll(new BindingId(elementType, identifier), list);
+            _providerChain.ResolveAll(new BindPath(elementType, identifier), list);
 
             var result = Array.CreateInstance(elementType, list.Count);
             for (var i = 0; i < list.Count; i++)
@@ -293,9 +263,9 @@ namespace Zenject
             return result;
         }
 
-        public void ResolveAll<T>(BindingId bindingId, List<T> instances)
+        internal void ResolveAll<T>(List<T> instances)
         {
-            _providerChain.ResolveAll(bindingId, instances);
+            _providerChain.ResolveAll(new BindPath(typeof(T)), instances);
         }
 
         public T Instantiate<T>(ArgumentArray extraArgs = default)

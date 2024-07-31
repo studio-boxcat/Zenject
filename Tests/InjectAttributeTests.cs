@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Text;
 using NUnit.Framework;
 using UnityEditor;
@@ -15,13 +16,23 @@ namespace Zenject.Tests
             var methods = TypeCache.GetMethodsWithAttribute<InjectMethodAttribute>();
             foreach (var methodInfo in methods)
             {
-                var message = _sb.Append(methodInfo.DeclaringType.Name).Append(':').Append(methodInfo.Name).ToString();
+                var message = _sb.Append(methodInfo.DeclaringType!.Name).Append(':').Append(methodInfo.Name).ToString();
                 _sb.Clear();
 
                 Assert.IsFalse(methodInfo.IsStatic, message);
                 Assert.IsTrue(methodInfo.IsPrivate, message);
                 Assert.AreEqual("Zenject_Constructor", methodInfo.Name, message);
                 Assert.AreEqual(typeof(void), methodInfo.ReturnType, message);
+
+                // Check if BindId is valid.
+                var attr = methodInfo.GetCustomAttribute<InjectAttributeBase>();
+                Assert.IsTrue(BindIdDict.Contains(attr.Id), message);
+                foreach (var paramInfo in methodInfo.GetParameters())
+                {
+                    var paramInjectAttr = paramInfo.GetCustomAttribute<InjectAttributeBase>();
+                    if (paramInjectAttr == null) continue;
+                    Assert.IsTrue(BindIdDict.Contains(paramInjectAttr.Id), message);
+                }
             }
         }
 
@@ -31,7 +42,7 @@ namespace Zenject.Tests
             var fieldInfos = TypeCache.GetFieldsWithAttribute<InjectAttributeBase>();
             foreach (var fieldInfo in fieldInfos)
             {
-                var message = _sb.Append(fieldInfo.DeclaringType.Name).Append(':').Append(fieldInfo.Name).ToString();
+                var message = _sb.Append(fieldInfo.DeclaringType!.Name).Append(':').Append(fieldInfo.Name).ToString();
                 _sb.Clear();
 
                 Assert.IsFalse(fieldInfo.IsStatic, message);
@@ -44,7 +55,12 @@ namespace Zenject.Tests
                 {
                     Assert.IsTrue(fieldInfo.IsDefined(typeof(NonSerializedAttribute), false), message);
                 }
+
+                // Check if BindId is valid.
+                var attr = fieldInfo.GetCustomAttribute<InjectAttributeBase>();
+                Assert.IsTrue(BindIdDict.Contains(attr.Id), message);
             }
+            return;
 
             static bool IsSerializableType(Type type)
             {

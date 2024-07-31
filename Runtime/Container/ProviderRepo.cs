@@ -13,20 +13,22 @@ namespace Zenject
     {
         readonly DiContainer _container;
         readonly List<ProviderInfo> _providers;
-        readonly Dictionary<BindingId, int> _primaryProviderMap;
-
+        readonly Dictionary<BindPath, int> _primaryProviderMap;
+#if DEBUG
+        readonly HashSet<int> _resolvesInProgress;
+#endif
 
         public ProviderRepo(DiContainer container, int capacity)
         {
             _container = container;
             _providers = new List<ProviderInfo>(capacity);
-            _primaryProviderMap = new Dictionary<BindingId, int>(capacity);
+            _primaryProviderMap = new Dictionary<BindPath, int>(capacity, BindPath.Comparer);
 #if DEBUG
             _resolvesInProgress = new HashSet<int>();
 #endif
         }
 
-        public int Register(TypeArray contractTypes, int identifier, ProvideDelegate provider, Type concreteType, ArgumentArray extraArguments)
+        public int Register(TypeArray contractTypes, BindId identifier, ProvideDelegate provider, Type concreteType, ArgumentArray extraArguments)
         {
             var providerIndex = _providers.Count;
 
@@ -34,14 +36,14 @@ namespace Zenject
 
             foreach (var contractType in contractTypes)
             {
-                var bindingId = new BindingId(contractType, identifier);
+                var bindingId = new BindPath(contractType, identifier);
                 _primaryProviderMap.TryAdd(bindingId, providerIndex);
             }
 
             return providerIndex;
         }
 
-        public int Register(TypeArray contractTypes, int identifier, object instance)
+        public int Register(TypeArray contractTypes, BindId identifier, object instance)
         {
             var providerIndex = _providers.Count;
 
@@ -49,16 +51,16 @@ namespace Zenject
 
             foreach (var contractType in contractTypes)
             {
-                var bindingId = new BindingId(contractType, identifier);
+                var bindingId = new BindPath(contractType, identifier);
                 _primaryProviderMap.TryAdd(bindingId, providerIndex);
             }
 
             return providerIndex;
         }
 
-        public bool HasBinding(BindingId bindingId)
+        public bool HasBinding(BindPath bindPath)
         {
-            return _primaryProviderMap.ContainsKey(bindingId);
+            return _primaryProviderMap.ContainsKey(bindPath);
         }
 
         public object Resolve(int providerIndex)
@@ -76,9 +78,9 @@ namespace Zenject
             return instance;
         }
 
-        public bool TryResolve(BindingId bindingId, out object instance)
+        public bool TryResolve(BindPath bindPath, out object instance)
         {
-            if (_primaryProviderMap.TryGetValue(bindingId, out var providerIndex) == false)
+            if (_primaryProviderMap.TryGetValue(bindPath, out var providerIndex) is false)
             {
                 instance = default;
                 return false;
@@ -88,15 +90,16 @@ namespace Zenject
             return true;
         }
 
-        public void ResolveAll(BindingId bindingId, IList buffer)
+        public void ResolveAll(BindPath bindPath, IList buffer)
         {
-            var (type, identifier) = bindingId;
+            var (type, identifier) = bindPath;
             Assert.IsNotNull(type);
 
             for (var index = 0; index < _providers.Count; index++)
             {
                 var providerInfo = _providers[index];
 
+                // identifier == 0 means resolve all.
                 if (identifier != 0 && providerInfo.Identifier != identifier)
                     continue;
 
@@ -115,10 +118,6 @@ namespace Zenject
                 buffer.Add(providerInfo.Instance);
             }
         }
-
-#if DEBUG
-        readonly HashSet<int> _resolvesInProgress;
-#endif
 
         [Conditional("DEBUG")]
         void MarkResolvesInProgress(int providerIndex)
@@ -141,7 +140,7 @@ namespace Zenject
         readonly struct ProviderInfo
         {
             public readonly TypeArray ContractTypes;
-            public readonly int Identifier;
+            public readonly BindId Identifier;
 
             public readonly ProvideDelegate Provider;
             public readonly Type ConcreteType;
@@ -149,7 +148,7 @@ namespace Zenject
             public readonly bool HasInstance;
             public readonly object Instance;
 
-            public ProviderInfo(TypeArray contractTypes, int identifier, ProvideDelegate provider, Type concreteType, ArgumentArray arguments) : this()
+            public ProviderInfo(TypeArray contractTypes, BindId identifier, ProvideDelegate provider, Type concreteType, ArgumentArray arguments) : this()
             {
                 ContractTypes = contractTypes;
                 Identifier = identifier;
@@ -159,7 +158,7 @@ namespace Zenject
                 Arguments = arguments;
             }
 
-            public ProviderInfo(TypeArray contractTypes, int identifier, object instance) : this()
+            public ProviderInfo(TypeArray contractTypes, BindId identifier, object instance) : this()
             {
                 ContractTypes = contractTypes;
                 Identifier = identifier;

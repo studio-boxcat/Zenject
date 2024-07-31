@@ -14,7 +14,7 @@ namespace Zenject
     public struct BindSpec
     {
         public Type PrimaryType;
-        public int Identifier;
+        public BindId Identifier;
         public BindFlag BindFlag;
 
 

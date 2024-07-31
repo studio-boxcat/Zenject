@@ -10,8 +10,8 @@ namespace Zenject
         {
         }
 
-        public InjectOptionalAttribute(string id)
-            : base(Hasher.Hash(id), optional: true)
+        public InjectOptionalAttribute(BindId id)
+            : base(id, optional: true)
         {
         }
     }

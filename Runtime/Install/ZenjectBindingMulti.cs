@@ -10,17 +10,14 @@ namespace Zenject
         public Component[] Components = null;
 
         [SerializeField]
-        [ValidateInput("Identifier_Validate")]
-        public string Identifier = string.Empty;
+        public BindId Id;
 
         [SerializeField]
         public ZenjectBinding.BindTypes BindType = ZenjectBinding.BindTypes.Self;
 
         public override void Bind(DiContainer container)
         {
-            var identifier = 0;
-            if (Identifier.Length > 0)
-                identifier = Hasher.Hash(Identifier);
+            var identifier = Id;
 
             foreach (var component in Components)
             {
@@ -37,12 +34,5 @@ namespace Zenject
                 ZenjectBinding.Bind(container, component, bindType, identifier);
             }
         }
-
-#if UNITY_EDITOR
-        bool Identifier_Validate(string identifier)
-        {
-            return identifier.Trim() == identifier;
-        }
-#endif
     }
 }

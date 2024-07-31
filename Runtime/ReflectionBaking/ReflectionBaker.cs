@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
@@ -39,7 +38,7 @@ namespace Zenject
 
             // Sort typeInfos by name.
             foreach (var typeList in assemblyDict.Values)
-                typeList.Sort((a, b) => a.Type.FullName.CompareTo(b.Type.FullName));
+                typeList.Sort((a, b) => string.Compare(a.Type.FullName, b.Type.FullName, StringComparison.Ordinal));
 
             // Generate injectables.
             foreach (var (assembly, typeInfos) in assemblyDict)
@@ -163,7 +162,7 @@ namespace Zenject
 
             // Sort FieldInfos by name.
             foreach (var typeInfo in typeDict.Values)
-                typeInfo.Fields?.Sort((a, b) => a.Name.CompareTo(b.Name));
+                typeInfo.Fields?.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
 
             return typeDict;
         }
@@ -184,7 +183,7 @@ namespace Zenject
                 var baseType = type.BaseType;
                 while (baseType != typeof(object))
                 {
-                    if (typeDict.TryGetValue(baseType, out var baseTypeInjectionInfo)
+                    if (typeDict.TryGetValue(baseType!, out var baseTypeInjectionInfo)
                         && baseTypeInjectionInfo.ShouldImplementInjectable())
                     {
                         injectableTypes.Add(type);
@@ -295,7 +294,7 @@ namespace Zenject
                 if (injectSpec.Type == typeof(DiContainer))
                 {
                     Assert.IsFalse(injectSpec.Optional);
-                    Assert.AreEqual(0, injectSpec.Identifier);
+                    Assert.AreEqual(default, injectSpec.Id);
                     sb.Append(field.Name).AppendLine(" = dp.Container;");
                     return;
                 }
@@ -305,7 +304,7 @@ namespace Zenject
                 if (injectSpec.Optional)
                 {
                     sb.Append("dp.TryResolve(")
-                        .Append(injectSpec.Identifier != 0 ? injectSpec.Identifier + "," : "")
+                        .Append(injectSpec.Id != 0 ? injectSpec.Id + "," : "")
                         .Append("ref ").Append(field.Name)
                         .AppendLine(");");
                 }
@@ -314,7 +313,7 @@ namespace Zenject
                     sb.Append(field.Name).Append(" = ")
                         .Append('(').Append(typeName).Append(')')
                         .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
-                        .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
+                        .Append(injectSpec.Id != 0 ? ", id: " + injectSpec.Id : "")
                         .AppendLine(");");
                 }
             }
@@ -389,7 +388,7 @@ namespace Zenject
             if (injectSpec.Type == typeof(DiContainer))
             {
                 Assert.IsFalse(injectSpec.Optional);
-                Assert.AreEqual(0, injectSpec.Identifier);
+                Assert.AreEqual(default, injectSpec.Id);
                 sb.Append("dp.Container");
                 return;
             }
@@ -399,8 +398,8 @@ namespace Zenject
             if (injectSpec.Optional)
             {
                 sb.Append("dp.TryResolve<").Append(typeName).Append(">(")
-                    .Append(injectSpec.Identifier != 0 ? "identifier: " + injectSpec.Identifier + "," : "");
-                if (injectSpec.Identifier != 0)
+                    .Append(injectSpec.Id != 0 ? "identifier: " + injectSpec.Id + "," : "");
+                if (injectSpec.Id != 0)
                     sb.Length -= 1;
                 sb.Append(')');
             }
@@ -408,7 +407,7 @@ namespace Zenject
             {
                 sb.Append('(').Append(typeName).Append(')')
                     .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
-                    .Append(injectSpec.Identifier != 0 ? ", identifier: " + injectSpec.Identifier : "")
+                    .Append(injectSpec.Id != 0 ? ", identifier: " + injectSpec.Id : "")
                     .Append(')');
             }
         }
@@ -445,7 +444,7 @@ namespace Zenject
         class AssemblyComparer : IComparer<Assembly>
         {
             public int Compare(Assembly x, Assembly y)
-                => x.FullName.CompareTo(y.FullName);
+                => string.Compare(x!.FullName, y!.FullName, StringComparison.Ordinal);
         }
     }
 }

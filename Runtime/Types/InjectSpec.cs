@@ -16,24 +16,22 @@ namespace Zenject
         //      ...
         //      ... In a constructor:
         //          public Foo([Inject(Id = "foo") Foo foo)
-        public readonly int Identifier;
+        public readonly BindId Id;
 
         // When optional, null is a valid value to be returned
         public readonly bool Optional;
 
-        public BindingId BindingId => new(Type, Identifier);
 
-
-        public InjectSpec(Type type, int identifier, bool optional = false)
+        public InjectSpec(Type type, BindId id, bool optional = false)
         {
             Type = type;
-            Identifier = identifier;
+            Id = id;
             Optional = optional;
         }
 
         public override string ToString()
         {
-            return $"({Type.Name}, {Hasher.ToHumanReadableString(Identifier)}, {Optional})";
+            return $"({Type.Name}, {Id}, {Optional})";
         }
     }
 }

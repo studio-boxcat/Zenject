@@ -9,8 +9,8 @@ namespace Zenject
         {
         }
 
-        public InjectAttribute(string id)
-            : base(Hasher.Hash(id))
+        public InjectAttribute(BindId id)
+            : base(id)
         {
         }
     }

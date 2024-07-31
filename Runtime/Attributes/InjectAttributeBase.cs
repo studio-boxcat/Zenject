@@ -6,10 +6,10 @@ namespace Zenject
     [Preserve]
     public abstract class InjectAttributeBase : Attribute
     {
-        public readonly int Id;
+        public readonly BindId Id;
         public readonly bool Optional;
 
-        protected InjectAttributeBase(int id = 0, bool optional = false)
+        protected InjectAttributeBase(BindId id = 0, bool optional = false)
         {
             Id = id;
             Optional = optional;
