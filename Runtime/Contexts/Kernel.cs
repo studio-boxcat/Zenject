@@ -13,6 +13,10 @@ namespace Zenject
         {
             diContainer.ResolveAll(_tickables);
             diContainer.ResolveAll(_disposables);
+
+            // If there are no tickables, disable the kernel to prevent unnecessary updates.
+            if (_tickables.Count is 0)
+                enabled = false;
         }
 
         void OnDestroy()
