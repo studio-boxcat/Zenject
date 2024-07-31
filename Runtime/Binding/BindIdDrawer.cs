@@ -26,7 +26,10 @@ namespace Zenject
                 _names = names.ToArray();
             }
 
-            ValueEntry.SmartValue = SirenixEditorFields.Dropdown(label, ValueEntry.SmartValue, _ids, _names);
+            var bindId = ValueEntry.SmartValue;
+            if (BindIdDict.Valid(bindId) is false)
+                SirenixEditorGUI.ErrorMessageBox("BindId is not valid: " + bindId);
+            ValueEntry.SmartValue = SirenixEditorFields.Dropdown(label, bindId, _ids, _names);
         }
     }
 }
