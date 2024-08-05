@@ -304,7 +304,7 @@ namespace Zenject
                 if (injectSpec.Optional)
                 {
                     sb.Append("dp.TryResolve(")
-                        .Append(injectSpec.Id != 0 ? ToArgument(injectSpec.Id) + "," : "")
+                        .Append(injectSpec.Id != 0 ? ToArgumentString(injectSpec.Id) + "," : "")
                         .Append("ref ").Append(field.Name)
                         .AppendLine(");");
                 }
@@ -313,14 +313,9 @@ namespace Zenject
                     sb.Append(field.Name).Append(" = ")
                         .Append('(').Append(typeName).Append(')')
                         .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
-                        .Append(injectSpec.Id != 0 ? ", id: " + ToArgument(injectSpec.Id) : "")
+                        .Append(injectSpec.Id != 0 ? ", id: " + ToArgumentString(injectSpec.Id) : "")
                         .AppendLine(");");
                 }
-            }
-
-            static string ToArgument(BindId bindId)
-            {
-                return "(BindId) " + ((uint) bindId).ToString();
             }
         }
 
@@ -403,7 +398,7 @@ namespace Zenject
             if (injectSpec.Optional)
             {
                 sb.Append("dp.TryResolve<").Append(typeName).Append(">(")
-                    .Append(injectSpec.Id != 0 ? "id: " + injectSpec.Id + "," : "");
+                    .Append(injectSpec.Id != 0 ? "id: " + ToArgumentString(injectSpec.Id) + "," : "");
                 if (injectSpec.Id != 0)
                     sb.Length -= 1;
                 sb.Append(')');
@@ -412,7 +407,7 @@ namespace Zenject
             {
                 sb.Append('(').Append(typeName).Append(')')
                     .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
-                    .Append(injectSpec.Id != 0 ? ", id: " + injectSpec.Id : "")
+                    .Append(injectSpec.Id != 0 ? ", id: " + ToArgumentString(injectSpec.Id) : "")
                     .Append(')');
             }
         }
@@ -426,6 +421,11 @@ namespace Zenject
             if (type.IsNestedAssembly) return "internal";
             if (type.IsNestedPrivate) return "private";
             return "internal";
+        }
+
+        static string ToArgumentString(BindId bindId)
+        {
+            return "(BindId) " + ((uint) bindId).ToString();
         }
 
         class TypeInfo
