@@ -403,7 +403,7 @@ namespace Zenject
             if (injectSpec.Optional)
             {
                 sb.Append("dp.TryResolve<").Append(typeName).Append(">(")
-                    .Append(injectSpec.Id != 0 ? "identifier: " + injectSpec.Id + "," : "");
+                    .Append(injectSpec.Id != 0 ? "id: " + injectSpec.Id + "," : "");
                 if (injectSpec.Id != 0)
                     sb.Length -= 1;
                 sb.Append(')');
@@ -412,7 +412,7 @@ namespace Zenject
             {
                 sb.Append('(').Append(typeName).Append(')')
                     .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
-                    .Append(injectSpec.Id != 0 ? ", identifier: " + injectSpec.Id : "")
+                    .Append(injectSpec.Id != 0 ? ", id: " + injectSpec.Id : "")
                     .Append(')');
             }
         }
