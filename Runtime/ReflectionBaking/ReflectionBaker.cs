@@ -304,7 +304,7 @@ namespace Zenject
                 if (injectSpec.Optional)
                 {
                     sb.Append("dp.TryResolve(")
-                        .Append(injectSpec.Id != 0 ? injectSpec.Id + "," : "")
+                        .Append(injectSpec.Id != 0 ? ToArgument(injectSpec.Id) + "," : "")
                         .Append("ref ").Append(field.Name)
                         .AppendLine(");");
                 }
@@ -313,9 +313,14 @@ namespace Zenject
                     sb.Append(field.Name).Append(" = ")
                         .Append('(').Append(typeName).Append(')')
                         .Append("dp.Resolve(typeof(").Append(typeName).Append(')')
-                        .Append(injectSpec.Id != 0 ? ", id: " + injectSpec.Id : "")
+                        .Append(injectSpec.Id != 0 ? ", id: " + ToArgument(injectSpec.Id) : "")
                         .AppendLine(");");
                 }
+            }
+
+            static string ToArgument(BindId bindId)
+            {
+                return "(BindId) " + ((uint) bindId).ToString();
             }
         }
 

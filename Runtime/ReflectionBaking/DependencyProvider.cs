@@ -17,11 +17,11 @@ namespace Zenject
         public DiContainer Container => _diContainer;
         public ArgumentArray ExtraArgs => _extraArgs;
 
-        public object Resolve(Type type, BindId identifier = default)
+        public object Resolve(Type type, BindId id = default)
         {
-            if (identifier == default && _extraArgs.TryGet(type, out var inst))
+            if (id == default && _extraArgs.TryGet(type, out var inst))
                 return inst;
-            return _diContainer.Resolve(type, identifier);
+            return _diContainer.Resolve(type, id);
         }
 
         public T TryResolve<T>(BindId identifier = default)
