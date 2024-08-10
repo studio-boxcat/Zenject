@@ -12,24 +12,16 @@ namespace Zenject
         protected override void Validate(ValidationResult result)
         {
             var value = ValueEntry.SmartValue;
+            if (value == null) return;
             Validate(value, result);
         }
 
         public static void Validate(GameObject go, ValidationResult result)
         {
             if (go.TryGetComponent(out InjectTargetCollection _))
-            {
-                result.ResultType = ValidationResultType.Error;
-                result.Message = "Given GameObject has an InjectTargetCollection component.";
-                return;
-            }
-
+                result.AddError("Given GameObject has an InjectTargetCollection component.");
             if (go.TryGetComponent(out GameObjectContext _))
-            {
-                result.ResultType = ValidationResultType.Error;
-                result.Message = "Given GameObject has a GameObjectContext component.";
-                return;
-            }
+                result.AddError("Given GameObject has a GameObjectContext component.");
         }
     }
 
