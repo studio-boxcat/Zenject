@@ -1,9 +1,21 @@
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Zenject
 {
     public abstract class ScriptableObjectInstaller : ScriptableObject, IInstaller
+#if UNITY_EDITOR
+        , ISelfValidator
+#endif
     {
-        public abstract void InstallBindings(DiContainer container);
+        public abstract void InstallBindings(InstallScheme scheme);
+
+#if UNITY_EDITOR
+        void ISelfValidator.Validate(SelfValidationResult result)
+        {
+            if (Injector.IsInjectionRequired(GetType()))
+                result.AddError("Injection for ScriptableObjectInstaller is prohibited.");
+        }
+#endif
     }
 }

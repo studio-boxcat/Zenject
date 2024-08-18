@@ -14,9 +14,7 @@ namespace Zenject
     {
         public static bool GenerateCode()
         {
-            var dirty = false;
             var typeDict = AnalyzeAllTypes();
-            var injectableTypes = BuildInjectableTypes(typeDict);
 
             // Group types by assembly.
             var assemblyDict = new SortedList<Assembly, List<TypeInfo>>(new AssemblyComparer());
@@ -41,11 +39,12 @@ namespace Zenject
                 typeList.Sort((a, b) => string.Compare(a.Type.FullName, b.Type.FullName, StringComparison.Ordinal));
 
             // Generate injectables.
+            var dirty = false;
             foreach (var (assembly, typeInfos) in assemblyDict)
             {
                 var assemblyName = assembly.GetName().Name;
                 L.I("Generating code for assembly: " + assemblyName);
-                var newContent = GenerateCode_Injectable(typeInfos, injectableTypes);
+                var newContent = GenerateCode_Injectable(typeInfos);
                 var rootFound = TryGetCorrespondingRootForAssembly(assemblyName, out var rootDir);
                 Assert.IsTrue(rootFound, $"Root directory for assembly '{assemblyName}' not found");
                 dirty |= CompareAndWrite(rootDir + "Zenject_CodeGen.cs", newContent);
@@ -57,16 +56,15 @@ namespace Zenject
                 dirty |= CompareAndWrite("Assets/Zenject_CodeGen_Constructors.cs", newContent);
             }
 
+            return dirty;
+
             static bool CompareAndWrite(string path, string content)
             {
-                var orgContent = File.Exists(path) ? File.ReadAllText(path) : "";
-                var newContent = content;
-                if (orgContent == newContent) return false;
-                File.WriteAllText(path, newContent);
+                var orgContent = File.Exists(path) ? File.ReadAllText(path) : null;
+                if (orgContent == content) return false;
+                File.WriteAllText(path, content);
                 return true;
             }
-
-            return dirty;
         }
 
         static readonly Dictionary<Assembly, bool> _assembliesToIgnore = new();
@@ -90,16 +88,16 @@ namespace Zenject
 
         static bool TryGetCorrespondingRootForAssembly(string assemblyName, out string rootDir)
         {
-            if (_assemblyNameToDir.Count == 0) SetUpAssemblyNameToDir();
+            if (_assemblyNameToDir.Count is 0) SetUpAssemblyNameToDir(_assemblyNameToDir);
             return _assemblyNameToDir.TryGetValue(assemblyName, out rootDir);
 
-            static void SetUpAssemblyNameToDir()
+            static void SetUpAssemblyNameToDir(Dictionary<string, string> map)
             {
                 // These are the default assembly names that Unity creates.
-                _assemblyNameToDir["Assembly-CSharp-firstpass"] = "Assets/Plugins/";
-                _assemblyNameToDir["Assembly-CSharp-Editor-firstpass"] = "Assets/Plugins/Editor/";
-                _assemblyNameToDir["Assembly-CSharp"] = "Assets/";
-                _assemblyNameToDir["Assembly-CSharp-Editor"] = "Assets/Editor/";
+                map["Assembly-CSharp-firstpass"] = "Assets/Plugins/";
+                map["Assembly-CSharp-Editor-firstpass"] = "Assets/Plugins/Editor/";
+                map["Assembly-CSharp"] = "Assets/";
+                map["Assembly-CSharp-Editor"] = "Assets/Editor/";
 
                 // Find all asmdefs and add them to the dictionary.
                 var asmdefGUIDs = AssetDatabase.FindAssets("t:asmdef");
@@ -109,7 +107,7 @@ namespace Zenject
                     var delimiterIndex = asmdefPath.LastIndexOf('/');
                     var asmdefName = asmdefPath[(delimiterIndex + 1)..^".asmdef".Length];
                     var asmdefDir = asmdefPath[..(delimiterIndex + 1)];
-                    _assemblyNameToDir.Add(asmdefName, asmdefDir);
+                    map.Add(asmdefName, asmdefDir);
                 }
             }
         }
@@ -119,32 +117,22 @@ namespace Zenject
             var typeDict = new Dictionary<Type, TypeInfo>();
             var ignoredTypes = new HashSet<Type>(TypeCache.GetTypesWithAttribute<NoReflectionBakingAttribute>());
 
-            TypeInfo GetTypeInfo(Type type)
-            {
-                if (typeDict.TryGetValue(type, out var typeInfo))
-                    return typeInfo;
-                typeInfo = new TypeInfo(type);
-                typeDict.Add(type, typeInfo);
-                return typeInfo;
-            }
-
             var constructors = TypeCache.GetMethodsWithAttribute<InjectConstructorAttribute>();
             foreach (var methodInfo in constructors)
             {
                 var type = methodInfo.DeclaringType;
-                // Skip if the type is marked with NoReflectionBaking.
-                if (ignoredTypes.Contains(type)) continue;
+                if (ignoredTypes.Contains(type)) continue; // Skip if the type is marked with NoReflectionBaking.
 
-                GetTypeInfo(type).Constructor = methodInfo;
+                var typeInfo = GetTypeInfo(type, typeDict);
+                typeInfo.Constructor = methodInfo;
             }
 
             foreach (var methodInfo in TypeCache.GetMethodsWithAttribute<InjectMethodAttribute>())
             {
                 var type = methodInfo.DeclaringType;
-                // Skip if the type is marked with NoReflectionBaking.
-                if (ignoredTypes.Contains(type)) continue;
+                if (ignoredTypes.Contains(type)) continue; // Skip if the type is marked with NoReflectionBaking.
 
-                var typeInfo = GetTypeInfo(type);
+                var typeInfo = GetTypeInfo(type, typeDict);
                 Assert.IsNull(typeInfo.Method);
                 typeInfo.Method = methodInfo;
             }
@@ -152,10 +140,9 @@ namespace Zenject
             foreach (var fieldInfo in TypeCache.GetFieldsWithAttribute<InjectAttributeBase>())
             {
                 var type = fieldInfo.DeclaringType;
-                // Skip if the type is marked with NoReflectionBaking.
-                if (ignoredTypes.Contains(type)) continue;
+                if (ignoredTypes.Contains(type)) continue; // Skip if the type is marked with NoReflectionBaking.
 
-                var typeInfo = GetTypeInfo(type);
+                var typeInfo = GetTypeInfo(type, typeDict);
                 typeInfo.Fields ??= new List<FieldInfo>();
                 typeInfo.Fields.Add(fieldInfo);
             }
@@ -165,41 +152,20 @@ namespace Zenject
                 typeInfo.Fields?.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
 
             return typeDict;
-        }
 
-        static HashSet<Type> BuildInjectableTypes(Dictionary<Type, TypeInfo> typeDict)
-        {
-            var injectableTypes = new HashSet<Type>();
-            foreach (var (type, typeInfo) in typeDict)
+            static TypeInfo GetTypeInfo(Type type, Dictionary<Type, TypeInfo> typeDict)
             {
-                // Check if this type implements IZenjectInjectable
-                if (typeInfo.ShouldImplementInjectable())
-                {
-                    injectableTypes.Add(type);
-                    continue;
-                }
-
-                // Check if any base types implement IZenjectInjectable
-                var baseType = type.BaseType;
-                while (baseType != typeof(object))
-                {
-                    if (typeDict.TryGetValue(baseType!, out var baseTypeInjectionInfo)
-                        && baseTypeInjectionInfo.ShouldImplementInjectable())
-                    {
-                        injectableTypes.Add(type);
-                        break;
-                    }
-
-                    baseType = type.BaseType;
-                }
+                if (typeDict.TryGetValue(type, out var typeInfo))
+                    return typeInfo;
+                typeInfo = new TypeInfo(type);
+                typeDict.Add(type, typeInfo);
+                return typeInfo;
             }
-
-            return injectableTypes;
         }
 
         static readonly StringBuilder _sb = new();
 
-        static string GenerateCode_Injectable(List<TypeInfo> typeInfos, HashSet<Type> injectableTypes)
+        static string GenerateCode_Injectable(List<TypeInfo> typeInfos)
         {
             _sb.AppendLine("#if !UNITY_EDITOR");
             _sb.AppendLine("using Zenject;");
@@ -224,11 +190,11 @@ namespace Zenject
 
                 var shouldImplementInjectable = typeInfo.ShouldImplementInjectable();
                 _sb.Append(GetAccessModifier(type)).Append(" partial class ").Append(type.Name)
-                    .Append(shouldImplementInjectable ? " : IZenjectInjectable" : "")
+                    .Append(shouldImplementInjectable ? " : " + nameof(IZenjectInjectable) : "")
                     .AppendLine(" {");
 
                 if (shouldImplementInjectable)
-                    GenerateInjectMethod(type, typeInfo.Fields, typeInfo.Method, injectableTypes, _sb);
+                    GenerateInjectMethod(typeInfo.Fields, typeInfo.Method, _sb);
 
                 _sb.AppendLine("}").AppendLine();
 
@@ -248,15 +214,9 @@ namespace Zenject
             return content;
 
             static void GenerateInjectMethod(
-                Type type, List<FieldInfo> fields, MethodInfo method, HashSet<Type> injectableTypes, StringBuilder sb)
+                List<FieldInfo> fields, MethodInfo method, StringBuilder sb)
             {
-                var isBaseInjectable = injectableTypes.Contains(type.BaseType);
-                sb.AppendLine(isBaseInjectable
-                    ? "public override void Inject(DependencyProvider dp) {"
-                    : "public void Inject(DependencyProvider dp) {");
-
-                if (isBaseInjectable)
-                    sb.AppendLine("base.Inject(dp);");
+                sb.AppendLine($"public void Inject({nameof(DependencyProvider)} dp) {{");
 
                 if (fields != null)
                 {

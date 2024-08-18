@@ -6,16 +6,21 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public static class Initializer
+    public static class Injector
     {
-        static readonly Dictionary<Type, InitializerInfo> _initializerCache = new();
+        static readonly Dictionary<Type, TypeInfo> _typeInfoCache = new();
 
-        public static void Initialize(object inst, DiContainer diContainer, ArgumentArray extraArgs)
+        public static void Inject(object inst, DiContainer diContainer, ArgumentArray extraArgs)
         {
+#if DEBUG
+            if (inst is ScriptableObject)
+                L.W("Injecting ScriptableObject could lead to unexpected behavior");
+#endif
+
             // If the object implements IZenjectInjectable, then we call Initialize.
             if (inst is IZenjectInjectable injectable)
             {
-                injectable.Inject(new DependencyProvider(diContainer, extraArgs));
+                injectable.Inject(diContainer, extraArgs);
                 return;
             }
 
@@ -38,20 +43,20 @@ namespace Zenject
                    || GetInfo(type).IsInjectionRequired();
         }
 
-        static InitializerInfo GetInfo(Type type)
+        static TypeInfo GetInfo(Type type)
         {
-            if (_initializerCache.TryGetValue(type, out var initializer))
+            if (_typeInfoCache.TryGetValue(type, out var initializer))
                 return initializer;
 
             var fieldInfos = TypeAnalyzer.GetFieldInfos(type, false);
             if (fieldInfos.Length == 0) fieldInfos = null;
             var methodInfo = TypeAnalyzer.GetMethodInfo(type, false);
-            initializer = new InitializerInfo(fieldInfos, methodInfo);
-            _initializerCache.Add(type, initializer);
+            initializer = new TypeInfo(fieldInfos, methodInfo);
+            _typeInfoCache.Add(type, initializer);
 
-#if DEBUG && !UNITY_EDITOR
+#if DEBUG && !UNITY_EDITOR // Only when reflection baking is enabled
             if (initializer.Fields is {Length: > 0} || initializer.Method.MethodInfo != null)
-                UnityEngine.Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
+                L.W($"Unregistered type detected: {type.PrettyName()}");
 #endif
 
             return initializer;
@@ -59,7 +64,7 @@ namespace Zenject
 
         public static void ClearCache()
         {
-            _initializerCache.Clear();
+            _typeInfoCache.Clear();
         }
 
         static void InjectMember(
@@ -80,14 +85,15 @@ namespace Zenject
 #if DEBUG
             catch (Exception e)
             {
-                Debug.LogError($"Failed to resolve field: {injectSpec.ToString()}", inst as UnityEngine.Object);
-                Debug.LogException(e, inst as UnityEngine.Object);
+                L.E($"Failed to resolve field: {injectSpec.ToString()} → {inst.GetType()}", inst as UnityEngine.Object);
+                L.E(e, inst as UnityEngine.Object);
+                throw;
             }
 #endif
 
-            if (injectSpec.Optional && value == null)
+            if (injectSpec.Optional && value is null)
             {
-                // Do not override in this case so it retains the hard-coded value
+                // Do not overwrite in this case, so it retains the hard-coded value
             }
             else
             {
@@ -104,7 +110,7 @@ namespace Zenject
             {
                 var paramValues = ParamArrayPool.Rent(method.Parameters.Length);
                 ParamUtils.ResolveParams(container, method.Parameters, paramValues, extraArgs);
-                method.MethodInfo.Invoke(inst, paramValues);
+                method.MethodInfo!.Invoke(inst, paramValues);
                 ParamArrayPool.Release(paramValues);
             }
 #if DEBUG
@@ -115,13 +121,13 @@ namespace Zenject
 #endif
         }
 
-        readonly struct InitializerInfo
+        readonly struct TypeInfo
         {
             [CanBeNull] public readonly InjectFieldInfo[] Fields;
             public readonly InjectMethodInfo Method;
 
 
-            public InitializerInfo(
+            public TypeInfo(
                 InjectFieldInfo[] fields,
                 InjectMethodInfo method)
             {

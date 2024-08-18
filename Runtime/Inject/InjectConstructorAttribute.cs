@@ -5,7 +5,5 @@ namespace Zenject
 {
     [AttributeUsage(AttributeTargets.Constructor)]
     [MeansImplicitUse(ImplicitUseKindFlags.Access)]
-    public class InjectConstructorAttribute : InjectAttributeBase
-    {
-    }
+    public class InjectConstructorAttribute : InjectAttributeBase { }
 }

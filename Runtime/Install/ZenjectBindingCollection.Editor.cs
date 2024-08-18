@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
@@ -9,7 +8,7 @@ using UnityEngine.SceneManagement;
 
 namespace Zenject
 {
-    public partial class ZenjectBindingCollection
+    partial class ZenjectBindingCollection
     {
         void Reset()
         {
@@ -19,7 +18,7 @@ namespace Zenject
         [Button("Collect", ButtonSizes.Medium)]
         public void Editor_Collect()
         {
-            Bindings = Internal_Collect().ToArray();
+            _bindings = Internal_Collect().ToArray();
         }
 
         [MenuItem("CONTEXT/ZenjectBindingCollection/Collect")]
@@ -31,21 +30,20 @@ namespace Zenject
             EditorUtility.SetDirty(target);
         }
 
-        [UsedImplicitly]
         bool Validate_Bindings(ref string errorMessage)
         {
             // When playing, we don't want to validate the targets.
-            if (Bindings == null)
+            if (_bindings == null)
                 return true;
 
             // Bindings must not contain self.
-            if (Bindings.Contains(this))
+            if (_bindings.Contains(this))
             {
                 errorMessage = "Bindings must not contain self.";
                 return false;
             }
 
-            if (Bindings.SequenceEqual(Internal_Collect()) == false)
+            if (_bindings.SequenceEqual(Internal_Collect()) == false)
             {
                 errorMessage = "Bindings must match the collected bindings.";
                 return false;

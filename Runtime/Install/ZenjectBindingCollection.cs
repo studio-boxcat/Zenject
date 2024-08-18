@@ -1,26 +1,38 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Zenject
 {
     [DisallowMultipleComponent]
-    public partial class ZenjectBindingCollection : ZenjectBindingBase
+    partial class ZenjectBindingCollection : ZenjectBindingBase
     {
+        [SerializeField, Required]
+        [FormerlySerializedAs("Bindings")]
         [ListDrawerSettings(IsReadOnly = true)]
         [ValidateInput("Validate_Bindings")]
-        public ZenjectBindingBase[] Bindings;
+        ZenjectBindingBase[] _bindings;
 
-        public static void TryBind(GameObject gameObject, DiContainer diContainer)
+        public override void Bind(InstallScheme scheme)
         {
-            if (gameObject.TryGetComponent(out ZenjectBindingCollection zenjectBindings))
-                zenjectBindings.Bind(diContainer);
-        }
+            var len = _bindings.Length;
 
-        public override void Bind(DiContainer diContainer)
-        {
-            foreach (var binding in Bindings)
-                binding.Bind(diContainer);
-            Bindings = null;
+            for (var index = 0; index < len; index++)
+            {
+                var binding = _bindings[index];
+
+#if UNITY_EDITOR
+                if (binding == null)
+                {
+                    L.E($"Binding is null at index {index}.");
+                    continue;
+                }
+#endif
+
+                binding.Bind(scheme);
+            }
+
+            _bindings = null;
         }
     }
 }

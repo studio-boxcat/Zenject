@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Zenject
 {
     /// <summary>
@@ -8,12 +10,12 @@ namespace Zenject
         void Inject(DependencyProvider dp);
     }
 
-    public static class IZenjectInjectableExtensions
+    public static class ZenjectExtensions
     {
-        public static void Inject(
-            this IZenjectInjectable thiz, DiContainer diContainer, ArgumentArray extraArgs)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Inject(this IZenjectInjectable injectable, DiContainer diContainer, ArgumentArray extraArgs)
         {
-            thiz.Inject(new DependencyProvider(diContainer, extraArgs));
+            injectable.Inject(new DependencyProvider(diContainer, extraArgs));
         }
     }
 }

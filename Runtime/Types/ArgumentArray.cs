@@ -6,22 +6,22 @@ namespace Zenject
 {
     public readonly struct ArgumentArray
     {
-        public readonly object Arg1;
-        public readonly object Arg2;
-        public readonly object Arg3;
-        public readonly object Arg4;
         public readonly int Length;
+        readonly object _arg1;
+        readonly object _arg2;
+        readonly object _arg3;
+        readonly object _arg4;
 
 
         public ArgumentArray(object arg1)
         {
             Assert.IsNotNull(arg1, "Argument 1 is null");
 
-            Arg1 = arg1;
-            Arg2 = null;
-            Arg3 = null;
-            Arg4 = null;
             Length = 1;
+            _arg1 = arg1;
+            _arg2 = null;
+            _arg3 = null;
+            _arg4 = null;
         }
 
         public ArgumentArray(object arg1, object arg2)
@@ -30,11 +30,11 @@ namespace Zenject
             Assert.IsNotNull(arg2, "Argument 2 is null");
             Assert.AreNotEqual(arg1.GetType(), arg2.GetType(), "Argument 1 and 2 have the same type");
 
-            Arg1 = arg1;
-            Arg2 = arg2;
-            Arg3 = null;
-            Arg4 = null;
             Length = 2;
+            _arg1 = arg1;
+            _arg2 = arg2;
+            _arg3 = null;
+            _arg4 = null;
         }
 
         public ArgumentArray(object arg1, object arg2, object arg3)
@@ -46,11 +46,11 @@ namespace Zenject
             Assert.AreNotEqual(arg1.GetType(), arg3.GetType(), "Argument 1 and 3 have the same type");
             Assert.AreNotEqual(arg2.GetType(), arg3.GetType(), "Argument 2 and 3 have the same type");
 
-            Arg1 = arg1;
-            Arg2 = arg2;
-            Arg3 = arg3;
-            Arg4 = null;
             Length = 3;
+            _arg1 = arg1;
+            _arg2 = arg2;
+            _arg3 = arg3;
+            _arg4 = null;
         }
 
         public ArgumentArray(object arg1, object arg2, object arg3, object arg4)
@@ -66,12 +66,23 @@ namespace Zenject
             Assert.AreNotEqual(arg2.GetType(), arg4.GetType(), "Argument 2 and 4 have the same type");
             Assert.AreNotEqual(arg3.GetType(), arg4.GetType(), "Argument 3 and 4 have the same type");
 
-            Arg1 = arg1;
-            Arg2 = arg2;
-            Arg3 = arg3;
-            Arg4 = arg4;
             Length = 4;
+            _arg1 = arg1;
+            _arg2 = arg2;
+            _arg3 = arg3;
+            _arg4 = arg4;
         }
+
+        public object this[int index] => index switch
+        {
+            0 => _arg1,
+            1 => _arg2,
+            2 => _arg3,
+            3 => _arg4,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        public bool Any() => Length is not 0;
 
         public bool TryGet(Type type, out object value)
         {
@@ -81,9 +92,9 @@ namespace Zenject
                 return false;
             }
 
-            if (type.IsInstanceOfType(Arg1))
+            if (type.IsInstanceOfType(_arg1))
             {
-                value = Arg1;
+                value = _arg1;
                 return true;
             }
 
@@ -93,9 +104,9 @@ namespace Zenject
                 return false;
             }
 
-            if (type.IsInstanceOfType(Arg2))
+            if (type.IsInstanceOfType(_arg2))
             {
-                value = Arg2;
+                value = _arg2;
                 return true;
             }
 
@@ -105,9 +116,9 @@ namespace Zenject
                 return false;
             }
 
-            if (type.IsInstanceOfType(Arg3))
+            if (type.IsInstanceOfType(_arg3))
             {
-                value = Arg3;
+                value = _arg3;
                 return true;
             }
 
@@ -117,9 +128,9 @@ namespace Zenject
                 return false;
             }
 
-            if (type.IsInstanceOfType(Arg4))
+            if (type.IsInstanceOfType(_arg4))
             {
-                value = Arg4;
+                value = _arg4;
                 return true;
             }
 
@@ -158,9 +169,9 @@ namespace Zenject
             return arr.Length switch
             {
                 0 => new ArgumentArray(arg),
-                1 => new ArgumentArray(arr.Arg1, arg),
-                2 => new ArgumentArray(arr.Arg1, arr.Arg2, arg),
-                3 => new ArgumentArray(arr.Arg1, arr.Arg2, arr.Arg3, arg),
+                1 => new ArgumentArray(arr._arg1, arg),
+                2 => new ArgumentArray(arr._arg1, arr._arg2, arg),
+                3 => new ArgumentArray(arr._arg1, arr._arg2, arr._arg3, arg),
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -169,19 +180,19 @@ namespace Zenject
         {
             if (a.Length == 0) return b;
             if (b.Length == 0) return a;
-            if (b.Length == 1) return a + b.Arg1;
+            if (b.Length == 1) return a + b._arg1;
 
             return a.Length switch
             {
                 1 => b.Length switch
                 {
-                    2 => new ArgumentArray(a.Arg1, b.Arg1, b.Arg2),
-                    3 => new ArgumentArray(a.Arg1, b.Arg1, b.Arg2, b.Arg3),
+                    2 => new ArgumentArray(a._arg1, b._arg1, b._arg2),
+                    3 => new ArgumentArray(a._arg1, b._arg1, b._arg2, b._arg3),
                     _ => throw new ArgumentOutOfRangeException()
                 },
                 2 => b.Length switch
                 {
-                    2 => new ArgumentArray(a.Arg1, a.Arg2, b.Arg1, b.Arg2),
+                    2 => new ArgumentArray(a._arg1, a._arg2, b._arg1, b._arg2),
                     _ => throw new ArgumentOutOfRangeException()
                 },
                 _ => throw new ArgumentOutOfRangeException()

@@ -1,41 +1,37 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace Zenject
 {
-    sealed class Kernel : MonoBehaviour
+    readonly struct Kernel
     {
-        readonly List<ITickable> _tickables = new();
-        readonly List<IDisposable> _disposables = new();
+        readonly List<IDisposable> _disposables;
+        readonly List<ITickable> _tickables;
 
-        public void RegisterServices(DiContainer diContainer)
+        public Kernel(List<IDisposable> disposables, List<ITickable> tickables)
         {
-            // Do not resolve from parent containers
-            diContainer.ResolveAllFromSelf(_tickables);
-            diContainer.ResolveAllFromSelf(_disposables);
+            _disposables = disposables;
+            _tickables = tickables;
 
-            // If there are no tickables, disable the kernel to prevent unnecessary updates.
-            if (_tickables.Count is 0)
-                enabled = false;
-
-            // Log
-            L.I($"Kernel initialized: {name}\n" +
-                $"Tickables: [{string.Join(", ", _tickables.Select(t => t.GetType().Name))}]\n" +
-                $"Disposables: [{string.Join(", ", _disposables.Select(d => d.GetType().Name))}]");
+            // Log.
+            L.I("Kernel initialized\n"
+                + $"Tickables: [{string.Join(", ", _tickables.Select(t => t.GetType().Name))}]\n"
+                + $"Disposables: [{string.Join(", ", _disposables.Select(d => d.GetType().Name))}]");
         }
 
-        void OnDestroy()
+        public void Dispose()
         {
-            L.I($"Kernel destroyed: {name}\n" +
-                $"Disposables: [{string.Join(", ", _disposables.Select(d => d.GetType().Name))}]");
+            L.I("Kernel destroyed\n" +
+                $"Disposing {nameof(IDisposable)}s: [{string.Join(", ", _disposables.Select(d => d.GetType().Name))}]");
 
-            foreach (var disposable in _disposables)
-                disposable.Dispose();
+            // Dispose in reverse order.
+            var len = _disposables.Count;
+            for (var i = len - 1; i >= 0; i--)
+                _disposables[i].Dispose();
         }
 
-        void Update()
+        public void Tick()
         {
             foreach (var tickable in _tickables)
                 tickable.Tick();

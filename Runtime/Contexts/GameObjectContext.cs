@@ -4,10 +4,11 @@ using UnityEngine;
 
 namespace Zenject
 {
-    [RequireComponent(typeof(Kernel))]
     public class GameObjectContext : MonoBehaviour, IZenjectInjectable
     {
         public DiContainer Container;
+
+        Kernel _kernel;
 
         [SerializeField, InlineProperty, HideLabel]
         InstallerCollection _installers;
@@ -15,7 +16,7 @@ namespace Zenject
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryInject(GameObject gameObject, DiContainer diContainer, ArgumentArray extraArgs)
         {
-            if (gameObject.TryGetComponent(out GameObjectContext context) == false)
+            if (gameObject.TryGetComponent(out GameObjectContext context) is false)
                 return false;
 
             context.Inject(diContainer, extraArgs);
@@ -24,17 +25,40 @@ namespace Zenject
 
         void IZenjectInjectable.Inject(DependencyProvider dp)
         {
-            Container = new DiContainer(dp.Container, 32);
+            var parentContainer = dp.Container;
 
-            ZenjectBindingCollection.TryBind(gameObject, Container);
 
-            _installers.InjectAndInstall(Container, dp.ExtraArgs);
+            // Install
+            var scheme = new InstallScheme(8);
 
-            GetComponent<Kernel>().RegisterServices(Container);
+            // 1. ExtraArgs
+            var extraArgsLen = dp.ExtraArgs.Length;
+            for (var i = 0; i < extraArgsLen; i++)
+            {
+                var arg = dp.ExtraArgs[i];
+                scheme.Bind(arg.GetType(), dp.ExtraArgs[i]);
+            }
 
-            Container.ResolveNonLazyProviders();
+            // 2. ZenjectBindingCollection
+            if (gameObject.TryGetComponent(out ZenjectBindingCollection zenjectBindings))
+                zenjectBindings.Bind(scheme);
 
+            // 3. Installers
+            _installers.InstallScriptableObjectInstallers(scheme);
+            _installers.InjectAndInstallMonoBehaviourInstallers(scheme, parentContainer);
+            _installers = default;
+
+
+            // Build & Inject
+            Container = scheme.Build(parentContainer, out _kernel);
             InjectTargetCollection.TryInject(gameObject, Container, dp.ExtraArgs);
+        }
+
+        void OnDestroy()
+        {
+            _kernel.Dispose();
+            _kernel = default; // For GC.
+            Container = null; // For GC.
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Zenject
 
     public static class Constructor
     {
-        [CanBeNull]
+        [UsedImplicitly, CanBeNull]
         public static IConstructorHook Hook;
 
         static Binder _binder;
@@ -73,7 +73,7 @@ namespace Zenject
             _constructorCache.Add(type, constructorInfo);
 
 #if DEBUG && !UNITY_EDITOR
-            UnityEngine.Debug.LogWarning("[Zenject] Unregistered type detected: " + type.PrettyName());
+            L.W("Unregistered type detected: " + type.PrettyName());
 #endif
 
             return constructorInfo;

@@ -5,7 +5,5 @@ namespace Zenject
 {
     [Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class)]
-    public class NoReflectionBakingAttribute : Attribute
-    {
-    }
+    public class NoReflectionBakingAttribute : Attribute { }
 }

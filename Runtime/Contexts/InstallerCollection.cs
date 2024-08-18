@@ -22,67 +22,73 @@ namespace Zenject
             _monoInstallers = monoInstallers;
         }
 
-        public void InjectAndInstall(DiContainer container, ArgumentArray extraArgs)
+        public void InstallScriptableObjectInstallers(InstallScheme scheme)
         {
-            for (var index = 0; index < _scriptableObjectInstallers.Length; index++)
-            {
-                var installer = _scriptableObjectInstallers[index];
-#if DEBUG
-                if (installer == null)
-                    Debug.LogError("ScriptableObjectInstaller is null at index: " + index);
-#endif
-                InjectAndInstallBindings(container, extraArgs, installer);
-            }
-
-            for (var index = 0; index < _monoInstallers.Length; index++)
-            {
-                var installer = _monoInstallers[index];
-#if DEBUG
-                if (installer == null)
-                    Debug.LogError("MonoBehaviourInstaller is null at index: " + index);
-#endif
-                InjectAndInstallBindings(container, extraArgs, installer);
-            }
-
-            _scriptableObjectInstallers = default;
-            _monoInstallers = default;
-            return;
-
-            static void InjectAndInstallBindings(DiContainer container, ArgumentArray extraArgs, IInstaller installer)
-            {
-#if DEBUG
-                try
-                {
-                    L.I("Inject: " + GetDebugName(installer), (Object) installer);
-                    container.Inject(installer, extraArgs);
-                }
-                catch (Exception)
-                {
-                    L.E("Failed to Inject to Installer: " + GetDebugName(installer), (Object) installer);
-                    throw;
-                }
-
-                try
-                {
-                    L.I("InstallBindings: " + GetDebugName(installer), (Object) installer);
-                    installer.InstallBindings(container);
-                }
-                catch (Exception)
-                {
-                    L.E("Failed to Install Bindings of Installer: " + ((Object) installer).name, (Object) installer);
-                    throw;
-                }
-
-                static string GetDebugName(IInstaller installer)
-                {
-                    var obj = (Object) installer;
-                    return $"{obj.name} ({obj.GetType().Name})";
-                }
-#else
-                container.Inject(installer, extraArgs);
-                installer.InstallBindings(container);
-#endif
-            }
+            foreach (var installer in _scriptableObjectInstallers)
+                InstallBindings(installer, scheme);
         }
+
+        public void InjectAndInstallMonoBehaviourInstallers(InstallScheme scheme, DiContainer parentContainer)
+        {
+            if (_monoInstallers.Length is 0)
+                return;
+
+            // Inject first.
+            var injectionProxy = scheme.AsInjectionProxy(parentContainer);
+            foreach (var installer in _monoInstallers)
+                InjectToInstaller(injectionProxy, installer);
+
+            // Then install.
+            foreach (var installer in _monoInstallers)
+                InstallBindings(installer, scheme);
+        }
+
+        static void InstallBindings(IInstaller installer, InstallScheme scheme)
+        {
+#if DEBUG
+            L.I("InstallBindings: " + GetDebugName(installer), (Object) installer);
+
+            try
+#endif
+            {
+                installer.InstallBindings(scheme);
+            }
+#if DEBUG
+            catch (Exception)
+            {
+                L.E("Failed to Install Bindings: " + (Object) installer, (Object) installer);
+                throw;
+            }
+#endif
+        }
+
+        static void InjectToInstaller(DiContainer container, MonoBehaviourInstaller installer)
+        {
+#if DEBUG
+            L.I("Inject: " + GetDebugName(installer), installer);
+
+            try
+#endif
+            {
+                container.Inject(installer, default);
+            }
+#if DEBUG
+            catch (Exception)
+            {
+                L.E("Failed to Inject: " + GetDebugName(installer), installer);
+                throw;
+            }
+#endif
+        }
+
+#if DEBUG
+        static string GetDebugName(IInstaller installer)
+        {
+            var obj = (Object) installer;
+            return obj != null
+                ? $"{obj.name} ({obj.GetType().Name})"
+                : "null";
+        }
+#endif
     }
 }

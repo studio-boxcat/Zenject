@@ -1,62 +1,27 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Zenject
 {
-    public class ZenjectBinding : ZenjectBindingBase
-#if UNITY_EDITOR
-        , ISelfValidator
-#endif
+    class ZenjectBinding : ZenjectBindingBase
     {
         [SerializeField, Required, ShowIf("@Target == null")]
         public Object Target;
-
         [SerializeField]
         public BindId Identifier;
 
-        [SerializeField]
-        public BindTypes BindType = BindTypes.Self;
-
-        public enum BindTypes
-        {
-            Self,
-            AllInterfaces,
-            AllInterfacesAndSelf,
-        }
-
-        public override void Bind(DiContainer container)
+        public override void Bind(InstallScheme scheme)
         {
             if (Target == null)
             {
 #if DEBUG
-                Debug.LogWarning($"Found null component in ZenjectBinding on object '{name}'");
+                L.W($"Found null component in ZenjectBinding on object '{name}'", this);
 #endif
                 return;
             }
 
-            Bind(container, Target, BindType, Identifier);
-        }
-
-        public static void Bind(DiContainer container, object target, BindTypes bindType, BindId identifier)
-        {
-            switch (bindType)
-            {
-                case BindTypes.Self:
-                    container.Bind(target, identifier);
-                    break;
-                case BindTypes.AllInterfaces:
-                    container.BindInterfacesTo(target, identifier);
-                    break;
-                case BindTypes.AllInterfacesAndSelf:
-                    container.BindInterfacesAndSelfTo(target, identifier);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(bindType));
-            }
+            scheme.Bind(Target.GetType(), Target, Identifier);
         }
 
 #if UNITY_EDITOR
@@ -76,46 +41,7 @@ namespace Zenject
         }
 
         [ShowInInspector, DisplayAsString]
-        string _bindingTypes
-        {
-            get
-            {
-                if (Target == null)
-                    return "";
-
-                var typeList = new List<Type>();
-                switch (BindType)
-                {
-                    case BindTypes.Self:
-                        typeList.Add(Target.GetType());
-                        break;
-                    case BindTypes.AllInterfaces:
-                        typeList.AddRange(Target.GetType().GetInterfaces());
-                        break;
-                    case BindTypes.AllInterfacesAndSelf:
-                        typeList.Add(Target.GetType());
-                        typeList.AddRange(Target.GetType().GetInterfaces());
-                        break;
-                    default:
-                        return "";
-                }
-
-                return string.Join(", ", typeList.Select(x => x.Name).ToArray());
-            }
-        }
-
-        void ISelfValidator.Validate(SelfValidationResult result)
-        {
-            if (Target == null)
-                return;
-
-            if (BindType is BindTypes.AllInterfaces or BindTypes.AllInterfacesAndSelf)
-            {
-                var type = Target.GetType();
-                if (type.GetInterfaces().Length == 0)
-                    result.AddError("Target does not implement any interfaces");
-            }
-        }
+        string _contractType => Target == null ? "" : Target.GetType().Name;
 
         ValueDropdownList<Object> Target_Dropdown()
         {

@@ -134,7 +134,7 @@ namespace Zenject
                 return false;
             }
 
-            requiresInjection = Initializer.IsInjectionRequired(type);
+            requiresInjection = Injector.IsInjectionRequired(type);
             _requiresInjectCache.Add(type, requiresInjection);
             return requiresInjection;
         }

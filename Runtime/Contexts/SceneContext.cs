@@ -1,45 +1,77 @@
-using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Zenject
 {
-    [RequireComponent(typeof(Kernel))]
     public class SceneContext : MonoBehaviour
     {
-        public static Action<DiContainer> ExtraBindingsInstallMethod;
+        static InstallScheme _prebuiltScheme;
+        public static void SetPrebuiltScheme(InstallScheme scheme)
+        {
+            if (_prebuiltScheme is not null)
+                L.E("PrebuiltScheme is already set.");
+            _prebuiltScheme = scheme;
+        }
+
 
         public DiContainer Container;
+
+        Kernel _kernel;
 
         [SerializeField, InlineProperty, HideLabel]
         InstallerCollection _installers;
 
         public void Awake()
         {
-            SceneContextRegistry.Add(this);
-
-            Container = new DiContainer(ProjectContext.Instance.Container, 128);
-
-            if (ExtraBindingsInstallMethod != null)
+            // Get Parent Container
+            DiContainer parentContainer;
+            if (ProjectContext.HasInstance)
             {
-                ExtraBindingsInstallMethod(Container);
-                ExtraBindingsInstallMethod = null;
+                parentContainer = ProjectContext.Instance.Container;
+            }
+            else
+            {
+                L.E("ProjectContext is not initialized. ProjectContext.Initialize() must be called before SceneContext.Awake().");
+                parentContainer = ProjectContext.Initialize().Container;
             }
 
-            ZenjectBindingCollection.TryBind(gameObject, Container);
 
-            _installers.InjectAndInstall(Container, default);
+            // Install
+            var scheme = _prebuiltScheme ?? new InstallScheme(64);
+            _prebuiltScheme = null;
 
-            GetComponent<Kernel>().RegisterServices(Container);
+            // 1. ZenjectBindingCollection
+            if (gameObject.TryGetComponent(out ZenjectBindingCollection zenjectBindings))
+                zenjectBindings.Bind(scheme);
 
-            Container.ResolveNonLazyProviders();
+            // 2. Installers
+            _installers.InstallScriptableObjectInstallers(scheme);
+            _installers.InjectAndInstallMonoBehaviourInstallers(scheme, parentContainer);
+            _installers = default;
 
+
+            // Build Container & Inject
+            Container = scheme.Build(parentContainer, out _kernel);
             InjectTargetCollection.TryInject(gameObject, Container, default);
+
+
+            // Register SceneContext at last.
+            // If somehow exception occurs on Awake, OnDestroy will not be called.
+            SceneContextRegistry.Add(this);
         }
 
         void OnDestroy()
         {
+            _kernel.Dispose();
+            _kernel = default; // For GC.
+            Container = null; // For GC.
+
             SceneContextRegistry.Remove(this);
+        }
+
+        void Update()
+        {
+            _kernel.Tick();
         }
 
 #if UNITY_EDITOR

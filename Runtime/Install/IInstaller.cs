@@ -2,6 +2,6 @@ namespace Zenject
 {
     public interface IInstaller
     {
-        void InstallBindings(DiContainer container);
+        void InstallBindings(InstallScheme scheme);
     }
 }

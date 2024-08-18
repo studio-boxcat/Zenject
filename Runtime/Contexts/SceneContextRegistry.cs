@@ -13,12 +13,16 @@ namespace Zenject
 
         public static void Add(SceneContext context)
         {
+            L.I($"SceneContextRegistry.Add({context})");
+
             Assert.IsFalse(List.Contains(context));
             List.Add(context);
         }
 
         public static void Remove(SceneContext context)
         {
+            L.I($"SceneContextRegistry.Remove({context})");
+
             var removed = List.Remove(context);
             Assert.IsTrue(removed);
         }

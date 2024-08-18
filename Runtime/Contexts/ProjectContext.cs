@@ -1,58 +1,63 @@
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    [RequireComponent(typeof(Kernel))]
     public class ProjectContext : MonoBehaviour
     {
         static ProjectContext _instance;
-
+        public static bool HasInstance => _instance is not null;
         public static ProjectContext Instance
         {
             get
             {
-                if (_instance is null)
-                    InstantiateAndInitialize();
+                Assert.IsNotNull(_instance, "ProjectContext is not initialized. ProjectContext.Initialize() must be called before ProjectContext.Instance.");
                 return _instance;
             }
         }
 
-        public static bool HasInstance => _instance is not null;
+        public DiContainer Container;
 
-        public readonly DiContainer Container = new(null, 64);
+        Kernel _kernel;
 
-        [SerializeField, InlineProperty, HideLabel]
-        InstallerCollection _installers;
+        [SerializeField, Required, AssetsOnly]
+        ScriptableObjectInstaller _installer;
 
-
-        static void InstantiateAndInitialize()
+        public static ProjectContext Initialize(InstallScheme scheme = null)
         {
-            Assert.IsTrue(
-                FindAnyObjectByType<ProjectContext>(FindObjectsInactive.Include) is null,
+            Assert.IsTrue(_instance is null, "Tried to create multiple instances of ProjectContext!");
+            Assert.IsTrue(FindAnyObjectByType<ProjectContext>(FindObjectsInactive.Include) is null,
                 "Tried to create multiple instances of ProjectContext!");
 
             var prefab = Resources.Load<ProjectContext>("ProjectContext");
-            _instance = Instantiate(prefab, null, false);
+            var instance = Instantiate(prefab, null, false);
+            instance.DoInitialize(scheme);
+            DontDestroyOnLoad(instance.gameObject);
+
+            return _instance = instance;
         }
 
-        void Awake()
+        void DoInitialize([CanBeNull] InstallScheme scheme)
         {
-            Assert.IsTrue(_instance is null);
+            // Install
+            scheme ??= new InstallScheme(16);
+            _installer.InstallBindings(scheme); // No injection for ProjectContext.
+            _installer = null;
 
-            DontDestroyOnLoad(gameObject);
-
-            _installers.InjectAndInstall(Container, default);
-
-            GetComponent<Kernel>().RegisterServices(Container);
-
-            Container.ResolveNonLazyProviders();
+            // Build Container
+            Container = scheme.Build(null, out _kernel);
         }
 
         void OnDestroy()
         {
-            _instance = null;
+            _kernel.Dispose();
+            _kernel = default; // For GC.
+            Container = null; // For GC.
+
+            if (ReferenceEquals(this, _instance))
+                _instance = null;
         }
     }
 }
