@@ -24,8 +24,28 @@ namespace Zenject
 
         void Inject(DiContainer diContainer, ArgumentArray extraArgs)
         {
-            foreach (var target in Targets)
-                diContainer.Inject(target, extraArgs);
+            var count = Targets.Length;
+
+            for (var index = 0; index < count; index++)
+            {
+                var target = Targets[index];
+
+#if DEBUG
+                try
+#endif
+                {
+                    diContainer.Inject(target, extraArgs);
+                }
+#if DEBUG
+                catch
+                {
+                    L.E($"Failed to inject target: target={target}, index={index}",
+                        target != null ? target : this);
+                    throw;
+                }
+#endif
+            }
+
             Targets = null;
         }
     }
