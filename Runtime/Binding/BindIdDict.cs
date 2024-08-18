@@ -38,7 +38,7 @@ namespace Zenject
             var fieldTypes = TypeCache.GetFieldsWithAttribute<BindIdDefinitionAttribute>();
             foreach (var fieldInfo in fieldTypes)
             {
-                Assert.AreEqual(typeof(BindId), fieldInfo.DeclaringType);
+                Assert.AreEqual(typeof(BindId), fieldInfo.FieldType);
                 AddField(dict, fieldInfo);
             }
 
