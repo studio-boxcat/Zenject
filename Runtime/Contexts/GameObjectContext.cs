@@ -44,8 +44,7 @@ namespace Zenject
                 zenjectBindings.Bind(scheme);
 
             // 3. Installers
-            _installers.InstallScriptableObjectInstallers(scheme);
-            _installers.InjectAndInstallMonoBehaviourInstallers(scheme, parentContainer);
+            _installers.Install(scheme, parentContainer);
             _installers = default;
 
 
