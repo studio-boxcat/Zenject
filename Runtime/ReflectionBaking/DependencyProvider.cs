@@ -24,22 +24,22 @@ namespace Zenject
             return _diContainer.Resolve(type, id);
         }
 
-        public T TryResolve<T>(BindId identifier = default)
+        public T TryResolve<T>(BindId id = default)
         {
-            if (identifier == default && _extraArgs.TryGet(out T obj))
+            if (id == default && _extraArgs.TryGet(out T obj))
                 return obj;
-            return _diContainer.TryResolve(identifier, out obj) ? obj : default;
+            return _diContainer.TryResolve(id, out obj) ? obj : default;
         }
 
-        public void TryResolve<T>(BindId identifier, ref T value)
+        public void TryResolve<T>(BindId id, ref T value)
         {
-            if (identifier == default && _extraArgs.TryGet(out T temp))
+            if (id == default && _extraArgs.TryGet(out T temp))
             {
                 value = temp;
                 return;
             }
 
-            if (_diContainer.TryResolve(identifier, out temp))
+            if (_diContainer.TryResolve(id, out temp))
             {
                 value = temp;
             }

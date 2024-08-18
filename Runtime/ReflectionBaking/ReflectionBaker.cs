@@ -337,7 +337,7 @@ namespace Zenject
         static InjectSpec GetInjectSpecForParam(ParameterInfo parameter)
         {
             var paramType = parameter.ParameterType;
-            var injectAttr = parameter.GetCustomAttribute<InjectAttribute>();
+            var injectAttr = parameter.GetCustomAttribute<InjectAttributeBase>();
             return injectAttr != null
                 ? new InjectSpec(paramType, injectAttr.Id, injectAttr.Optional)
                 : new InjectSpec(paramType, default);
