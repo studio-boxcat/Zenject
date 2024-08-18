@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -58,6 +59,11 @@ namespace Zenject
             _kernel.Dispose();
             _kernel = default; // For GC.
             Container = null; // For GC.
+        }
+
+        void Update()
+        {
+            _kernel.Tick();
         }
     }
 }

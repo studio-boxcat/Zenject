@@ -1,3 +1,4 @@
+using System;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -58,6 +59,11 @@ namespace Zenject
 
             if (ReferenceEquals(this, _instance))
                 _instance = null;
+        }
+
+        void Update()
+        {
+            _kernel.Tick();
         }
     }
 }
