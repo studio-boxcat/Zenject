@@ -122,7 +122,7 @@ namespace Zenject
             }
             else
             {
-                throw new Exception($"Failed to Resolve: {bindKey}");
+                throw new Exception($"Failed to Resolve: {BindKey.ToString(bindKey)}");
             }
         }
 
