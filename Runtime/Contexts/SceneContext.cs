@@ -14,8 +14,10 @@ namespace Zenject
         }
 
 
-        [ShowInInspector] public DiContainer Container;
-        [ShowInInspector] Kernel _kernel;
+        [ShowInInspector, ShowIf("@Container != null")]
+        public DiContainer Container;
+        [ShowInInspector, ShowIf("@Container != null")]
+        Kernel _kernel;
 
         [SerializeField, InlineProperty, HideLabel, HideInPlayMode]
         InstallerCollection _installers;

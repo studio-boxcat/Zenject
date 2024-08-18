@@ -1,8 +1,7 @@
-using System;
+#if UNITY_EDITOR
 using Sirenix.OdinInspector;
 using Sirenix.Utilities;
 
-#if UNITY_EDITOR
 namespace Zenject
 {
     public partial class DiContainer
