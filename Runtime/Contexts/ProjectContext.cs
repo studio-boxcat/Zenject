@@ -18,9 +18,9 @@ namespace Zenject
             }
         }
 
-        public DiContainer Container;
 
-        Kernel _kernel;
+        [ShowInInspector] public DiContainer Container;
+        [ShowInInspector] Kernel _kernel;
 
         [SerializeField, Required, AssetsOnly]
         ScriptableObjectInstaller _installer;

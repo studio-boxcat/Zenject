@@ -13,7 +13,7 @@ namespace Zenject
 
         public static void Add(SceneContext context)
         {
-            L.I($"SceneContextRegistry.Add({context})");
+            L.I($"[SceneContextRegistry] Add: {context.gameObject.scene.name}", context);
 
             Assert.IsFalse(List.Contains(context));
             List.Add(context);
@@ -21,7 +21,7 @@ namespace Zenject
 
         public static void Remove(SceneContext context)
         {
-            L.I($"SceneContextRegistry.Remove({context})");
+            L.I($"[SceneContextRegistry] Remove: {context}", context);
 
             var removed = List.Remove(context);
             Assert.IsTrue(removed);

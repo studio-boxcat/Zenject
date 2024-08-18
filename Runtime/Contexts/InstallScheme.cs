@@ -109,7 +109,8 @@ namespace Zenject
 
         internal DiContainer Build([CanBeNull] DiContainer parentContainer, out Kernel kernel)
         {
-            L.I($"Building DiContainer: bindings={_bindingPtr}, payloads={_payloads.Count}");
+            L.I($"Building DiContainer: bindings={_bindingPtr}, payloads={_payloads.Count}\n" +
+                string.Join("\n", _bindings.Take(_bindingPtr).Select(b => b.ToString())));
 
             var container = new DiContainer();
             Bind(container); // Bind container itself.

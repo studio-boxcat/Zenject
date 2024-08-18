@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Sirenix.OdinInspector;
 
 namespace Zenject
 {
+    [HideReferenceObjectPicker]
     readonly struct Kernel
     {
+        [ShowInInspector, ListDrawerSettings(IsReadOnly = true)]
         readonly List<IDisposable> _disposables;
+        [ShowInInspector, ListDrawerSettings(IsReadOnly = true)]
         readonly List<ITickable> _tickables;
 
         public Kernel(List<IDisposable> disposables, List<ITickable> tickables)

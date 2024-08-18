@@ -14,11 +14,10 @@ namespace Zenject
         }
 
 
-        public DiContainer Container;
+        [ShowInInspector] public DiContainer Container;
+        [ShowInInspector] Kernel _kernel;
 
-        Kernel _kernel;
-
-        [SerializeField, InlineProperty, HideLabel]
+        [SerializeField, InlineProperty, HideLabel, HideInPlayMode]
         InstallerCollection _installers;
 
         public void Awake()
@@ -75,7 +74,7 @@ namespace Zenject
         }
 
 #if UNITY_EDITOR
-        [Button("Collect", ButtonSizes.Medium)]
+        [Button("Collect", ButtonSizes.Medium), HideInPlayMode]
         void Editor_Collect()
         {
             if (TryGetComponent<ZenjectBindingCollection>(out var zenjectBindings))

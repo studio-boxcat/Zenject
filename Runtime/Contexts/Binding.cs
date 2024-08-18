@@ -24,6 +24,8 @@ namespace Zenject
             Payload = payload;
         }
 
+        public override string ToString() => BindKey.ToString(Key);
+
         public static bool BinarySearch(Binding[] array, int count, ulong key, out int index)
         {
             index = Array.BinarySearch(array, 0, count, new Binding(key, null), Comparer.Instance);

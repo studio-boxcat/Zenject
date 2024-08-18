@@ -53,9 +53,10 @@ namespace Zenject
                 return newObj;
             }
 #if DEBUG
-            catch (ParamResolveException e)
+            catch
             {
-                throw new MethodInvokeException(constructorInfo.ConstructorInfo, e.ParamSpec, e.ParamIndex, e);
+                L.E("Instantiation failed: " + concreteType.PrettyName());
+                throw;
             }
 #endif
         }

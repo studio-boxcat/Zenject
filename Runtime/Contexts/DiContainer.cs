@@ -1,18 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using Sirenix.OdinInspector;
 using Object = UnityEngine.Object;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public class DiContainer
+    [HideReferenceObjectPicker]
+    public partial class DiContainer
     {
         Binding[] _bindings;
         int _bindingCount;
         Dictionary<ulong, Payload> _payloads;
-        [CanBeNull] DiContainer _parent;
+        [ShowInInspector, ReadOnly, CanBeNull]
+        DiContainer _parent;
 
         internal void Initialize(
             Binding[] bindings,
