@@ -75,6 +75,11 @@ namespace Zenject
         }
 
 #if UNITY_EDITOR
+        public static void Editor_ClearPrebuiltScheme()
+        {
+            _prebuiltScheme = null;
+        }
+
         [Button("Collect", ButtonSizes.Medium), HideInPlayMode]
         void Editor_Collect()
         {
