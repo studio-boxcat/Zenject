@@ -74,7 +74,7 @@ namespace Zenject
             _constructorCache.Add(type, constructorInfo);
 
 #if DEBUG && !UNITY_EDITOR
-            L.W("Unregistered type detected: " + type.PrettyName());
+            L.W("Unregistered type detected: " + type.Name);
 #endif
 
             return constructorInfo;

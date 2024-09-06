@@ -56,7 +56,7 @@ namespace Zenject
 
 #if DEBUG && !UNITY_EDITOR // Only when reflection baking is enabled
             if (initializer.Fields is {Length: > 0} || initializer.Method.MethodInfo != null)
-                L.W($"Unregistered type detected: {type.PrettyName()}");
+                L.W($"Unregistered type detected: {type.Name}");
 #endif
 
             return initializer;
