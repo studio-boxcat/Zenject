@@ -164,9 +164,9 @@ namespace Zenject
         public object Instantiate(Type concreteType, ArgumentArray extraArgs = default)
         {
             Assert.IsFalse(concreteType.IsSubclassOf(typeof(Component)),
-                $"'{concreteType.PrettyName()}' is a component.  Use InstantiateComponent instead.");
+                $"'{concreteType.Name}' is a component.  Use InstantiateComponent instead.");
             Assert.IsFalse(concreteType.IsAbstract,
-                $"'{concreteType.PrettyName()}' should be non-abstract");
+                $"'{concreteType.Name}' should be non-abstract");
 
             var newObj = Constructor.Instantiate(concreteType, this, extraArgs);
             Assert.IsTrue(newObj.GetType() == concreteType);

@@ -55,7 +55,7 @@ namespace Zenject
 #if DEBUG
             catch
             {
-                L.E("Instantiation failed: " + concreteType.PrettyName());
+                L.E("Instantiation failed: " + concreteType.Name);
                 throw;
             }
 #endif

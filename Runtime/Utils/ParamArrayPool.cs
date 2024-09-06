@@ -86,6 +86,7 @@ namespace Zenject
                 return new object[Buffer0.Length];
             }
 
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             public void Release(object[] arr)
             {
                 Assert.AreEqual(Buffer0.Length, arr.Length);
@@ -113,8 +114,6 @@ namespace Zenject
                     Rented3 = false;
                     return;
                 }
-
-                return;
             }
         }
     }
