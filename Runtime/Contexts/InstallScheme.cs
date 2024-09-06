@@ -116,7 +116,7 @@ namespace Zenject
             Bind(container); // Bind container itself.
             Binding.Sort(_bindings, _bindingPtr); // Sort before initializing DiContainer.
             var bindings = new Binding[_bindingPtr];
-            Array.Copy(_bindings, bindings, _bindingPtr); // Only use valid bindings.
+            Array.Copy(_bindings, bindings, _bindingPtr); // Trim invalid range.
             container.Initialize(bindings, _bindingPtr, _payloads, parentContainer);
 
             _kernelServices.ResolveAll(container);
