@@ -8,9 +8,19 @@ namespace Zenject
         static InstallScheme _prebuiltScheme;
         public static void SetPrebuiltScheme(InstallScheme scheme)
         {
+            L.I("SetPrebuiltScheme: " + scheme);
             if (_prebuiltScheme is not null)
                 L.E("PrebuiltScheme is already set.");
             _prebuiltScheme = scheme;
+        }
+
+        internal static void ClearPrebuiltScheme()
+        {
+#if DEBUG
+            if (_prebuiltScheme is not null)
+                L.I("ClearPrebuiltScheme");
+#endif
+            _prebuiltScheme = null;
         }
 
 
@@ -75,11 +85,6 @@ namespace Zenject
         }
 
 #if UNITY_EDITOR
-        public static void Editor_ClearPrebuiltScheme()
-        {
-            _prebuiltScheme = null;
-        }
-
         [Button("Collect", ButtonSizes.Medium), HideInPlayMode]
         void Editor_Collect()
         {

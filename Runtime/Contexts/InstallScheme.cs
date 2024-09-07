@@ -22,6 +22,11 @@ namespace Zenject
             _kernelServices = KernelServices.Create(capacity / 4);
         }
 
+        public override string ToString()
+        {
+            return "[ " + string.Join(", ", _bindings.Take(_bindingPtr)) + " ]";
+        }
+
         void AddBinding(Binding binding)
         {
             Assert.AreNotEqual(0, binding.Key, "Binding key must not be zero.");

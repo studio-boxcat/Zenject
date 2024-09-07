@@ -17,14 +17,14 @@ namespace Zenject
             Value = instance;
         }
 
-        public Binding(ulong bindKey, Type concreteType, bool payload) : this()
+        public Binding(ulong key, Type concreteType, bool payload) : this()
         {
-            Key = bindKey;
+            Key = key;
             Value = concreteType;
             Payload = payload;
         }
 
-        public override string ToString() => BindKey.ToString(Key);
+        public override string ToString() => BindKey.ToString(Key) + ":" + (Value is Type ? "T" : "I");
 
         public static bool BinarySearch(Binding[] array, int count, ulong key, out int index)
         {

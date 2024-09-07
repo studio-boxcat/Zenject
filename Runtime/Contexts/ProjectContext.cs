@@ -57,7 +57,10 @@ namespace Zenject
             Container = null; // For GC.
 
             if (ReferenceEquals(this, _instance))
+            {
                 _instance = null;
+                SceneContext.ClearPrebuiltScheme();
+            }
         }
 
         void Update()

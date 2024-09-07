@@ -27,7 +27,7 @@ namespace Zenject
         public void Dispose()
         {
             L.I("Kernel destroyed\n" +
-                $"Disposing {nameof(IDisposable)}s: [{string.Join(", ", _disposables.Select(d => d.GetType().Name))}]");
+                $"Disposing: [{string.Join(", ", _disposables.Select(d => d.GetType().Name))}]");
 
             // Dispose in reverse order.
             var len = _disposables.Count;
