@@ -52,15 +52,16 @@ namespace Zenject
 
         void OnDestroy()
         {
-            _kernel.Dispose();
-            _kernel = default; // For GC.
-            Container = null; // For GC.
-
+            // Clear static variables first, as _kernel.Dispose() may throw exceptions.
             if (ReferenceEquals(this, _instance))
             {
                 _instance = null;
                 SceneContext.ClearPrebuiltScheme();
             }
+
+            _kernel.Dispose();
+            _kernel = default; // For GC.
+            Container = null; // For GC.
         }
 
         void Update()

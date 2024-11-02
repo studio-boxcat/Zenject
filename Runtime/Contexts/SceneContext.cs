@@ -72,11 +72,12 @@ namespace Zenject
 
         void OnDestroy()
         {
+            // Clean up static variable as _kernel.Dispose() may throw exceptions.
+            SceneContextRegistry.Remove(this);
+
             _kernel.Dispose();
             _kernel = default; // For GC.
             Container = null; // For GC.
-
-            SceneContextRegistry.Remove(this);
         }
 
         void Update()
