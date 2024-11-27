@@ -1,3 +1,4 @@
+using System;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -33,7 +34,22 @@ namespace Zenject
 
             var prefab = Resources.Load<ProjectContext>("ProjectContext");
             var instance = Instantiate(prefab, null, false);
-            instance.DoInitialize(scheme);
+
+#if UNITY_EDITOR
+            try
+            {
+#endif
+                instance.DoInitialize(scheme);
+#if UNITY_EDITOR
+            }
+            catch (Exception e)
+            {
+                L.E("Exception occurred during ProjectContext initialization.\n" + e);
+                L.E(e);
+                throw;
+            }
+#endif
+
             DontDestroyOnLoad(instance.gameObject);
 
             return _instance = instance;
