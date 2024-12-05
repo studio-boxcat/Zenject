@@ -88,6 +88,11 @@ namespace Zenject
             gameObject.GetComponents(_monoBehaviourBuf);
             foreach (var monoBehaviour in _monoBehaviourBuf)
             {
+#if UNITY_EDITOR
+                if (monoBehaviour == null) // This can happen if the component is no longer inherited from MonoBehaviour.
+                    continue;
+#endif
+
                 if (RequiresInject(monoBehaviour.GetType()))
                     output.Add(monoBehaviour);
             }
