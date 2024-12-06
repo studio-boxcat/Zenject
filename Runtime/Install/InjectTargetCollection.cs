@@ -31,6 +31,14 @@ namespace Zenject
                 var target = Targets[index];
 
 #if DEBUG
+                if (target == null)
+                {
+                    L.E($"Target is null: this={name}, index={index}", this);
+                    continue;
+                }
+#endif
+
+#if DEBUG
                 try
 #endif
                 {
