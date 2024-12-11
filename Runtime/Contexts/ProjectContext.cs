@@ -57,6 +57,8 @@ namespace Zenject
 
         void DoInitialize([CanBeNull] InstallScheme scheme)
         {
+            Assert.IsNotNull(_installer, "Installer is not set in ProjectContext: " + this);
+
             // Install
             scheme ??= new InstallScheme(16);
             _installer.InstallBindings(scheme); // No injection for ProjectContext.
