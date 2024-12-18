@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using Unity.Profiling;
 using UnityEngine.Assertions;
 
 namespace Zenject
@@ -130,8 +131,11 @@ namespace Zenject
         }
 
 #if DEBUG
+        [IgnoredByDeepProfiler]
         bool DebugHasBinding(ulong bindKey) => _bindings.Any(b => b.Key == bindKey);
+        [IgnoredByDeepProfiler]
         public bool DebugHasBinding(Type type, BindId id = default) => DebugHasBinding(Hash(type, id));
+        [IgnoredByDeepProfiler]
         public bool DebugHasBinding<TContractType>(BindId id = default) => DebugHasBinding(typeof(TContractType), id);
 #endif
 
