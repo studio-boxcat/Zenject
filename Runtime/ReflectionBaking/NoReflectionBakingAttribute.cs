@@ -3,7 +3,8 @@ using System.Diagnostics;
 
 namespace Zenject
 {
-    [Conditional("UNITY_EDITOR")]
+    // DEBUG for validate the reflection baking
+    [Conditional("DEBUG")]
     [AttributeUsage(AttributeTargets.Assembly | AttributeTargets.Class)]
     public class NoReflectionBakingAttribute : Attribute { }
 }

@@ -173,9 +173,6 @@ namespace Zenject
             var lastNamespaceName = "";
             foreach (var typeInfo in typeInfos)
             {
-                if (typeInfo.ShouldImplementInjectable() == false)
-                    continue;
-
                 var type = typeInfo.Type;
                 var namespaceName = type.Namespace;
                 var namespaceChanged = lastNamespaceName != namespaceName;
@@ -188,12 +185,11 @@ namespace Zenject
                         _sb.Append("namespace ").Append(type.Namespace).AppendLine(" {").AppendLine();
                 }
 
-                var shouldImplementInjectable = typeInfo.ShouldImplementInjectable();
                 _sb.Append(GetAccessModifier(type)).Append(" partial class ").Append(type.Name)
-                    .Append(shouldImplementInjectable ? " : " + nameof(IZenjectInjectable) : "")
-                    .AppendLine(" {");
+                    .Append(" : ").Append(nameof(IZenjectInjectable)).AppendLine(" {");
 
-                if (shouldImplementInjectable)
+                // For types with no field injection & no method injection, default implementation (empty) will be used.
+                if (typeInfo.Fields is not null || typeInfo.Method is not null)
                     GenerateInjectMethod(typeInfo.Fields, typeInfo.Method, _sb);
 
                 _sb.AppendLine("}").AppendLine();
@@ -216,6 +212,8 @@ namespace Zenject
             static void GenerateInjectMethod(
                 List<FieldInfo> fields, MethodInfo method, StringBuilder sb)
             {
+                Assert.IsTrue(fields is not null || method is not null, "At least one of fields or method must be non-null.");
+
                 sb.AppendLine($"public void Inject({nameof(DependencyProvider)} dp) {{");
 
                 if (fields != null)
@@ -402,8 +400,6 @@ namespace Zenject
             {
                 Type = type;
             }
-
-            public bool ShouldImplementInjectable() => Fields != null || Method != null;
         }
 
         class AssemblyComparer : IComparer<Assembly>

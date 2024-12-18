@@ -49,7 +49,9 @@ namespace Zenject
                 return initializer;
 
 #if !UNITY_EDITOR
-            L.W($"Reflection baking is disabled for {type.Name}");
+            // Ignore if explicitly marked with [NoReflectionBaking]
+            if (type.IsDefined(typeof(NoReflectionBakingAttribute), false) is false)
+                L.W($"Reflection baking is disabled for {type.Name}");
 #endif
 
             var fieldInfos = TypeAnalyzer.GetFieldInfos(type, false);
@@ -57,11 +59,6 @@ namespace Zenject
             var methodInfo = TypeAnalyzer.GetMethodInfo(type, false);
             initializer = new TypeInfo(fieldInfos, methodInfo);
             _typeInfoCache.Add(type, initializer);
-
-#if DEBUG && !UNITY_EDITOR // Only when reflection baking is enabled
-            if (initializer.Fields is {Length: > 0} || initializer.Method.MethodInfo != null)
-                L.W($"Unregistered type detected: {type.Name}");
-#endif
 
             return initializer;
         }

@@ -70,12 +70,14 @@ namespace Zenject
             if (_constructorCache.TryGetValue(type, out var constructorInfo))
                 return constructorInfo;
 
+#if DEBUG && !UNITY_EDITOR
+            // Ignore if explicitly marked with [NoReflectionBaking]
+            if (type.IsDefined(typeof(NoReflectionBakingAttribute), false) is false)
+                L.W("Unregistered type detected: " + type.Name);
+#endif
+
             constructorInfo = TypeAnalyzer.GetConstructorInfo(type);
             _constructorCache.Add(type, constructorInfo);
-
-#if DEBUG && !UNITY_EDITOR
-            L.W("Unregistered type detected: " + type.Name);
-#endif
 
             return constructorInfo;
         }

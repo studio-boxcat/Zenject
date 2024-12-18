@@ -7,7 +7,8 @@ namespace Zenject
     /// </summary>
     public interface IZenjectInjectable
     {
-        void Inject(DependencyProvider dp);
+        // For types with no field injection & no method injection, default implementation (empty) will be used.
+        void Inject(DependencyProvider dp) { }
     }
 
     public static class ZenjectExtensions
