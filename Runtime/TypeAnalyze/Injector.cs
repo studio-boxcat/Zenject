@@ -48,6 +48,10 @@ namespace Zenject
             if (_typeInfoCache.TryGetValue(type, out var initializer))
                 return initializer;
 
+#if !UNITY_EDITOR
+            L.W($"Reflection baking is disabled for {type.Name}");
+#endif
+
             var fieldInfos = TypeAnalyzer.GetFieldInfos(type, false);
             if (fieldInfos.Length == 0) fieldInfos = null;
             var methodInfo = TypeAnalyzer.GetMethodInfo(type, false);

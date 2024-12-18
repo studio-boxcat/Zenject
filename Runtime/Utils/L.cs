@@ -1,9 +1,11 @@
 using System.Diagnostics;
+using Unity.Profiling;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
 namespace Zenject
 {
+    [IgnoredByDeepProfiler]
     static class L
     {
         [Conditional("DEBUG"), HideInCallstack]
