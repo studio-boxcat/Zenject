@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Zenject.Analyzers.Samples</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Analyzer Include="..\\Zenject.Analyzers\\bin\\Release\\netstandard2.0\\Zenject.Analyzers.dll" />
+    </ItemGroup>
+</Project>

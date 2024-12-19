@@ -22,9 +22,6 @@ namespace Zenject
             {
                 var assembly = typeInfo.Type.Assembly;
 
-                if (ShouldIgnoreAssembly(assembly))
-                    continue;
-
                 // Add the type to the assembly.
                 if (assemblyDict.TryGetValue(assembly, out var typeList) == false)
                 {
@@ -67,23 +64,6 @@ namespace Zenject
             }
         }
 
-        static readonly Dictionary<Assembly, bool> _assembliesToIgnore = new();
-
-        static bool ShouldIgnoreAssembly(Assembly assembly)
-        {
-            if (_assembliesToIgnore.TryGetValue(assembly, out var shouldIgnore))
-                return shouldIgnore;
-
-            // Skip if the assembly is marked with NoReflectionBaking.
-            if (assembly.IsDefined(typeof(NoReflectionBakingAttribute)))
-                return _assembliesToIgnore[assembly] = true;
-
-            // If the assembly is not in the Assets folder, skip it.
-            var assemblyName = assembly.GetName().Name;
-            shouldIgnore = TryGetCorrespondingRootForAssembly(assemblyName, out _) == false;
-            return _assembliesToIgnore[assembly] = shouldIgnore;
-        }
-
         static readonly Dictionary<string, string> _assemblyNameToDir = new();
 
         static bool TryGetCorrespondingRootForAssembly(string assemblyName, out string rootDir)
@@ -116,12 +96,13 @@ namespace Zenject
         {
             var typeDict = new Dictionary<Type, TypeInfo>();
             var ignoredTypes = new HashSet<Type>(TypeCache.GetTypesWithAttribute<NoReflectionBakingAttribute>());
+            var ignoredAssemblies = CollectIgnoredAssembly();
 
             var constructors = TypeCache.GetMethodsWithAttribute<InjectConstructorAttribute>();
             foreach (var methodInfo in constructors)
             {
                 var type = methodInfo.DeclaringType;
-                if (ignoredTypes.Contains(type)) continue; // Skip if the type is marked with NoReflectionBaking.
+                if (ShouldIgnoreType(type, ignoredTypes, ignoredAssemblies)) continue; // Skip if the type is marked with NoReflectionBaking.
 
                 var typeInfo = GetTypeInfo(type, typeDict);
                 typeInfo.Constructor = methodInfo;
@@ -130,7 +111,7 @@ namespace Zenject
             foreach (var methodInfo in TypeCache.GetMethodsWithAttribute<InjectMethodAttribute>())
             {
                 var type = methodInfo.DeclaringType;
-                if (ignoredTypes.Contains(type)) continue; // Skip if the type is marked with NoReflectionBaking.
+                if (ShouldIgnoreType(type, ignoredTypes, ignoredAssemblies)) continue; // Skip if the type is marked with NoReflectionBaking.
 
                 var typeInfo = GetTypeInfo(type, typeDict);
                 Assert.IsNull(typeInfo.Method);
@@ -140,7 +121,7 @@ namespace Zenject
             foreach (var fieldInfo in TypeCache.GetFieldsWithAttribute<InjectAttributeBase>())
             {
                 var type = fieldInfo.DeclaringType;
-                if (ignoredTypes.Contains(type)) continue; // Skip if the type is marked with NoReflectionBaking.
+                if (ShouldIgnoreType(type, ignoredTypes, ignoredAssemblies)) continue; // Skip if the type is marked with NoReflectionBaking.
 
                 var typeInfo = GetTypeInfo(type, typeDict);
                 typeInfo.Fields ??= new List<FieldInfo>();
@@ -152,6 +133,31 @@ namespace Zenject
                 typeInfo.Fields?.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
 
             return typeDict;
+
+            static bool ShouldIgnoreType(Type type, HashSet<Type> ignoredTypes, HashSet<Assembly> ignoredAssemblies)
+            {
+                return ignoredAssemblies.Contains(type.Assembly)
+                       || ignoredTypes.Contains(type);
+            }
+
+            static HashSet<Assembly> CollectIgnoredAssembly()
+            {
+                var ret = new HashSet<Assembly>();
+
+                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    // Skip if the assembly is marked with NoReflectionBaking.
+                    if (assembly.IsDefined(typeof(NoReflectionBakingAttribute)))
+                        ret.Add(assembly);
+
+                    // If the assembly is not in the Assets folder, skip it.
+                    var assemblyName = assembly.GetName().Name;
+                    if (TryGetCorrespondingRootForAssembly(assemblyName, out _) is false)
+                        ret.Add(assembly);
+                }
+
+                return ret;
+            }
 
             static TypeInfo GetTypeInfo(Type type, Dictionary<Type, TypeInfo> typeDict)
             {
