@@ -73,7 +73,7 @@ namespace Zenject
 #if DEBUG && !UNITY_EDITOR
             // Ignore if explicitly marked with [NoReflectionBaking]
             if (type.IsDefined(typeof(NoReflectionBakingAttribute), false) is false)
-                L.W("Unregistered type detected: " + type.Name);
+                L.W($"Reflection baking is disabled for {type.Name}");
 #endif
 
             constructorInfo = TypeAnalyzer.GetConstructorInfo(type);
