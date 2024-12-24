@@ -16,7 +16,7 @@ namespace Zenject.Analyzers;
 public class PartialKeywordFixProvider : CodeFixProvider
 {
     public override ImmutableArray<string> FixableDiagnosticIds { get; } =
-        ImmutableArray.Create(PartialKeywordAnalyzer.DiagnosticId);
+        ImmutableArray.Create(DiagnosticIds.PartialKeyword);
 
     public override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 
@@ -44,21 +44,20 @@ public class PartialKeywordFixProvider : CodeFixProvider
             diagnostic);
     }
 
-    private static async Task<Document> AddPartialKeywordAsync(Document document,
+    private static async Task<Document> AddPartialKeywordAsync(
+        Document document,
         ClassDeclarationSyntax classDeclaration,
         CancellationToken cancellationToken)
     {
-        // Add the partial modifier to the class.
         var partialModifier = SyntaxFactory.Token(SyntaxKind.PartialKeyword);
         var newModifiers = classDeclaration.Modifiers.Add(partialModifier);
         var newClassDeclaration = classDeclaration.WithModifiers(newModifiers);
 
-        // Replace the old class declaration with the new one.
-        var root = await document.GetSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
-        if (root == null)
-            return document;
-
-        var newRoot = root.ReplaceNode(classDeclaration, newClassDeclaration);
-        return document.WithSyntaxRoot(newRoot);
+        // Reuse the common helper
+        return await document.ReplaceNodeAsync(
+            oldNode: classDeclaration,
+            newNode: newClassDeclaration,
+            cancellationToken
+        );
     }
 }
