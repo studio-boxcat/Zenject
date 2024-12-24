@@ -23,7 +23,7 @@ namespace Zenject
             Targets = Internal_Collect().ToArray();
         }
 
-        [MenuItem("CONTEXT/InjectTargetCollection/Collect")]
+        [MenuItem("CONTEXT/InjectTargetCollection/Collect _c")]
         static void Editor_Collect(MenuCommand cmd)
         {
             var target = (InjectTargetCollection) cmd.context;

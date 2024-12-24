@@ -21,7 +21,7 @@ namespace Zenject
             _bindings = Internal_Collect().ToArray();
         }
 
-        [MenuItem("CONTEXT/ZenjectBindingCollection/Collect")]
+        [MenuItem("CONTEXT/ZenjectBindingCollection/Collect _c")]
         static void Editor_Collect(MenuCommand cmd)
         {
             var target = (ZenjectBindingCollection) cmd.context;
