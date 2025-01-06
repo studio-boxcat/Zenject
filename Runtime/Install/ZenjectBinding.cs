@@ -4,7 +4,7 @@ using Object = UnityEngine.Object;
 
 namespace Zenject
 {
-    class ZenjectBinding : ZenjectBindingBase
+    internal class ZenjectBinding : ZenjectBindingBase
     {
         [SerializeField, Required, ShowIf("@Target == null")]
         public Object Target;
@@ -26,7 +26,7 @@ namespace Zenject
 
 #if UNITY_EDITOR
         [ShowInInspector, LabelText("Target"), PropertyOrder(-2), ShowIf("@Target != null")]
-        Object _target
+        private Object _target
         {
             get => Target;
             set => Target = value;
@@ -34,16 +34,16 @@ namespace Zenject
 
         [ShowInInspector, LabelText("Component"), PropertyOrder(-1),
          ShowIf("@Target != null"), ValueDropdown("Target_Dropdown")]
-        Object _targetDropdown
+        private Object _targetDropdown
         {
             get => Target;
             set => Target = value;
         }
 
         [ShowInInspector, DisplayAsString]
-        string _contractType => Target == null ? "" : Target.GetType().Name;
+        private string _contractType => Target == null ? "" : Target.GetType().Name;
 
-        ValueDropdownList<Object> Target_Dropdown()
+        private ValueDropdownList<Object> Target_Dropdown()
         {
             if (Target == null)
                 return null;

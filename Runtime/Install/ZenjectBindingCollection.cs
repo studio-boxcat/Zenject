@@ -5,13 +5,13 @@ using UnityEngine.Serialization;
 namespace Zenject
 {
     [DisallowMultipleComponent]
-    partial class ZenjectBindingCollection : ZenjectBindingBase
+    internal partial class ZenjectBindingCollection : ZenjectBindingBase
     {
         [SerializeField, Required]
         [FormerlySerializedAs("Bindings")]
         [ListDrawerSettings(IsReadOnly = true)]
         [ValidateInput("Validate_Bindings")]
-        ZenjectBindingBase[] _bindings;
+        private ZenjectBindingBase[] _bindings;
 
         public override void Bind(InstallScheme scheme)
         {

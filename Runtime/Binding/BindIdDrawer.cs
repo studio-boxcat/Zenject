@@ -9,10 +9,10 @@ using UnityEngine;
 namespace Zenject
 {
     [UsedImplicitly]
-    class BindIdDrawer : OdinValueDrawer<BindId>
+    internal class BindIdDrawer : OdinValueDrawer<BindId>
     {
-        static int[] _ids;
-        static GUIContent[] _names;
+        private static int[] _ids;
+        private static GUIContent[] _names;
 
         protected override void DrawPropertyLayout(GUIContent label)
         {

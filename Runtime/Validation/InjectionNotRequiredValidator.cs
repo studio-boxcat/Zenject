@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Zenject
 {
-    class InjectionNotRequiredValidator_GameObject : AttributeValidator<InjectionNotRequiredAttribute, GameObject>
+    internal class InjectionNotRequiredValidator_GameObject : AttributeValidator<InjectionNotRequiredAttribute, GameObject>
     {
         protected override void Validate(ValidationResult result)
         {
@@ -25,7 +25,7 @@ namespace Zenject
         }
     }
 
-    class InjectionNotRequiredValidator_Component<TComponent> : AttributeValidator<InjectionNotRequiredAttribute, TComponent>
+    internal class InjectionNotRequiredValidator_Component<TComponent> : AttributeValidator<InjectionNotRequiredAttribute, TComponent>
         where TComponent : Component
     {
         protected override void Validate(ValidationResult result)

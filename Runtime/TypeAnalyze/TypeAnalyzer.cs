@@ -6,7 +6,7 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    static class TypeAnalyzer
+    internal static class TypeAnalyzer
     {
         public static InjectConstructorInfo GetConstructorInfo(Type type)
         {
@@ -49,8 +49,8 @@ namespace Zenject
             return new InjectMethodInfo(methodInfo, ParamUtils.BakeParams(methodInfo));
         }
 
-        static readonly List<InjectFieldInfo> _fieldInfoBuffer = new();
-        static readonly InjectFieldInfo[] _emptyFieldInfoArray = Array.Empty<InjectFieldInfo>();
+        private static readonly List<InjectFieldInfo> _fieldInfoBuffer = new();
+        private static readonly InjectFieldInfo[] _emptyFieldInfoArray = Array.Empty<InjectFieldInfo>();
 
         public static InjectFieldInfo[] GetFieldInfos(Type type, bool excludeNonDeclaringFields)
         {

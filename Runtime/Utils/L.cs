@@ -6,7 +6,7 @@ using Debug = UnityEngine.Debug;
 namespace Zenject
 {
     [IgnoredByDeepProfiler]
-    static class L
+    internal static class L
     {
         [Conditional("DEBUG"), HideInCallstack]
         public static void I(string message, Object context = null)

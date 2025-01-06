@@ -8,7 +8,7 @@ namespace Zenject
 {
     public static class Injector
     {
-        static readonly Dictionary<Type, TypeInfo> _typeInfoCache = new();
+        private static readonly Dictionary<Type, TypeInfo> _typeInfoCache = new();
 
         public static void Inject(object inst, DiContainer diContainer, ArgumentArray extraArgs)
         {
@@ -43,7 +43,7 @@ namespace Zenject
                    || GetInfo(type).IsInjectionRequired();
         }
 
-        static TypeInfo GetInfo(Type type)
+        private static TypeInfo GetInfo(Type type)
         {
             if (_typeInfoCache.TryGetValue(type, out var initializer))
                 return initializer;
@@ -68,7 +68,7 @@ namespace Zenject
             _typeInfoCache.Clear();
         }
 
-        static void InjectMember(
+        private static void InjectMember(
             object inst, DiContainer container, InjectFieldInfo setter, InjectSpec injectSpec, ArgumentArray extraArgs)
         {
             if (extraArgs.TryGet(injectSpec.Type, out var value))
@@ -102,7 +102,7 @@ namespace Zenject
             }
         }
 
-        static void InjectMethod(
+        private static void InjectMethod(
             object inst, DiContainer container, InjectMethodInfo method, ArgumentArray extraArgs)
         {
 #if DEBUG
@@ -122,7 +122,7 @@ namespace Zenject
 #endif
         }
 
-        readonly struct TypeInfo
+        private readonly struct TypeInfo
         {
             [CanBeNull] public readonly InjectFieldInfo[] Fields;
             public readonly InjectMethodInfo Method;

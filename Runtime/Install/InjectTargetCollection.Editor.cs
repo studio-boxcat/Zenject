@@ -12,7 +12,7 @@ namespace Zenject
 {
     public partial class InjectTargetCollection
     {
-        void Reset()
+        private void Reset()
         {
             Editor_Collect();
         }
@@ -24,7 +24,7 @@ namespace Zenject
         }
 
         [MenuItem("CONTEXT/InjectTargetCollection/Collect _c")]
-        static void Editor_Collect(MenuCommand cmd)
+        private static void Editor_Collect(MenuCommand cmd)
         {
             var target = (InjectTargetCollection) cmd.context;
             Undo.RecordObject(target, "");
@@ -32,7 +32,7 @@ namespace Zenject
             EditorUtility.SetDirty(target);
         }
 
-        bool Validate_Targets()
+        private bool Validate_Targets()
         {
             // When playing, we don't want to validate the targets.
             if (Targets == null) return true;
@@ -40,7 +40,7 @@ namespace Zenject
             return Targets.SequenceEqual(Internal_Collect());
         }
 
-        List<Object> Internal_Collect()
+        private List<Object> Internal_Collect()
         {
             var targets = new List<Object>();
 
@@ -65,7 +65,7 @@ namespace Zenject
             return targets;
         }
 
-        static Object TryGetInjectionIntermediary(GameObject target)
+        private static Object TryGetInjectionIntermediary(GameObject target)
         {
             // If the gameObject has a GameObjectContext component then let it handle its own children.
             if (target.TryGetComponent(out GameObjectContext context))
@@ -78,12 +78,12 @@ namespace Zenject
             return null;
         }
 
-        static readonly List<MonoBehaviour> _monoBehaviourBuf = new();
+        private static readonly List<MonoBehaviour> _monoBehaviourBuf = new();
 
         /// <summary>
         /// Collects all injectable components on the given gameObject.
         /// </summary>
-        static void CollectInjectableComponents(GameObject gameObject, List<Object> output)
+        private static void CollectInjectableComponents(GameObject gameObject, List<Object> output)
         {
             gameObject.GetComponents(_monoBehaviourBuf);
             foreach (var monoBehaviour in _monoBehaviourBuf)
@@ -98,7 +98,7 @@ namespace Zenject
             }
         }
 
-        static void CollectInjectablesInChildren(Transform transform, List<Object> output)
+        private static void CollectInjectablesInChildren(Transform transform, List<Object> output)
         {
             var childCount = transform.childCount;
             for (var i = 0; i < childCount; i++)
@@ -112,7 +112,7 @@ namespace Zenject
         /// Collects all injectable components on the given gameObject and its children.
         /// Since the given gameObject is not a root gameObject, it will add only the InjectionIntermediary if it exists.
         /// </summary>
-        static void CollectInjectablesFromNonRootGameObject(GameObject gameObject, List<Object> output)
+        private static void CollectInjectablesFromNonRootGameObject(GameObject gameObject, List<Object> output)
         {
             var injectionIntermediary = TryGetInjectionIntermediary(gameObject);
             if (injectionIntermediary is not null)
@@ -125,9 +125,9 @@ namespace Zenject
             CollectInjectablesInChildren(gameObject.transform, output);
         }
 
-        static readonly Dictionary<Type, bool> _requiresInjectCache = new();
+        private static readonly Dictionary<Type, bool> _requiresInjectCache = new();
 
-        static bool RequiresInject(Type type)
+        private static bool RequiresInject(Type type)
         {
             if (_requiresInjectCache.TryGetValue(type, out var requiresInjection))
                 return requiresInjection;

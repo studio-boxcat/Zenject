@@ -5,7 +5,7 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    struct Binding
+    internal struct Binding
     {
         public readonly ulong Key;
         public object Value; // Instance or ConcreteType
@@ -47,7 +47,7 @@ namespace Zenject
             }
         }
 
-        class Comparer : IComparer<Binding>
+        private class Comparer : IComparer<Binding>
         {
             public static readonly IComparer<Binding> Instance = new Comparer();
 
@@ -58,7 +58,7 @@ namespace Zenject
         }
     }
 
-    readonly struct Payload
+    internal readonly struct Payload
     {
         public readonly ProvideDelegate Provider;
         public readonly ArgumentArray Arguments;

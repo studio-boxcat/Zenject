@@ -7,7 +7,7 @@ namespace Zenject
     public partial class DiContainer
     {
         [ShowInInspector, LabelText("Bindings"), ListDrawerSettings(IsReadOnly = true)]
-        EditorBinding[] _editor_Bindings
+        private EditorBinding[] _editor_Bindings
         {
             get
             {
@@ -19,7 +19,7 @@ namespace Zenject
             }
         }
 
-        readonly struct EditorBinding
+        private readonly struct EditorBinding
         {
             [ShowInInspector, DisplayAsString, HideLabel]
             public readonly string Key;

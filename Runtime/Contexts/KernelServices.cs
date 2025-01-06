@@ -5,14 +5,14 @@ namespace Zenject
 {
     public partial class InstallScheme
     {
-        readonly struct KernelServices
+        private readonly struct KernelServices
         {
             public readonly List<IDisposable> Disposables1;
             public readonly List<ulong> Disposables2;
             public readonly List<ITickable> Tickables1;
             public readonly List<ulong> Tickables2;
 
-            KernelServices(
+            private KernelServices(
                 List<IDisposable> disposables1,
                 List<ulong> disposables2,
                 List<ITickable> tickables1,

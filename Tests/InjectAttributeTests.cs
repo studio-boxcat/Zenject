@@ -8,7 +8,7 @@ namespace Zenject.Tests
 {
     public class InjectAttributeTests
     {
-        static readonly StringBuilder _sb = new();
+        private static readonly StringBuilder _sb = new();
 
         [Test]
         public void Test_AllMethodInjection()

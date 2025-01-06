@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace Zenject
 {
-    class ParamResolveException : Exception
+    internal class ParamResolveException : Exception
     {
         public readonly InjectSpec ParamSpec;
         public readonly int ParamIndex;
@@ -15,13 +15,13 @@ namespace Zenject
             ParamIndex = paramIndex;
         }
 
-        static string FormatMessage(InjectSpec paramSpec, int paramIndex)
+        private static string FormatMessage(InjectSpec paramSpec, int paramIndex)
         {
             return $"Failed to Resolve Param: paramSpec={paramSpec.ToString()}, paramIndex={paramIndex}";
         }
     }
 
-    class MethodInvokeException : Exception
+    internal class MethodInvokeException : Exception
     {
         public readonly MethodBase MethodBase;
         public readonly InjectSpec ParamSpec;
@@ -35,7 +35,7 @@ namespace Zenject
             ParamIndex = paramIndex;
         }
 
-        static string FormatMessage(MethodBase methodBase, InjectSpec paramSpec, int paramIndex)
+        private static string FormatMessage(MethodBase methodBase, InjectSpec paramSpec, int paramIndex)
         {
             return $"Failed to Invoke Method: method={methodBase.Name}, paramSpec={paramSpec.ToString()}, paramIndex={paramIndex}";
         }

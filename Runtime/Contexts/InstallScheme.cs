@@ -11,10 +11,10 @@ namespace Zenject
 
     public partial class InstallScheme
     {
-        Binding[] _bindings;
-        int _bindingPtr;
-        readonly Dictionary<ulong, Payload> _payloads;
-        readonly KernelServices _kernelServices;
+        private Binding[] _bindings;
+        private int _bindingPtr;
+        private readonly Dictionary<ulong, Payload> _payloads;
+        private readonly KernelServices _kernelServices;
 
         public InstallScheme(int capacity = 16)
         {
@@ -28,7 +28,7 @@ namespace Zenject
             return "[ " + string.Join(", ", _bindings.Take(_bindingPtr)) + " ]";
         }
 
-        void AddBinding(Binding binding)
+        private void AddBinding(Binding binding)
         {
             Assert.AreNotEqual(0, binding.Key, "Binding key must not be zero.");
 
@@ -132,13 +132,13 @@ namespace Zenject
 
 #if DEBUG
         [IgnoredByDeepProfiler]
-        bool DebugHasBinding(ulong bindKey) => _bindings.Any(b => b.Key == bindKey);
+        private bool DebugHasBinding(ulong bindKey) => _bindings.Any(b => b.Key == bindKey);
         [IgnoredByDeepProfiler]
         public bool DebugHasBinding(Type type, BindId id = default) => DebugHasBinding(Hash(type, id));
         [IgnoredByDeepProfiler]
         public bool DebugHasBinding<TContractType>(BindId id = default) => DebugHasBinding(typeof(TContractType), id);
 #endif
 
-        static ulong Hash(Type type, BindId id) => BindKey.Hash(type, id);
+        private static ulong Hash(Type type, BindId id) => BindKey.Hash(type, id);
     }
 }

@@ -11,11 +11,11 @@ namespace Zenject
     [HideReferenceObjectPicker]
     public partial class DiContainer
     {
-        Binding[] _bindings;
-        int _bindingCount;
-        Dictionary<ulong, Payload> _payloads;
+        private Binding[] _bindings;
+        private int _bindingCount;
+        private Dictionary<ulong, Payload> _payloads;
         [ShowInInspector, ReadOnly, CanBeNull]
-        DiContainer _parent;
+        private DiContainer _parent;
 
         internal void Initialize(
             Binding[] bindings,
@@ -214,6 +214,6 @@ namespace Zenject
             return inst;
         }
 
-        static ulong Hash(Type type, BindId id) => BindKey.Hash(type, id);
+        private static ulong Hash(Type type, BindId id) => BindKey.Hash(type, id);
     }
 }

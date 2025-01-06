@@ -6,12 +6,12 @@ using Sirenix.OdinInspector;
 namespace Zenject
 {
     [HideReferenceObjectPicker]
-    readonly struct Kernel
+    internal readonly struct Kernel
     {
         [ShowInInspector, ListDrawerSettings(IsReadOnly = true)]
-        readonly List<IDisposable> _disposables;
+        private readonly List<IDisposable> _disposables;
         [ShowInInspector, ListDrawerSettings(IsReadOnly = true)]
-        readonly List<ITickable> _tickables;
+        private readonly List<ITickable> _tickables;
 
         public Kernel(List<IDisposable> disposables, List<ITickable> tickables)
         {

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace Zenject
 {
-    static class BindKey
+    internal static class BindKey
     {
 #if DEBUG
-        static readonly Dictionary<ulong, string> _debugNames = new();
+        private static readonly Dictionary<ulong, string> _debugNames = new();
 #endif
 
         public static ulong Hash(Type type, BindId id)

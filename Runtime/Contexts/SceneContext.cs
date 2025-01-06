@@ -5,7 +5,7 @@ namespace Zenject
 {
     public class SceneContext : MonoBehaviour
     {
-        static InstallScheme _prebuiltScheme;
+        private static InstallScheme _prebuiltScheme;
         public static void SetPrebuiltScheme(InstallScheme scheme)
         {
             L.I("SetPrebuiltScheme: " + scheme);
@@ -27,10 +27,10 @@ namespace Zenject
         [ShowInInspector, ShowIf("@Container != null")]
         public DiContainer Container;
         [ShowInInspector, ShowIf("@Container != null")]
-        Kernel _kernel;
+        private Kernel _kernel;
 
         [SerializeField, InlineProperty, HideLabel, HideInPlayMode]
-        InstallerCollection _installers;
+        private InstallerCollection _installers;
 
         public void Awake()
         {
@@ -70,7 +70,7 @@ namespace Zenject
             SceneContextRegistry.Add(this);
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             // Clean up static variable as _kernel.Dispose() may throw exceptions.
             SceneContextRegistry.Remove(this);
@@ -80,14 +80,14 @@ namespace Zenject
             Container = null; // For GC.
         }
 
-        void Update()
+        private void Update()
         {
             _kernel.Tick();
         }
 
 #if UNITY_EDITOR
         [Button("Collect", ButtonSizes.Medium), HideInPlayMode]
-        void Editor_Collect()
+        private void Editor_Collect()
         {
             if (TryGetComponent<ZenjectBindingCollection>(out var zenjectBindings))
                 zenjectBindings.Editor_Collect();

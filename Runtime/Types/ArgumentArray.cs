@@ -7,10 +7,10 @@ namespace Zenject
     public readonly struct ArgumentArray
     {
         public readonly int Length;
-        readonly object _arg1;
-        readonly object _arg2;
-        readonly object _arg3;
-        readonly object _arg4;
+        private readonly object _arg1;
+        private readonly object _arg2;
+        private readonly object _arg3;
+        private readonly object _arg4;
 
 
         public ArgumentArray(object arg1)

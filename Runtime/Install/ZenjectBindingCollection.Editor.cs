@@ -8,9 +8,9 @@ using UnityEngine.SceneManagement;
 
 namespace Zenject
 {
-    partial class ZenjectBindingCollection
+    internal partial class ZenjectBindingCollection
     {
-        void Reset()
+        private void Reset()
         {
             Editor_Collect();
         }
@@ -22,7 +22,7 @@ namespace Zenject
         }
 
         [MenuItem("CONTEXT/ZenjectBindingCollection/Collect _c")]
-        static void Editor_Collect(MenuCommand cmd)
+        private static void Editor_Collect(MenuCommand cmd)
         {
             var target = (ZenjectBindingCollection) cmd.context;
             Undo.RecordObject(target, "");
@@ -30,7 +30,7 @@ namespace Zenject
             EditorUtility.SetDirty(target);
         }
 
-        bool Validate_Bindings(ref string errorMessage)
+        private bool Validate_Bindings(ref string errorMessage)
         {
             // When playing, we don't want to validate the targets.
             if (_bindings == null)
@@ -52,7 +52,7 @@ namespace Zenject
             return true;
         }
 
-        List<ZenjectBindingBase> Internal_Collect()
+        private List<ZenjectBindingBase> Internal_Collect()
         {
             var targets = new List<ZenjectBindingBase>();
 
@@ -73,9 +73,9 @@ namespace Zenject
             return targets;
         }
 
-        static readonly List<ZenjectBindingBase> _bindingBuf = new();
+        private static readonly List<ZenjectBindingBase> _bindingBuf = new();
 
-        static void GetBindingsUnderGameObject(
+        private static void GetBindingsUnderGameObject(
             Transform transform, bool self, List<ZenjectBindingBase> output)
         {
             // If the transform has a ZenjectBindingCollection component then let it handle its own children.

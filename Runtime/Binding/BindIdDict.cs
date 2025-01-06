@@ -6,14 +6,14 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    static class BindIdDict
+    internal static class BindIdDict
     {
-        static Dictionary<BindId, string> _dictBacking;
-        static Dictionary<BindId, string> _dict => _dictBacking ??= Build();
+        private static Dictionary<BindId, string> _dictBacking;
+        private static Dictionary<BindId, string> _dict => _dictBacking ??= Build();
         public static Dictionary<BindId, string>.KeyCollection Keys => _dict.Keys;
         public static Dictionary<BindId, string>.ValueCollection Values => _dict.Values;
 
-        static HashSet<BindId> _validSet;
+        private static HashSet<BindId> _validSet;
         public static bool Valid(BindId bindId)
         {
             if (bindId == default) return true; // 0 means default.
@@ -21,7 +21,7 @@ namespace Zenject
             return _validSet.Contains(bindId);
         }
 
-        static Dictionary<BindId, string> Build()
+        private static Dictionary<BindId, string> Build()
         {
             var dict = new Dictionary<BindId, string>();
 

@@ -6,12 +6,12 @@ using Object = UnityEngine.Object;
 namespace Zenject
 {
     [Serializable]
-    struct InstallerCollection
+    internal struct InstallerCollection
     {
         [SerializeField, Required]
-        ScriptableObjectInstaller[] _scriptableObjectInstallers;
+        private ScriptableObjectInstaller[] _scriptableObjectInstallers;
         [SerializeField, Required]
-        MonoBehaviourInstaller[] _monoInstallers;
+        private MonoBehaviourInstaller[] _monoInstallers;
 
 
         public InstallerCollection(

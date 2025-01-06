@@ -17,8 +17,8 @@ namespace Zenject
         [UsedImplicitly, CanBeNull]
         public static IConstructorHook Hook;
 
-        static Binder _binder;
-        static CultureInfo _cultureInfo;
+        private static Binder _binder;
+        private static CultureInfo _cultureInfo;
 
         public static object Instantiate(Type concreteType, DiContainer container, ArgumentArray extraArgs)
         {
@@ -61,9 +61,9 @@ namespace Zenject
 #endif
         }
 
-        static readonly Dictionary<Type, InjectConstructorInfo> _constructorCache = new();
+        private static readonly Dictionary<Type, InjectConstructorInfo> _constructorCache = new();
 
-        static InjectConstructorInfo GetConstructorInfo(Type type)
+        private static InjectConstructorInfo GetConstructorInfo(Type type)
         {
             Assert.IsFalse(type.IsSubclassOf(typeof(UnityEngine.Object)));
 

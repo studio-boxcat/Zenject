@@ -3,9 +3,9 @@ using System.Reflection;
 
 namespace Zenject
 {
-    static class ParamUtils
+    internal static class ParamUtils
     {
-        static readonly InjectSpec[] _emptyInjectableArray = Array.Empty<InjectSpec>();
+        private static readonly InjectSpec[] _emptyInjectableArray = Array.Empty<InjectSpec>();
 
         public static InjectSpec[] BakeParams(MethodBase methodInfo)
         {

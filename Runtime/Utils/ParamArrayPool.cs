@@ -2,9 +2,9 @@ using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    static class ParamArrayPool
+    internal static class ParamArrayPool
     {
-        static readonly Container[] _containers = new Container[16];
+        private static readonly Container[] _containers = new Container[16];
 
         public static object[] Rent(int len)
         {
@@ -33,7 +33,7 @@ namespace Zenject
             _containers[len].Release(arr);
         }
 
-        struct Container
+        private struct Container
         {
             public readonly object[] Buffer0;
             public readonly object[] Buffer1;

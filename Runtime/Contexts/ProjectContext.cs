@@ -8,7 +8,7 @@ namespace Zenject
 {
     public class ProjectContext : MonoBehaviour
     {
-        static ProjectContext _instance;
+        private static ProjectContext _instance;
         public static bool HasInstance => _instance is not null;
         public static ProjectContext Instance
         {
@@ -21,10 +21,11 @@ namespace Zenject
 
 
         [ShowInInspector] public DiContainer Container;
-        [ShowInInspector] Kernel _kernel;
+        [ShowInInspector]
+        private Kernel _kernel;
 
         [SerializeField, Required, AssetsOnly]
-        ScriptableObjectInstaller _installer;
+        private ScriptableObjectInstaller _installer;
 
         public static ProjectContext Initialize(InstallScheme scheme = null)
         {
@@ -55,7 +56,7 @@ namespace Zenject
             return _instance = instance;
         }
 
-        void DoInitialize([CanBeNull] InstallScheme scheme)
+        private void DoInitialize([CanBeNull] InstallScheme scheme)
         {
             Assert.IsNotNull(_installer, "Installer is not set in ProjectContext: " + this);
 
@@ -68,7 +69,7 @@ namespace Zenject
             Container = scheme.Build(null, out _kernel);
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             // Clear static variables first, as _kernel.Dispose() may throw exceptions.
             if (ReferenceEquals(this, _instance))
@@ -82,7 +83,7 @@ namespace Zenject
             Container = null; // For GC.
         }
 
-        void Update()
+        private void Update()
         {
             _kernel.Tick();
         }

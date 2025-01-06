@@ -8,10 +8,11 @@ namespace Zenject
     public class GameObjectContext : MonoBehaviour, IZenjectInjectable
     {
         [ShowInInspector] public DiContainer Container;
-        [ShowInInspector] Kernel _kernel;
+        [ShowInInspector]
+        private Kernel _kernel;
 
         [SerializeField, InlineProperty, HideLabel]
-        InstallerCollection _installers;
+        private InstallerCollection _installers;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool TryInject(GameObject gameObject, DiContainer diContainer, ArgumentArray extraArgs)
@@ -53,14 +54,14 @@ namespace Zenject
             InjectTargetCollection.TryInject(gameObject, Container, dp.ExtraArgs);
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             _kernel.Dispose();
             _kernel = default; // For GC.
             Container = null; // For GC.
         }
 
-        void Update()
+        private void Update()
         {
             _kernel.Tick();
         }

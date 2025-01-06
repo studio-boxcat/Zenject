@@ -64,9 +64,9 @@ namespace Zenject
             }
         }
 
-        static readonly Dictionary<string, string> _assemblyNameToDir = new();
+        private static readonly Dictionary<string, string> _assemblyNameToDir = new();
 
-        static bool TryGetCorrespondingRootForAssembly(string assemblyName, out string rootDir)
+        private static bool TryGetCorrespondingRootForAssembly(string assemblyName, out string rootDir)
         {
             if (_assemblyNameToDir.Count is 0) SetUpAssemblyNameToDir(_assemblyNameToDir);
             return _assemblyNameToDir.TryGetValue(assemblyName, out rootDir);
@@ -92,7 +92,7 @@ namespace Zenject
             }
         }
 
-        static Dictionary<Type, TypeInfo> AnalyzeAllTypes()
+        private static Dictionary<Type, TypeInfo> AnalyzeAllTypes()
         {
             var typeDict = new Dictionary<Type, TypeInfo>();
             var ignoredTypes = new HashSet<Type>(TypeCache.GetTypesWithAttribute<NoReflectionBakingAttribute>());
@@ -169,9 +169,9 @@ namespace Zenject
             }
         }
 
-        static readonly StringBuilder _sb = new();
+        private static readonly StringBuilder _sb = new();
 
-        static string GenerateCode_Injectable(List<TypeInfo> typeInfos)
+        private static string GenerateCode_Injectable(List<TypeInfo> typeInfos)
         {
             _sb.AppendLine("#if !UNITY_EDITOR");
             _sb.AppendLine("using Zenject;");
@@ -283,7 +283,7 @@ namespace Zenject
             }
         }
 
-        static string GenerateCode_Constructors(SortedList<Assembly, List<TypeInfo>> assemblyDict)
+        private static string GenerateCode_Constructors(SortedList<Assembly, List<TypeInfo>> assemblyDict)
         {
             _sb.AppendLine("#if !UNITY_EDITOR")
                 .AppendLine("using System;")
@@ -338,7 +338,7 @@ namespace Zenject
             }
         }
 
-        static InjectSpec GetInjectSpecForParam(ParameterInfo parameter)
+        private static InjectSpec GetInjectSpecForParam(ParameterInfo parameter)
         {
             var paramType = parameter.ParameterType;
             var injectAttr = parameter.GetCustomAttribute<InjectAttributeBase>();
@@ -347,7 +347,7 @@ namespace Zenject
                 : new InjectSpec(paramType, default);
         }
 
-        static void GenerateResolveType(InjectSpec injectSpec, StringBuilder sb)
+        private static void GenerateResolveType(InjectSpec injectSpec, StringBuilder sb)
         {
             if (injectSpec.Type == typeof(DiContainer))
             {
@@ -376,7 +376,7 @@ namespace Zenject
             }
         }
 
-        static string GetAccessModifier(Type type)
+        private static string GetAccessModifier(Type type)
         {
             if (type.IsPublic) return "public";
             if (type.IsNestedPublic) return "public";
@@ -387,12 +387,12 @@ namespace Zenject
             return "internal";
         }
 
-        static string ToArgumentString(BindId bindId)
+        private static string ToArgumentString(BindId bindId)
         {
             return "(BindId) " + ((uint) bindId).ToString();
         }
 
-        class TypeInfo
+        private class TypeInfo
         {
             public readonly Type Type;
             [CanBeNull]
@@ -408,7 +408,7 @@ namespace Zenject
             }
         }
 
-        class AssemblyComparer : IComparer<Assembly>
+        private class AssemblyComparer : IComparer<Assembly>
         {
             public int Compare(Assembly x, Assembly y)
                 => string.Compare(x!.FullName, y!.FullName, StringComparison.Ordinal);

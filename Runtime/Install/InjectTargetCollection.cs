@@ -22,7 +22,7 @@ namespace Zenject
             Inject(dp.Container, dp.ExtraArgs);
         }
 
-        void Inject(DiContainer diContainer, ArgumentArray extraArgs)
+        private void Inject(DiContainer diContainer, ArgumentArray extraArgs)
         {
             var count = Targets.Length;
 

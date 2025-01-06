@@ -4,8 +4,8 @@ namespace Zenject
 {
     public readonly struct DependencyProvider
     {
-        readonly DiContainer _diContainer;
-        readonly ArgumentArray _extraArgs;
+        private readonly DiContainer _diContainer;
+        private readonly ArgumentArray _extraArgs;
 
 
         public DependencyProvider(DiContainer diContainer, ArgumentArray extraArgs)
