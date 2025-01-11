@@ -234,7 +234,7 @@ namespace Zenject
 
                 if (method != null)
                 {
-                    sb.Append("Zenject_Constructor(");
+                    sb.Append(method.Name).Append('(');
 
                     var parameters = method.GetParameters();
                     foreach (var parameter in parameters)
