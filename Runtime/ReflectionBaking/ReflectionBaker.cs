@@ -12,7 +12,7 @@ namespace Zenject
 {
     public static class ReflectionBaker
     {
-        public static bool GenerateCode()
+        public static bool GenerateCode(string constructorPath)
         {
             var typeDict = AnalyzeAllTypes();
 
@@ -50,7 +50,7 @@ namespace Zenject
             // Generate constructors.
             {
                 var newContent = GenerateCode_Constructors(assemblyDict);
-                dirty |= CompareAndWrite("Assets/Zenject_CodeGen_Constructors.cs", newContent);
+                dirty |= CompareAndWrite(constructorPath, newContent);
             }
 
             return dirty;
