@@ -1,7 +1,0 @@
-{
-  "name": "Zenject.Tests",
-  "references": ["Zenject"],
-  "includePlatforms": [
-    "Editor"
-  ]
-}
