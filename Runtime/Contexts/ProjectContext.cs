@@ -1,5 +1,4 @@
 using System;
-using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -21,11 +20,8 @@ namespace Zenject
 
 
         [ShowInInspector] public DiContainer Container;
-        [ShowInInspector]
-        private Kernel _kernel;
+        [ShowInInspector] private Kernel _kernel;
 
-        [SerializeField, Required, AssetsOnly]
-        private ScriptableObjectInstaller _installer;
 
         public static ProjectContext Initialize(InstallScheme scheme = null)
         {
@@ -33,14 +29,18 @@ namespace Zenject
             Assert.IsTrue(FindAnyObjectByType<ProjectContext>(FindObjectsInactive.Include) is null,
                 "Tried to create multiple instances of ProjectContext!");
 
-            var prefab = Resources.Load<ProjectContext>("ProjectContext");
-            var instance = Instantiate(prefab, null, false);
+            var instanceGO = new GameObject("ProjectContext", typeof(ProjectContext));
+            DontDestroyOnLoad(instanceGO);
+
+            _instance = instanceGO.GetComponent<ProjectContext>();
 
 #if UNITY_EDITOR
             try
             {
 #endif
-                instance.DoInitialize(scheme);
+                scheme ??= new InstallScheme(16);
+                Resources.Load<ScriptableObjectInstaller>("ProjectInstaller").InstallBindings(scheme);
+                _instance.Container = scheme.Build(null, out _instance._kernel);
 #if UNITY_EDITOR
             }
             catch (Exception e)
@@ -51,22 +51,7 @@ namespace Zenject
             }
 #endif
 
-            DontDestroyOnLoad(instance.gameObject);
-
-            return _instance = instance;
-        }
-
-        private void DoInitialize([CanBeNull] InstallScheme scheme)
-        {
-            Assert.IsNotNull(_installer, "Installer is not set in ProjectContext: " + this);
-
-            // Install
-            scheme ??= new InstallScheme(16);
-            _installer.InstallBindings(scheme); // No injection for ProjectContext.
-            _installer = null;
-
-            // Build Container
-            Container = scheme.Build(null, out _kernel);
+            return _instance;
         }
 
         private void OnDestroy()
