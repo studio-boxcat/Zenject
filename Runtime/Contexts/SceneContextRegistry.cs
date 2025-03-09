@@ -24,7 +24,10 @@ namespace Zenject
             L.I($"[SceneContextRegistry] Remove: {context}", context);
 
             var removed = List.Remove(context);
-            Assert.IsTrue(removed);
+#if DEBUG
+            if (!removed)
+                L.E($"[SceneContextRegistry] Remove failed: {context}", context);
+#endif
         }
 
         [CanBeNull]
