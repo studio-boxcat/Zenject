@@ -23,7 +23,7 @@ namespace Zenject
         [ShowInInspector] private Kernel _kernel;
 
 
-        public static ProjectContext Initialize(InstallScheme scheme = null)
+        public static ProjectContext Initialize(InstallScheme scheme)
         {
             Assert.IsTrue(_instance is null, "Tried to create multiple instances of ProjectContext!");
             Assert.IsTrue(FindAnyObjectByType<ProjectContext>(FindObjectsInactive.Include) is null,
@@ -38,8 +38,6 @@ namespace Zenject
             try
             {
 #endif
-                scheme ??= new InstallScheme(16);
-                Resources.Load<ScriptableObjectInstaller>("ProjectInstaller").InstallBindings(scheme);
                 _instance.Container = scheme.Build(null, out _instance._kernel);
 #if UNITY_EDITOR
             }

@@ -1,5 +1,6 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -35,16 +36,8 @@ namespace Zenject
         public void Awake()
         {
             // Get Parent Container
-            DiContainer parentContainer;
-            if (ProjectContext.HasInstance)
-            {
-                parentContainer = ProjectContext.Instance.Container;
-            }
-            else
-            {
-                L.E("ProjectContext is not initialized. ProjectContext.Initialize() must be called before SceneContext.Awake().");
-                parentContainer = ProjectContext.Initialize().Container;
-            }
+            Assert.IsTrue(ProjectContext.HasInstance);
+            var parentContainer = ProjectContext.Instance.Container;
 
 
             // Install
