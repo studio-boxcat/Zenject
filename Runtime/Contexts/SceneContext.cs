@@ -79,8 +79,8 @@ namespace Zenject
         }
 
 #if UNITY_EDITOR
-        [Button("Collect", ButtonSizes.Medium), HideInPlayMode]
-        private void Editor_Collect()
+        [ContextMenu("Collect _c")]
+        private void Collect()
         {
             if (TryGetComponent<ZenjectBindingCollection>(out var zenjectBindings))
                 zenjectBindings.Editor_Collect();
