@@ -1,6 +1,5 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -35,11 +34,6 @@ namespace Zenject
 
         public void Awake()
         {
-            // Get Parent Container
-            Assert.IsTrue(ProjectContext.HasInstance);
-            var parentContainer = ProjectContext.Instance.Container;
-
-
             // Install
             var scheme = _prebuiltScheme ?? new InstallScheme(64);
             _prebuiltScheme = null;
@@ -49,12 +43,15 @@ namespace Zenject
                 zenjectBindings.Bind(scheme);
 
             // 2. Installers
-            _installers.Install(scheme, parentContainer);
+            DiContainer parent = null;
+            if (ProjectContext.HasInstance) parent = ProjectContext.Instance.Container;
+            else L.E("[SceneContext] ProjectContext not initialized. Use empty DiContainer.");
+            _installers.Install(scheme, parent);
             _installers = default;
 
 
             // Build Container & Inject
-            Container = scheme.Build(parentContainer, out _kernel);
+            Container = scheme.Build(parent, out _kernel);
             InjectTargetCollection.TryInject(gameObject, Container, default);
 
 

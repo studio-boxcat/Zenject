@@ -1,4 +1,5 @@
 using System;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -22,7 +23,7 @@ namespace Zenject
             _monoInstallers = monoInstallers;
         }
 
-        public void Install(InstallScheme scheme, DiContainer parentContainer)
+        public void Install(InstallScheme scheme, [CanBeNull] DiContainer parentContainer)
         {
             // Install ScriptableObjectInstallers first.
             {
