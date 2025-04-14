@@ -7,8 +7,7 @@ namespace Zenject
     public class GameObjectContext : MonoBehaviour, IZenjectInjectable
     {
         [ShowInInspector] public DiContainer Container;
-        [ShowInInspector]
-        private Kernel _kernel;
+        [ShowInInspector] private Kernel _kernel;
 
         [SerializeField, InlineProperty, HideLabel]
         private InstallerCollection _installers;
@@ -44,7 +43,7 @@ namespace Zenject
                 zenjectBindings.Bind(scheme);
 
             // 3. Installers
-            _installers.Install(scheme, parentContainer);
+            _installers.Install(scheme, parentContainer, this);
             _installers = default;
 
 

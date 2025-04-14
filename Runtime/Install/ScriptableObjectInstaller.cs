@@ -3,12 +3,12 @@ using UnityEngine;
 
 namespace Zenject
 {
-    public abstract class ScriptableObjectInstaller : ScriptableObject, IInstaller
+    public abstract class ScriptableObjectInstaller : ScriptableObject
 #if UNITY_EDITOR
         , ISelfValidator
 #endif
     {
-        public abstract void InstallBindings(InstallScheme scheme);
+        public abstract void InstallBindings(InstallScheme scheme, Component context);
 
 #if UNITY_EDITOR
         void ISelfValidator.Validate(SelfValidationResult result)

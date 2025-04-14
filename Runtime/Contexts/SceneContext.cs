@@ -46,7 +46,7 @@ namespace Zenject
             DiContainer parent = null;
             if (ProjectContext.HasInstance) parent = ProjectContext.Instance.Container;
             else L.E("[SceneContext] ProjectContext not initialized. Use empty DiContainer.");
-            _installers.Install(scheme, parent);
+            _installers.Install(scheme, parent, this);
             _installers = default;
 
 

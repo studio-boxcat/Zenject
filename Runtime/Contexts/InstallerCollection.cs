@@ -1,4 +1,7 @@
+// ReSharper disable CoVariantArrayConversion
+
 using System;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -23,55 +26,55 @@ namespace Zenject
             _monoInstallers = monoInstallers;
         }
 
-        public void Install(InstallScheme scheme, [CanBeNull] DiContainer parentContainer)
+        public void Install(InstallScheme scheme, [CanBeNull] DiContainer parentContainer, Component context)
         {
-            // Install ScriptableObjectInstallers first.
+#if DEBUG
+            try
+#endif
             {
-                // ReSharper disable once CoVariantArrayConversion
-                InstallBindings(_scriptableObjectInstallers, scheme);
+                // Install ScriptableObjectInstallers first.
+                {
+                    InstallBindingsSO(_scriptableObjectInstallers, scheme, context);
+                }
+
+                // Inject and then Install MonoBehaviourInstallers.
+                if (_monoInstallers.Length is not 0)
+                {
+                    var injectionProxy = scheme.AsInjectionProxy(parentContainer);
+                    InjectToInstallers(_monoInstallers, injectionProxy);
+                    InstallBindingsMono(_monoInstallers, scheme);
+                }
             }
-
-            // Inject and Install MonoBehaviourInstallers.
-            if (_monoInstallers.Length is not 0)
+#if DEBUG
+            catch
             {
-                // Inject first.
-                var injectionProxy = scheme.AsInjectionProxy(parentContainer);
-                InjectToInstallers(_monoInstallers, injectionProxy);
-
-                // Then install.
-                // ReSharper disable once CoVariantArrayConversion
-                InstallBindings(_monoInstallers, scheme);
+                LogErrorWithStatus();
+                throw;
             }
+#endif
+            return;
 
-            static void InstallBindings(IInstaller[] installers, InstallScheme scheme)
+            static void InstallBindingsSO(ScriptableObjectInstaller[] installers, InstallScheme scheme, Component context)
             {
+                EnsureInstallers(installers);
                 var count = installers.Length;
-
                 for (var index = 0; index < count; index++)
                 {
                     var installer = installers[index];
+                    RecordStatus("InstallBindings", installer);
+                    installer.InstallBindings(scheme, context);
+                }
+            }
 
-#if DEBUG
-                    L.I("InstallBindings: " + GetDebugName(installer), (Object) installer);
-
-                    if (installer == null)
-                    {
-                        L.E("Null Installer at index: " + index);
-                        continue;
-                    }
-
-                    try
-#endif
-                    {
-                        installer.InstallBindings(scheme);
-                    }
-#if DEBUG
-                    catch (Exception)
-                    {
-                        L.E("Failed to Install Bindings: " + (Object) installer, (Object) installer);
-                        throw;
-                    }
-#endif
+            static void InstallBindingsMono(MonoBehaviourInstaller[] installers, InstallScheme scheme)
+            {
+                EnsureInstallers(installers);
+                var count = installers.Length;
+                for (var index = 0; index < count; index++)
+                {
+                    var installer = installers[index];
+                    RecordStatus("InstallBindings", installer);
+                    installer.InstallBindings(scheme);
                 }
             }
 
@@ -82,39 +85,42 @@ namespace Zenject
                 for (var index = 0; index < count; index++)
                 {
                     var installer = installers[index];
-
-#if DEBUG
-                    L.I("Inject: " + GetDebugName(installer), installer);
-
-                    if (installer == null)
-                    {
-                        L.E("Null Installer at index: " + index);
-                        continue;
-                    }
-
-                    try
-#endif
-                    {
-                        container.Inject(installer, default);
-                    }
-#if DEBUG
-                    catch (Exception)
-                    {
-                        L.E("Failed to Inject: " + GetDebugName(installer), installer);
-                        throw;
-                    }
-#endif
+                    RecordStatus("Inject", installer);
+                    container.Inject(installer, default);
                 }
             }
 
-#if DEBUG
-            static string GetDebugName(IInstaller installer)
+            [Conditional("DEBUG")]
+            static void EnsureInstallers(Object[] installers)
             {
-                var obj = (Object) installer;
-                return obj != null
-                    ? $"{obj.name} ({obj.GetType().Name})"
-                    : "null";
+                for (var index = 0; index < installers.Length; index++)
+                {
+                    var installer = installers[index];
+                    if (installer) continue;
+                    throw new Exception("Installer is null at index: " + index);
+                }
             }
+        }
+
+#if DEBUG
+        private static string _statusMessage;
+#endif
+
+        [Conditional("DEBUG")]
+        private static void RecordStatus(string status, Object target)
+        {
+#if DEBUG
+            _statusMessage = status + " " + target;
+            L.I(_statusMessage, target);
+#endif
+        }
+
+        [Conditional("DEBUG")]
+        private static void LogErrorWithStatus()
+        {
+#if DEBUG
+            L.E(_statusMessage);
+            _statusMessage = null;
 #endif
         }
     }
