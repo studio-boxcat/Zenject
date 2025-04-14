@@ -150,7 +150,7 @@ namespace Zenject
 
             if (injectSpec.Optional is false)
             {
-                throw new Exception($"Failed to Resolve: {injectSpec.Type.Name}:{injectSpec.Id}");
+                throw new Exception($"Failed to Resolve: {injectSpec.Type.FullName}:{injectSpec.Id}");
             }
 
             return null;
