@@ -110,7 +110,7 @@ namespace Zenject
         private static void RecordStatus(string status, Object target)
         {
 #if DEBUG
-            _statusMessage = status + " " + target;
+            _statusMessage = $"{status} {target.name} ({target.GetType().Name})";
             L.I(_statusMessage, target);
 #endif
         }

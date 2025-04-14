@@ -47,7 +47,8 @@ namespace Zenject
             // L.I($"Binding: {contractType}:{id}");
 
 #if DEBUG
-            Assert.IsTrue(contractType.IsInstanceOfType(instance), "ContractType must be assignable from instance type");
+            Assert.IsTrue(instance as UnityEngine.Object ?? instance is not null, "Instance must not be null");
+            Assert.IsTrue(contractType.IsInstanceOfType(instance), $"ContractType must be assignable from instance type");
             Assert.IsFalse((id == default) && (contractType == typeof(object)), "ContractType is too general. Use a more specific type.");
             Assert.IsFalse((id == default) && (contractType == typeof(Object)), "ContractType is too general. Use a more specific type.");
             Assert.IsFalse(DebugHasBinding(contractType, id), $"Binding already exists: {contractType}:{id}");
