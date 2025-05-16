@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Sirenix.OdinInspector;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
@@ -17,19 +15,10 @@ namespace Zenject
             Editor_Collect();
         }
 
-        [Button("Collect", ButtonSizes.Medium)]
+        [ContextMenu("Collect _c")]
         public void Editor_Collect()
         {
             Targets = Internal_Collect().ToArray();
-        }
-
-        [MenuItem("CONTEXT/InjectTargetCollection/Collect _c")]
-        private static void Editor_Collect(MenuCommand cmd)
-        {
-            var target = (InjectTargetCollection) cmd.context;
-            Undo.RecordObject(target, "");
-            target.Editor_Collect();
-            EditorUtility.SetDirty(target);
         }
 
         private bool Validate_Targets()

@@ -15,19 +15,10 @@ namespace Zenject
             Editor_Collect();
         }
 
-        [Button("Collect", ButtonSizes.Medium)]
+        [ContextMenu("Collect _c")]
         public void Editor_Collect()
         {
             _bindings = Internal_Collect().ToArray();
-        }
-
-        [MenuItem("CONTEXT/ZenjectBindingCollection/Collect _c")]
-        private static void Editor_Collect(MenuCommand cmd)
-        {
-            var target = (ZenjectBindingCollection) cmd.context;
-            Undo.RecordObject(target, "");
-            target.Editor_Collect();
-            EditorUtility.SetDirty(target);
         }
 
         private bool Validate_Bindings(ref string errorMessage)
