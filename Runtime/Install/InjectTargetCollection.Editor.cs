@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
@@ -19,6 +20,7 @@ namespace Zenject
         public void Editor_Collect()
         {
             Targets = Internal_Collect().ToArray();
+            EditorUtility.SetDirty(this);
         }
 
         private bool Validate_Targets()

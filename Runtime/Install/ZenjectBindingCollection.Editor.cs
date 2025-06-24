@@ -19,6 +19,7 @@ namespace Zenject
         public void Editor_Collect()
         {
             _bindings = Internal_Collect().ToArray();
+            EditorUtility.SetDirty(this);
         }
 
         private bool Validate_Bindings(ref string errorMessage)
