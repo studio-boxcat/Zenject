@@ -9,12 +9,12 @@ namespace Zenject
     public class ProjectContext : MonoBehaviour
     {
         private static ProjectContext? _instance;
-        public static ProjectContext Instance
+        public static ProjectContext? Instance
         {
             get
             {
                 Assert.IsNotNull(_instance, "ProjectContext is not initialized. ProjectContext.Initialize() must be called before ProjectContext.Instance.");
-                return _instance!;
+                return _instance;
             }
         }
 
