@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using System.Linq;
-using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,10 +9,8 @@ namespace Zenject
 {
     internal partial class ZenjectBindingCollection
     {
-        private void Reset()
-        {
-            Editor_Collect();
-        }
+        private void OnValidate() => Editor_Collect();
+        private void Reset() => Editor_Collect();
 
         [ContextMenu("Collect _c")]
         public void Editor_Collect()

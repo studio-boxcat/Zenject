@@ -11,10 +11,8 @@ namespace Zenject
 {
     public partial class InjectTargetCollection
     {
-        private void Reset()
-        {
-            Editor_Collect();
-        }
+        private void OnValidate() => Editor_Collect();
+        private void Reset() => Editor_Collect();
 
         [ContextMenu("Collect _c")]
         public void Editor_Collect()
