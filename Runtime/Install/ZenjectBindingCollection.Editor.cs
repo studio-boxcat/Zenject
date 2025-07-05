@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Zenject
 {
@@ -15,8 +14,12 @@ namespace Zenject
         [ContextMenu("Collect _c")]
         public void Editor_Collect()
         {
-            _bindings = Internal_Collect().ToArray();
-            EditorUtility.SetDirty(this);
+            var targets = Internal_Collect();
+            if (_bindings.SequenceEqual(targets, RefComparer.Instance) is false)
+            {
+                _bindings = targets.ToArray();
+                EditorUtility.SetDirty(this);
+            }
         }
 
         private bool Validate_Bindings(ref string errorMessage)
@@ -45,9 +48,9 @@ namespace Zenject
         {
             var targets = new List<ZenjectBindingBase>();
 
-            if (gameObject.TryGetComponent<SceneContext>(out _))
+            if (gameObject.TryGetComponent<SceneContext>(out _) && gameObject.scene.IsValid())
             {
-                foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
+                foreach (var rootObj in gameObject.scene.GetRootGameObjects())
                 {
                     GetBindingsUnderGameObject(rootObj.transform, rootObj == gameObject, targets);
                 }

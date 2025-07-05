@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace Zenject
@@ -17,8 +16,12 @@ namespace Zenject
         [ContextMenu("Collect _c")]
         public void Editor_Collect()
         {
-            Targets = Internal_Collect().ToArray();
-            EditorUtility.SetDirty(this);
+            var targets = Internal_Collect();
+            if (Targets.SequenceEqual(targets, RefComparer.Instance) is false)
+            {
+                Targets = targets.ToArray();
+                EditorUtility.SetDirty(this);
+            }
         }
 
         private bool Validate_Targets()
@@ -38,9 +41,9 @@ namespace Zenject
             targets.Remove(this); // Remove this object from the list of targets so that we don't inject it twice.
             CollectInjectablesInChildren(gameObject.transform, targets);
 
-            if (gameObject.TryGetComponent<SceneContext>(out _))
+            if (gameObject.TryGetComponent<SceneContext>(out _) && gameObject.scene.IsValid())
             {
-                foreach (var rootObj in SceneManager.GetActiveScene().GetRootGameObjects())
+                foreach (var rootObj in gameObject.scene.GetRootGameObjects())
                 {
                     if (ReferenceEquals(rootObj, gameObject)) continue;
                     CollectInjectablesFromNonRootGameObject(rootObj, targets);
