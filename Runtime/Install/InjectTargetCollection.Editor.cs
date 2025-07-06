@@ -55,7 +55,7 @@ namespace Zenject
             targets.Remove(this); // Remove this object from the list of targets so that we don't inject it twice.
             CollectInjectablesInChildren(gameObject.transform, targets);
 
-            if (gameObject.TryGetComponent<SceneContext>(out _))
+            if (gameObject.HasComponent<SceneContext>())
             {
                 // rare-case. return in the middle of processing.
                 if (gameObject.scene.isLoaded is false)
@@ -67,12 +67,12 @@ namespace Zenject
                     CollectInjectablesFromNonRootGameObject(rootObj, targets);
                 }
             }
-            else if (gameObject.TryGetComponent<GameObjectContext>(out var gameObjectContext))
+            else if (gameObject.TryGetComponent<GameObjectContext>(out var ctx))
             {
-                targets.Remove(gameObjectContext);
+                targets.Remove(ctx);
             }
 
-            return false;
+            return true;
         }
 
         private static MonoBehaviour? TryGetInjectionIntermediary(GameObject target)
