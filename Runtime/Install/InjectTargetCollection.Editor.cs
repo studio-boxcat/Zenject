@@ -1,51 +1,69 @@
 #if UNITY_EDITOR
+#nullable enable
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
+using UnityEngine.Assertions;
 
 namespace Zenject
 {
     public partial class InjectTargetCollection
     {
-        private void OnValidate() => Editor_Collect();
         private void Reset() => Editor_Collect();
+        private void OnValidate() => Editor_Collect();
+
+        private static readonly List<MonoBehaviour> _collectBuf = new();
 
         [ContextMenu("Collect _c")]
         public void Editor_Collect()
         {
-            var targets = Internal_Collect();
-            if (Targets.SequenceEqual(targets, RefComparer.Instance) is false)
+            _collectBuf.Clear();
+
+            if (Internal_Collect(_collectBuf) is false)
+                return; // mostly due to unloaded scenes.
+
+            if (Targets.SequenceEqualRef(_collectBuf) is false)
             {
-                Targets = targets.ToArray();
+                Targets = _collectBuf.ToArray();
                 EditorUtility.SetDirty(this);
             }
         }
 
-        private bool Validate_Targets()
+        private bool Validate_Targets(ref string errorMessage)
         {
             // When playing, we don't want to validate the targets.
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             if (Targets == null) return true;
 
-            return Targets.SequenceEqual(Internal_Collect());
+            _collectBuf.Clear();
+            if (Internal_Collect(_collectBuf) is false)
+            {
+                errorMessage = "Cannot collect targets: " + name;
+                return false;
+            }
+
+            return Targets.SequenceEqualRef(_collectBuf);
         }
 
-        private List<Object> Internal_Collect()
+        private bool Internal_Collect(List<MonoBehaviour> targets)
         {
-            var targets = new List<Object>();
+            Assert.IsTrue(_collectBuf.IsEmpty(), "Collect buffer must be empty before validating targets.");
 
             // First collect all injectables on this gameObject.
             CollectInjectableComponents(gameObject, targets);
             targets.Remove(this); // Remove this object from the list of targets so that we don't inject it twice.
             CollectInjectablesInChildren(gameObject.transform, targets);
 
-            if (gameObject.TryGetComponent<SceneContext>(out _) && gameObject.scene.IsValid())
+            if (gameObject.TryGetComponent<SceneContext>(out _))
             {
+                // rare-case. return in the middle of processing.
+                if (gameObject.scene.isLoaded is false)
+                    return false;
+
                 foreach (var rootObj in gameObject.scene.GetRootGameObjects())
                 {
-                    if (ReferenceEquals(rootObj, gameObject)) continue;
+                    if (rootObj.RefEq(gameObject)) continue; // we already collected this gameObject
                     CollectInjectablesFromNonRootGameObject(rootObj, targets);
                 }
             }
@@ -54,10 +72,10 @@ namespace Zenject
                 targets.Remove(gameObjectContext);
             }
 
-            return targets;
+            return false;
         }
 
-        private static Object TryGetInjectionIntermediary(GameObject target)
+        private static MonoBehaviour? TryGetInjectionIntermediary(GameObject target)
         {
             // If the gameObject has a GameObjectContext component then let it handle its own children.
             if (target.TryGetComponent(out GameObjectContext context))
@@ -70,27 +88,20 @@ namespace Zenject
             return null;
         }
 
-        private static readonly List<MonoBehaviour> _monoBehaviourBuf = new();
+        private static readonly List<MonoBehaviour> _injectableCompBuf = new();
 
-        /// <summary>
-        /// Collects all injectable components on the given gameObject.
-        /// </summary>
-        private static void CollectInjectableComponents(GameObject gameObject, List<Object> output)
+        private static void CollectInjectableComponents(GameObject gameObject, List<MonoBehaviour> output)
         {
-            gameObject.GetComponents(_monoBehaviourBuf);
-            foreach (var monoBehaviour in _monoBehaviourBuf)
+            gameObject.GetComponents(_injectableCompBuf); // no need to clear.
+            foreach (var mb in _injectableCompBuf)
             {
-#if UNITY_EDITOR
-                if (monoBehaviour == null) // This can happen if the component is no longer inherited from MonoBehaviour.
-                    continue;
-#endif
-
-                if (RequiresInject(monoBehaviour.GetType()))
-                    output.Add(monoBehaviour);
+                if (!mb) continue; // This can happen if the component is no longer inherited from MonoBehaviour.
+                if (RequiresInject(mb.GetType()))
+                    output.Add(mb);
             }
         }
 
-        private static void CollectInjectablesInChildren(Transform transform, List<Object> output)
+        private static void CollectInjectablesInChildren(Transform transform, List<MonoBehaviour> output)
         {
             var childCount = transform.childCount;
             for (var i = 0; i < childCount; i++)
@@ -104,7 +115,7 @@ namespace Zenject
         /// Collects all injectable components on the given gameObject and its children.
         /// Since the given gameObject is not a root gameObject, it will add only the InjectionIntermediary if it exists.
         /// </summary>
-        private static void CollectInjectablesFromNonRootGameObject(GameObject gameObject, List<Object> output)
+        private static void CollectInjectablesFromNonRootGameObject(GameObject gameObject, List<MonoBehaviour> output)
         {
             var injectionIntermediary = TryGetInjectionIntermediary(gameObject);
             if (injectionIntermediary is not null)
@@ -125,6 +136,7 @@ namespace Zenject
                 return requiresInjection;
 
             // Do not inject on installers since these are always injected just before they are installed.
+            // See InstallerCollection.
             if (type.IsSubclassOf(typeof(MonoBehaviourInstaller)))
             {
                 _requiresInjectCache.Add(type, false);

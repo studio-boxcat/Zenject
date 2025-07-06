@@ -1,6 +1,6 @@
+#nullable enable
 using Sirenix.OdinInspector;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Zenject
 {
@@ -9,7 +9,7 @@ namespace Zenject
     {
         [ListDrawerSettings(IsReadOnly = true)]
         [ValidateInput("Validate_Targets")]
-        public Object[] Targets;
+        public MonoBehaviour[] Targets = null!;
 
         public static void TryInject(GameObject gameObject, DiContainer diContainer, ArgumentArray extraArgs)
         {
@@ -31,7 +31,7 @@ namespace Zenject
                 var target = Targets[index];
 
 #if DEBUG
-                if (target == null)
+                if (!target)
                 {
                     L.E($"Target is null: this={name}, index={index}", this);
                     continue;
@@ -48,13 +48,13 @@ namespace Zenject
                 catch
                 {
                     L.E($"Failed to inject target: target={target}, index={index}",
-                        target != null ? target : this);
+                        target ? target : this);
                     throw;
                 }
 #endif
             }
 
-            Targets = null;
+            Targets = null!;
         }
     }
 }
