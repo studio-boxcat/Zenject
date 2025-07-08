@@ -67,8 +67,9 @@ namespace Zenject
 
         // ProvideDelegate version.
         public void Bind(
-            Type contractType, BindId identifier,
-            Type concreteType, ProvideDelegate provider = null, ArgumentArray arguments = default,
+            Type contractType, Type concreteType,
+            BindId identifier = default,
+            ProvideDelegate provider = null, ArgumentArray arguments = default,
             bool disposable = false, bool tickable = false)
         {
             // L.I($"Binding: {contractType}:{identifier} → {concreteType}");
@@ -94,7 +95,7 @@ namespace Zenject
             bool disposable = false, bool tickable = false)
         {
             var t = typeof(TContract);
-            Bind(t, identifier, t, provider, arguments, disposable, tickable);
+            Bind(t, t, identifier, provider, arguments, disposable, tickable);
         }
 
         public void Bind<TContract, TConcrete>(BindId identifier = 0,
@@ -103,7 +104,7 @@ namespace Zenject
             where TConcrete : TContract
         {
             Assert.AreNotEqual(typeof(TContract), typeof(TConcrete), "Use Bind<TContract> instead.");
-            Bind(typeof(TContract), identifier, typeof(TConcrete), provider, arguments, disposable, tickable);
+            Bind(typeof(TContract), typeof(TConcrete), identifier, provider, arguments, disposable, tickable);
         }
 
         internal DiContainer AsInjectionProxy([CanBeNull] DiContainer parentContainer)
