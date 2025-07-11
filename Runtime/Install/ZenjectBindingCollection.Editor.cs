@@ -74,8 +74,17 @@ namespace Zenject
             }
 
             // if this is a scene context, we need to collect all bindings from the scene.
-            if (!gameObject.scene.isLoaded) // fail if the scene is not loaded
+            if (!gameObject.scene.isLoaded)
+            {
+                // if this is a prefab asset, we can only collect bindings from the root of the prefab.
+                if (PrefabUtility.IsPartOfPrefabAsset(gameObject))
+                {
+                    Collect(transform, self: true, output: targets);
+                    return true;
+                }
+
                 return false;
+            }
 
             foreach (var rootObj in gameObject.scene.GetRootGameObjects())
                 Collect(rootObj.transform, self: rootObj.RefEq(gameObject), output: targets);

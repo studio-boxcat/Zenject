@@ -57,9 +57,9 @@ namespace Zenject
 
             if (gameObject.HasComponent<SceneContext>())
             {
-                // rare-case. return in the middle of processing.
+                // if this is a prefab asset, we only need to collect the injectables on this gameObject.
                 if (gameObject.scene.isLoaded is false)
-                    return false;
+                    return PrefabUtility.IsPartOfPrefabAsset(gameObject);
 
                 foreach (var rootObj in gameObject.scene.GetRootGameObjects())
                 {
