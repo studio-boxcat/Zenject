@@ -7,7 +7,7 @@ namespace Zenject
     [HideMonoScript, DisallowMultipleComponent]
     public partial class InjectTargetCollection : MonoBehaviour, IZenjectInjectable
     {
-        [ListDrawerSettings(IsReadOnly = true)]
+        [ListDrawerSettings(IsReadOnly = true, ShowFoldout = false)]
         [ValidateInput("Validate_Targets")]
         public MonoBehaviour[] Targets = null!;
 

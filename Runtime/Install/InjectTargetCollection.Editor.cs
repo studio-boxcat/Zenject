@@ -10,25 +10,28 @@ namespace Zenject
 {
     public partial class InjectTargetCollection
     {
-        private void Reset() => Editor_Collect();
-        private void OnValidate() => Editor_Collect();
+        private void Reset() => Collect(dirty: false);
+        private void OnValidate() => Collect(dirty: false);
 
         private static readonly List<MonoBehaviour> _collectBuf = new();
 
-        [ContextMenu("Collect _c")]
-        private void Editor_Collect()
+        private void Collect(bool dirty)
         {
             _collectBuf.Clear();
 
+            // fails mostly due to unloaded scenes.
             if (Internal_Collect(_collectBuf) is false)
-                return; // mostly due to unloaded scenes.
+                return;
+            // skip if not changed.
+            if (Targets.SequenceEqualRef(_collectBuf))
+                return;
 
-            if (Targets.SequenceEqualRef(_collectBuf) is false)
-            {
-                Targets = _collectBuf.ToArray();
-                EditorUtility.SetDirty(this);
-            }
+            Targets = _collectBuf.ToArray();
+            if (dirty) EditorUtility.SetDirty(this);
         }
+
+        [ContextMenu("Collect _c")]
+        private void Collect() => Collect(dirty: true);
 
         private bool Validate_Targets(ref string errorMessage)
         {

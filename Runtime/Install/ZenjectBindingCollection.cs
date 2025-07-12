@@ -9,7 +9,7 @@ namespace Zenject
     {
         [SerializeField, Required]
         [FormerlySerializedAs("Bindings")]
-        [ListDrawerSettings(IsReadOnly = true)]
+        [ListDrawerSettings(IsReadOnly = true, ShowFoldout = false)]
         [ValidateInput("Validate_Bindings")]
         private ZenjectBindingBase[] _bindings;
 
