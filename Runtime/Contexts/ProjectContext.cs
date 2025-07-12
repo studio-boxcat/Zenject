@@ -39,6 +39,8 @@ namespace Zenject
 
         public static ProjectContext Initialize(InstallScheme scheme)
         {
+            L.I("ProjectContext.Initialize(): scheme=" + scheme);
+
             Assert.IsTrue(_instance is null, "Tried to create multiple instances of ProjectContext!");
             Assert.IsTrue(FindAnyObjectByType<ProjectContext>(FindObjectsInactive.Include) is null,
                 "Tried to create multiple instances of ProjectContext!");
@@ -75,6 +77,8 @@ namespace Zenject
 
         private void OnDestroy()
         {
+            L.I("ProjectContext.OnDestroy()");
+
             // Clear static variables first, as _kernel.Dispose() may throw exceptions.
             if (this.RefEq(_instance))
             {

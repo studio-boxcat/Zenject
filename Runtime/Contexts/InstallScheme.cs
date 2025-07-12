@@ -25,7 +25,7 @@ namespace Zenject
 
         public override string ToString()
         {
-            return "[ " + string.Join(", ", _bindings.Take(_bindingPtr)) + " ]";
+            return "[" + string.Join(", ", _bindings.Take(_bindingPtr)) + "]";
         }
 
         private void AddBinding(Binding binding)

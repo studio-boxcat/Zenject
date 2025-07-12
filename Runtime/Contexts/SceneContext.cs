@@ -1,3 +1,4 @@
+#nullable enable
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -5,7 +6,7 @@ namespace Zenject
 {
     public class SceneContext : MonoBehaviour
     {
-        private static InstallScheme _prebuiltScheme;
+        private static InstallScheme? _prebuiltScheme;
         public static void SetPrebuiltScheme(InstallScheme scheme)
         {
             L.I("SetPrebuiltScheme: " + scheme);
@@ -25,7 +26,7 @@ namespace Zenject
 
 
         [ShowInInspector, ShowIf("@Container != null")]
-        public DiContainer Container;
+        public DiContainer Container = null!;
         [ShowInInspector, ShowIf("@Container != null")]
         private Kernel _kernel;
 
@@ -34,6 +35,8 @@ namespace Zenject
 
         public void Awake()
         {
+            L.I("SceneContext.Awake()");
+
             // Install
             var scheme = _prebuiltScheme ?? new InstallScheme(64);
             _prebuiltScheme = null;
@@ -60,12 +63,14 @@ namespace Zenject
 
         private void OnDestroy()
         {
+            L.I("SceneContext.OnDestroy()");
+
             // Clean up static variable as _kernel.Dispose() may throw exceptions.
             SceneContextRegistry.Remove(this);
 
             _kernel.Dispose();
             _kernel = default; // For GC.
-            Container = null; // For GC.
+            Container = null!; // For GC. never use this value.
         }
 
         private void Update()
