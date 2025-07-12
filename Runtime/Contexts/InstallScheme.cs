@@ -34,7 +34,7 @@ namespace Zenject
 
             if (_bindingPtr == _bindings.Length)
             {
-                L.W("Binding array is full: " + _bindings.Length);
+                L.W($"Binding array is full: {_bindings.Length}\n{this}");
                 Array.Resize(ref _bindings, _bindings.Length * 2);
             }
 

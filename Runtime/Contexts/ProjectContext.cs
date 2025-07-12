@@ -94,6 +94,26 @@ namespace Zenject
         {
             _kernel.Tick();
         }
+
+#if UNITY_EDITOR
+        [PlayModeGate]
+        private static void AutoPurge()
+        {
+            // never initialized, nothing to clear.
+            if (_instance is null)
+                return;
+
+            L.I("ProjectContext.AutoPurge()");
+
+            if (SceneContextRegistry.Any())
+            {
+                L.E("ProjectContext.AutoPurge() called while SceneContextRegistry is not empty. Skipping clear.");
+                return;
+            }
+
+            Purge();
+        }
+#endif
     }
 
 #if UNITY_EDITOR

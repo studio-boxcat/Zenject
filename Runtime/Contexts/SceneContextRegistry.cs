@@ -9,18 +9,24 @@ namespace Zenject
     {
         public static readonly List<SceneContext> List = new();
 
+        public static bool Any() => List.Count is not 0;
+
         public static SceneContext Last => List[^1];
 
         public static void Add(SceneContext context)
         {
             L.I($"[SceneContextRegistry] Add: {context.gameObject.scene.name}", context);
 
-            Assert.IsFalse(List.Contains(context));
+            Assert.IsFalse(List.ContainsRef(context));
             List.Add(context);
+
+#if UNITY_EDITOR
+            if (List.Count is not 1)
+                L.W($"[SceneContextRegistry] Multiple SceneContexts detected: {context.gameObject.scene.name}. This is supported but accidental.");
+#endif
         }
 
-        [MustUseReturnValue]
-        public static bool Remove(SceneContext context)
+        public static void Remove(SceneContext context)
         {
             L.I($"[SceneContextRegistry] Remove: {context}", context);
 
@@ -29,8 +35,6 @@ namespace Zenject
             if (!removed)
                 L.E($"[SceneContextRegistry] Remove failed: {context}", context);
 #endif
-
-            return List.Count is 0;
         }
 
         [CanBeNull]

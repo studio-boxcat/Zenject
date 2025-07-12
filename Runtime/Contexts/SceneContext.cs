@@ -59,8 +59,7 @@ namespace Zenject
             _kernel = default; // For GC.
             Container = null!; // For GC. never use this value.
 
-            var needPurge = SceneContextRegistry.Remove(this);
-            if (needPurge) ProjectContext.Purge(); // Purge ProjectContext too if this is the last SceneContext.
+            SceneContextRegistry.Remove(this);
         }
 
         private void Update()
