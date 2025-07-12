@@ -23,15 +23,13 @@ namespace Zenject
             if (_instance is not null)
                 return _instance;
 
-            // rare-case.
-            var scheme = new InstallScheme();
 #if UNITY_EDITOR
             L.W("ProjectContext is not initialized, using fallback installer.");
-            IProjectContextFallbackInstaller.ResolveAndInstallBindings(scheme);
+            return InitializeWithFallback(); // rare-case.
 #else
             L.E("ProjectContext is not initialized.");
+            return Initialize(new InstallScheme());
 #endif
-            return Initialize(scheme);
         }
 
         [ShowInInspector] public DiContainer? Container;
@@ -96,6 +94,15 @@ namespace Zenject
         }
 
 #if UNITY_EDITOR
+        public static ProjectContext InitializeWithFallback()
+        {
+            L.I("ProjectContext.InitializeWithFallback()");
+            Assert.IsFalse(_instance, "Tried to initialize ProjectContext with fallback while it is already initialized!");
+            var scheme = new InstallScheme();
+            IProjectContextFallbackInstaller.ResolveAndInstallBindings(scheme);
+            return Initialize(scheme);
+        }
+
         [PlayModeGate]
         private static void AutoPurge()
         {
