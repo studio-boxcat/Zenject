@@ -72,16 +72,5 @@ namespace Zenject
         {
             _kernel.Tick();
         }
-
-#if UNITY_EDITOR
-        [ContextMenu("Collect _c")]
-        private void Collect()
-        {
-            if (TryGetComponent<ZenjectBindingCollection>(out var zenjectBindings))
-                zenjectBindings.Editor_Collect();
-            if (TryGetComponent<InjectTargetCollection>(out var injectTargets))
-                injectTargets.Editor_Collect();
-        }
-#endif
     }
 }

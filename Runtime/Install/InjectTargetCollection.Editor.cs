@@ -16,7 +16,7 @@ namespace Zenject
         private static readonly List<MonoBehaviour> _collectBuf = new();
 
         [ContextMenu("Collect _c")]
-        public void Editor_Collect()
+        private void Editor_Collect()
         {
             _collectBuf.Clear();
 

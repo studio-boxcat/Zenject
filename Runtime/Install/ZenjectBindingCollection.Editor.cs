@@ -10,12 +10,12 @@ namespace Zenject
     internal partial class ZenjectBindingCollection
     {
         private void Reset() => Editor_Collect();
-        private void OnValidate() => Editor_Collect();
+        private void OnValidate() => Editor_Collect(verbose: false);
 
         private static readonly List<ZenjectBindingBase> _compBuf = new();
 
         [ContextMenu("Collect _c")]
-        public void Editor_Collect()
+        private void Editor_Collect(bool verbose = true)
         {
             _compBuf.Clear();
 
