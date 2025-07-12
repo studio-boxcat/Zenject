@@ -19,7 +19,8 @@ namespace Zenject
             List.Add(context);
         }
 
-        public static void Remove(SceneContext context)
+        [MustUseReturnValue]
+        public static bool Remove(SceneContext context)
         {
             L.I($"[SceneContextRegistry] Remove: {context}", context);
 
@@ -28,6 +29,8 @@ namespace Zenject
             if (!removed)
                 L.E($"[SceneContextRegistry] Remove failed: {context}", context);
 #endif
+
+            return List.Count is 0;
         }
 
         [CanBeNull]

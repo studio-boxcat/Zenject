@@ -68,24 +68,23 @@ namespace Zenject
             return _instance;
         }
 
-        public static void DestroyInstance()
+        public static void Purge()
         {
-            L.I("Destroying ProjectContext instance.");
-            if (_instance is not null)
-                Destroy(_instance.gameObject);
-        }
-
-        private void OnDestroy()
-        {
-            L.I("ProjectContext.OnDestroy()");
-
-            // Clear static variables first, as _kernel.Dispose() may throw exceptions.
-            if (this.RefEq(_instance))
+            L.I("ProjectContext.Purge()");
+            if (_instance is null)
             {
-                _instance = null;
-                SceneContext.ClearPrebuiltScheme();
+                L.E("ProjectContext is not initialized. Cannot purge.");
+                return;
             }
 
+            var inst = _instance; // Cache the instance to avoid null reference during Dispose.
+            _instance = null;
+            inst.Dispose();
+            if (inst) Destroy(inst.gameObject); // Destroy the GameObject to clean up resources.
+        }
+
+        private void Dispose() // intentionally not using OnDestroy to avoid Unity's automatic call order.
+        {
             _kernel.Dispose();
             _kernel = default; // For GC.
             Container = null; // For GC.

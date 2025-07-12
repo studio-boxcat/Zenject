@@ -15,16 +15,6 @@ namespace Zenject
             _prebuiltScheme = scheme;
         }
 
-        internal static void ClearPrebuiltScheme()
-        {
-#if DEBUG
-            if (_prebuiltScheme is not null)
-                L.I("ClearPrebuiltScheme");
-#endif
-            _prebuiltScheme = null;
-        }
-
-
         [ShowInInspector, ShowIf("@Container != null")]
         public DiContainer Container = null!;
         [ShowInInspector, ShowIf("@Container != null")]
@@ -65,12 +55,12 @@ namespace Zenject
         {
             L.I("SceneContext.OnDestroy()");
 
-            // Clean up static variable as _kernel.Dispose() may throw exceptions.
-            SceneContextRegistry.Remove(this);
-
             _kernel.Dispose();
             _kernel = default; // For GC.
             Container = null!; // For GC. never use this value.
+
+            var needPurge = SceneContextRegistry.Remove(this);
+            if (needPurge) ProjectContext.Purge(); // Purge ProjectContext too if this is the last SceneContext.
         }
 
         private void Update()
