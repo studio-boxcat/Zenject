@@ -21,7 +21,8 @@ namespace Zenject
 
             if (Internal_Collect(_compBuf) is false)
             {
-                L.W("[ZenjectBindingCollection] Cannot collect bindings: " + name);
+                if (verbose)
+                    L.W("[ZenjectBindingCollection] Cannot collect bindings: " + name);
                 return;
             }
 
