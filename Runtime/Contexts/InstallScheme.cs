@@ -1,7 +1,7 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Unity.Profiling;
 using UnityEngine.Assertions;
 
@@ -62,14 +62,14 @@ namespace Zenject
 
         public void Bind<TContractType>(TContractType instance, BindId id = default)
         {
-            Bind(typeof(TContractType), instance, id);
+            Bind(typeof(TContractType), instance!, id);
         }
 
         // ProvideDelegate version.
         public void Bind(
             Type contractType, Type concreteType,
             BindId identifier = default,
-            ProvideDelegate provider = null, ArgumentArray arguments = default,
+            ProvideDelegate? provider = null, ArgumentArray arguments = default,
             bool disposable = false, bool tickable = false)
         {
             // L.I($"Binding: {contractType}:{identifier} → {concreteType}");
@@ -91,7 +91,7 @@ namespace Zenject
         }
 
         public void Bind<TContract>(BindId identifier = 0,
-            ProvideDelegate provider = null, ArgumentArray arguments = default,
+            ProvideDelegate? provider = null, ArgumentArray arguments = default,
             bool disposable = false, bool tickable = false)
         {
             var t = typeof(TContract);
@@ -99,7 +99,7 @@ namespace Zenject
         }
 
         public void Bind<TContract, TConcrete>(BindId identifier = 0,
-            ProvideDelegate provider = null, ArgumentArray arguments = default,
+            ProvideDelegate? provider = null, ArgumentArray arguments = default,
             bool disposable = false, bool tickable = false)
             where TConcrete : TContract
         {
@@ -107,7 +107,7 @@ namespace Zenject
             Bind(typeof(TContract), typeof(TConcrete), identifier, provider, arguments, disposable, tickable);
         }
 
-        internal DiContainer AsInjectionProxy([CanBeNull] DiContainer parentContainer)
+        internal DiContainer AsInjectionProxy(DiContainer? parentContainer)
         {
             var container = new DiContainer();
             Binding.Sort(_bindings, _bindingPtr); // Sort before initializing DiContainer.
@@ -115,7 +115,7 @@ namespace Zenject
             return container;
         }
 
-        internal DiContainer Build([CanBeNull] DiContainer parentContainer, out Kernel kernel)
+        internal DiContainer Build(DiContainer? parentContainer, out Kernel kernel)
         {
             L.I($"Building DiContainer: bindings={_bindingPtr}, payloads={_payloads.Count}\n" +
                 "[" + string.Join(',', _bindings.Take(_bindingPtr).Select(b => b.ToString())) + "]");
