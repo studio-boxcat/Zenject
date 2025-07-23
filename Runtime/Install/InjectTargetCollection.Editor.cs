@@ -23,6 +23,7 @@ namespace Zenject
             if (Internal_Collect(_collectBuf) is false)
                 return;
             // skip if not changed.
+            Targets ??= Array.Empty<MonoBehaviour>();
             if (Targets.SequenceEqualRef(_collectBuf))
                 return;
 
