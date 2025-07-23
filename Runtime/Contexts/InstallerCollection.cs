@@ -1,8 +1,8 @@
 // ReSharper disable CoVariantArrayConversion
 
+#nullable enable
 using System;
 using System.Diagnostics;
-using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -26,8 +26,10 @@ namespace Zenject
             _monoInstallers = monoInstallers;
         }
 
-        public void Install(InstallScheme scheme, [CanBeNull] DiContainer parentContainer, Component context)
+        public DiContainer BuildContainer(InstallScheme scheme, DiContainer? parent, Component context, out Kernel kernel)
         {
+            var container = scheme.Start(parent: parent);
+
 #if DEBUG
             try
 #endif
@@ -40,8 +42,8 @@ namespace Zenject
                 // Inject and then Install MonoBehaviourInstallers.
                 if (_monoInstallers.Length is not 0)
                 {
-                    var injectionProxy = scheme.AsInjectionProxy(parentContainer);
-                    InjectToInstallers(_monoInstallers, injectionProxy);
+                    scheme.Update(container);
+                    InjectToInstallers(_monoInstallers, container);
                     InstallBindingsMono(_monoInstallers, scheme);
                 }
             }
@@ -52,7 +54,9 @@ namespace Zenject
                 throw;
             }
 #endif
-            return;
+
+            scheme.End(container, out kernel);
+            return container;
 
             static void InstallBindingsSO(ScriptableObjectInstaller[] installers, InstallScheme scheme, Component context)
             {

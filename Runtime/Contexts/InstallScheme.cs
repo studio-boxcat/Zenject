@@ -30,7 +30,8 @@ namespace Zenject
 
         private void AddBinding(Binding binding)
         {
-            Assert.AreNotEqual(0, binding.Key, "Binding key must not be zero.");
+            Assert.IsTrue(binding.Key is not 0, "Binding key must not be zero.");
+            Assert.IsTrue(binding.Key != BindKey.GetSelfBindKey(), "Binding must not be self-referential.");
 
             if (_bindingPtr == _bindings.Length)
             {
@@ -107,28 +108,22 @@ namespace Zenject
             Bind(typeof(TContract), typeof(TConcrete), identifier, provider, arguments, disposable, tickable);
         }
 
-        internal DiContainer AsInjectionProxy(DiContainer? parentContainer)
-        {
-            var container = new DiContainer();
-            Binding.Sort(_bindings, _bindingPtr); // Sort before initializing DiContainer.
-            container.Initialize(_bindings, _bindingPtr, _payloads, parentContainer);
-            return container;
-        }
-
-        internal DiContainer Build(DiContainer? parentContainer, out Kernel kernel)
+        internal DiContainer Start(DiContainer? parent) => new(parent, _payloads);
+        internal void Update(DiContainer container) => container.InternalUpdateBindings(_bindings, _bindingPtr);
+        internal void End(DiContainer container, out Kernel kernel)
         {
             L.I($"Building DiContainer: bindings={_bindingPtr}, payloads={_payloads.Count}\n" +
                 "[" + string.Join(',', _bindings.Take(_bindingPtr).Select(b => b.ToString())) + "]");
-
-            var container = new DiContainer();
-            Bind(container); // Bind container itself.
-            Binding.Sort(_bindings, _bindingPtr); // Sort before initializing DiContainer.
-            var bindings = new Binding[_bindingPtr];
-            Array.Copy(_bindings, bindings, _bindingPtr); // Trim invalid range.
-            container.Initialize(bindings, _bindingPtr, _payloads, parentContainer);
-
+            Update(container);
             _kernelServices.ResolveAll(container);
             kernel = new Kernel(_kernelServices.Disposables1, _kernelServices.Tickables1);
+        }
+
+        internal DiContainer Build(out Kernel kernal)
+        {
+            var container = Start(null);
+            Update(container);
+            End(container, out kernal);
             return container;
         }
 

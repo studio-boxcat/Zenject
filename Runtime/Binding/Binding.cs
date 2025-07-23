@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using UnityEngine.Assertions;
 
 namespace Zenject
 {
@@ -24,7 +22,7 @@ namespace Zenject
             Payload = payload;
         }
 
-        public override string ToString() => BindKey.ToString(Key) + ":" + (Value is Type ? "T" : "I");
+        public override string ToString() => (Value is Type ? "T:" : "I:") + BindKey.ToString(Key);
 
         public static bool BinarySearch(Binding[] array, int count, ulong key, out int index)
         {
@@ -34,18 +32,6 @@ namespace Zenject
 
         public static void Sort(Binding[] array, int count)
             => Array.Sort(array, 0, count, Comparer.Instance);
-
-        [Conditional("DEBUG")]
-        public static void Validate(Binding[] array, int count)
-        {
-            for (var i = 1; i < count; i++)
-            {
-                var a = array[i - 1].Key;
-                var b = array[i].Key;
-                Assert.IsTrue(a <= b, "Binding array is not sorted.");
-                Assert.AreNotEqual(a, b, "Duplicate binding key detected: " + BindKey.ToString(a));
-            }
-        }
 
         private class Comparer : IComparer<Binding>
         {

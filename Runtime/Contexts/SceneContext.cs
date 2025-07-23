@@ -35,14 +35,10 @@ namespace Zenject
             if (gameObject.TryGetComponent(out ZenjectBindingCollection zenjectBindings))
                 zenjectBindings.Bind(scheme);
 
-            // 2. Installers
+            // 2. Build & Inject
             var parent = ProjectContext.Resolve().Container;
-            _installers.Install(scheme, parent, this);
+            Container = _installers.BuildContainer(scheme, parent: parent, context: this, out _kernel);
             _installers = default;
-
-
-            // Build Container & Inject
-            Container = scheme.Build(parent, out _kernel);
             InjectTargetCollection.TryInject(gameObject, Container, default);
 
 

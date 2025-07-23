@@ -11,9 +11,10 @@ namespace Zenject
 
         public static ulong Hash(Type type, BindId id)
         {
-            var key = (ulong) type.GetHashCode() << 32 | (uint) id;
+            var key = Numeric.PackU64(type.GetHashCode(), (uint) id);
 #if DEBUG
-            _debugNames[key] = $"{type.Name}:{id}";
+            _debugNames[key] = id == default
+                ? type.Name : $"{type.Name}:{id}";
 #endif
             return key;
         }
@@ -25,6 +26,14 @@ namespace Zenject
 #else
             return key.ToString();
 #endif
+        }
+
+        private static ulong _selfBindKey;
+        public static ulong GetSelfBindKey()
+        {
+            if (_selfBindKey is 0)
+                _selfBindKey = Hash(typeof(DiContainer), default);
+            return _selfBindKey;
         }
     }
 }

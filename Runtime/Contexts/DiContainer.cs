@@ -1,6 +1,7 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
+using System.Linq;
 using Sirenix.OdinInspector;
 using Object = UnityEngine.Object;
 using UnityEngine;
@@ -13,22 +14,35 @@ namespace Zenject
     {
         private Binding[] _bindings;
         private int _bindingCount;
-        private Dictionary<ulong, Payload> _payloads;
-        [ShowInInspector, ReadOnly, CanBeNull]
-        private DiContainer _parent;
+        [ShowInInspector, ReadOnly] private DiContainer? _parent;
+        private readonly Dictionary<ulong, Payload> _payloads;
 
-        internal void Initialize(
-            Binding[] bindings,
-            int bindingCount,
-            Dictionary<ulong, Payload> payloads,
-            [CanBeNull] DiContainer parent)
+        internal DiContainer(
+            DiContainer? parent,
+            Dictionary<ulong, Payload> payloads)
         {
-            Binding.Validate(bindings, bindingCount);
+            _bindings = Array.Empty<Binding>();
+            _bindingCount = 0;
+            _parent = parent;
+            _payloads = payloads;
+        }
 
+        internal void InternalUpdateBindings(
+            Binding[] bindings,
+            int bindingCount)
+        {
             _bindings = bindings;
             _bindingCount = bindingCount;
-            _payloads = payloads;
-            _parent = parent;
+            Binding.Sort(_bindings, _bindingCount); // Sort bindings by key.
+        }
+
+        public override string ToString() => BuildBindingList();
+
+        private string BuildBindingList()
+        {
+            var bindings = string.Join(", ", Enumerable.Range(0, _bindingCount)
+                .Select(i => _bindings[i].ToString()));
+            return $"[{bindings}]";
         }
 
         public void Inject(object injectable, ArgumentArray extraArgs)
@@ -38,6 +52,12 @@ namespace Zenject
 
         public bool TryResolve(ulong bindKey, out object instance)
         {
+            if (bindKey == BindKey.GetSelfBindKey())
+            {
+                instance = this;
+                return true;
+            }
+
             var found = Binding.BinarySearch(_bindings, _bindingCount, bindKey, out var index);
 
             // Check parent container.
@@ -45,7 +65,7 @@ namespace Zenject
             {
                 if (_parent is not null)
                     return _parent.TryResolve(bindKey, out instance);
-                instance = default;
+                instance = null!; // never use this value.
                 return false;
             }
 
@@ -99,7 +119,7 @@ namespace Zenject
             }
             else
             {
-                instance = default;
+                instance = default!; // never use this value.
                 return false;
             }
         }
@@ -141,7 +161,7 @@ namespace Zenject
             return (TContract) Resolve(typeof(TContract), id);
         }
 
-        internal object Resolve(InjectSpec injectSpec)
+        internal object? Resolve(InjectSpec injectSpec)
         {
             if (TryResolve(injectSpec.Type, injectSpec.Id, out var instance))
             {
@@ -150,7 +170,7 @@ namespace Zenject
 
             if (injectSpec.Optional is false)
             {
-                throw new Exception($"Failed to Resolve: {injectSpec.Type.FullName}:{injectSpec.Id}");
+                throw new Exception($"Failed to Resolve: {injectSpec.Type.FullName}:{injectSpec.Id}, bindings={BuildBindingList()}");
             }
 
             return null;

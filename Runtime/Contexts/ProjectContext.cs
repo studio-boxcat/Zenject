@@ -52,7 +52,7 @@ namespace Zenject
             try
             {
 #endif
-                _instance.Container = scheme.Build(null, out _instance._kernel);
+                _instance.Container = scheme.Build(out _instance._kernel);
 #if UNITY_EDITOR
             }
             catch (Exception e)

@@ -24,9 +24,6 @@ namespace Zenject
 
         void IZenjectInjectable.Inject(DependencyProvider dp)
         {
-            var parentContainer = dp.Container;
-
-
             // Install
             var scheme = new InstallScheme(8);
 
@@ -42,13 +39,9 @@ namespace Zenject
             if (gameObject.TryGetComponent(out ZenjectBindingCollection zenjectBindings))
                 zenjectBindings.Bind(scheme);
 
-            // 3. Installers
-            _installers.Install(scheme, parentContainer, this);
+            // 3. Build & Inject
+            Container = _installers.BuildContainer(scheme, parent: dp.Container, this, out _kernel);
             _installers = default;
-
-
-            // Build & Inject
-            Container = scheme.Build(parentContainer, out _kernel);
             InjectTargetCollection.TryInject(gameObject, Container, dp.ExtraArgs);
         }
 
