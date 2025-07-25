@@ -84,6 +84,18 @@ namespace Zenject
 
         public bool Any() => Length is not 0;
 
+        public bool Contains<T>()
+        {
+            if (Length < 1) return false;
+            if (_arg1 is T) return true;
+            if (Length < 2) return false;
+            if (_arg2 is T) return true;
+            if (Length < 3) return false;
+            if (_arg3 is T) return true;
+            if (Length < 4) return false;
+            return _arg4 is T;
+        }
+
         public bool TryGet(Type type, out object value)
         {
             if (Length < 1)
