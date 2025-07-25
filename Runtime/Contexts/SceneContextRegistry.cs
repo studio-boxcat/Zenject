@@ -1,6 +1,6 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using UnityEngine.Assertions;
 
 namespace Zenject
@@ -37,8 +37,7 @@ namespace Zenject
 #endif
         }
 
-        [CanBeNull]
-        public static object TryResolve(Type type)
+        public static object? TryResolve(Type type)
         {
             for (var i = List.Count - 1; i >= 0; i--)
             {
@@ -50,10 +49,8 @@ namespace Zenject
             return null;
         }
 
-        [CanBeNull]
-        public static T TryResolve<T>()
-        {
-            return (T) TryResolve(typeof(T));
-        }
+        public static T? TryResolve<T>() => (T?) TryResolve(typeof(T));
+
+        public static T Instantiate<T>() => Last.Container.Instantiate<T>();
     }
 }

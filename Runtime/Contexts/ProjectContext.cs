@@ -18,22 +18,7 @@ namespace Zenject
             }
         }
 
-        public static ProjectContext Resolve()
-        {
-            if (_instance is not null)
-                return _instance;
-
-#if UNITY_EDITOR
-            L.W("ProjectContext is not initialized, using fallback installer.");
-            return InitializeWithFallback(); // rare-case.
-#else
-            L.E("ProjectContext is not initialized.");
-            return Initialize(new InstallScheme());
-#endif
-        }
-
-        [ShowInInspector] public DiContainer? Container;
-        [ShowInInspector] private Kernel _kernel;
+        public static bool IsInitialized => _instance != null;
 
         public static ProjectContext Initialize(InstallScheme scheme)
         {
@@ -50,11 +35,11 @@ namespace Zenject
 
 #if UNITY_EDITOR
             try
-            {
 #endif
-                _instance.Container = scheme.Build(out _instance._kernel);
-#if UNITY_EDITOR
+            {
+                _instance.SetUp(scheme);
             }
+#if UNITY_EDITOR
             catch (Exception e)
             {
                 L.E("Exception occurred during ProjectContext initialization.\n" + e);
@@ -79,6 +64,29 @@ namespace Zenject
             _instance = null;
             inst.Dispose();
             if (inst) Destroy(inst.gameObject); // Destroy the GameObject to clean up resources.
+        }
+
+        public static ProjectContext Resolve()
+        {
+            if (_instance is not null)
+                return _instance;
+
+#if UNITY_EDITOR
+            L.W("ProjectContext is not initialized, using fallback installer.");
+            return InitializeWithFallback(); // rare-case.
+#else
+            L.E("ProjectContext is not initialized.");
+            return Initialize(new InstallScheme());
+#endif
+        }
+
+        [ShowInInspector] public DiContainer? Container;
+        [ShowInInspector] private Kernel _kernel;
+
+        private void SetUp(InstallScheme scheme)
+        {
+            Assert.IsNull(Container, "ProjectContext is already set up. Cannot set up again.");
+            Container = scheme.Build(out _kernel);
         }
 
         private void Dispose() // intentionally not using OnDestroy to avoid Unity's automatic call order.
