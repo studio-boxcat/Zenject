@@ -2,13 +2,14 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace Zenject
 {
-    public partial class InjectTargetCollection
+    public partial class InjectTargetCollection : ISelfValidator
     {
         private void Reset() => Collect(dirty: false);
         private void OnValidate() => Collect(dirty: false);
@@ -20,7 +21,7 @@ namespace Zenject
             _collectBuf.Clear();
 
             // fails mostly due to unloaded scenes.
-            if (Internal_Collect(_collectBuf) is false)
+            if (DryRunCollect(_collectBuf) is false)
                 return;
             // skip if not changed.
             Targets ??= Array.Empty<MonoBehaviour>();
@@ -31,26 +32,30 @@ namespace Zenject
             if (dirty) EditorUtility.SetDirty(this);
         }
 
+        // ReSharper disable once Unity.DuplicateShortcut
         [ContextMenu("Collect _c")]
         private void Collect() => Collect(dirty: true);
 
-        private bool Validate_Targets(ref string errorMessage)
+        void ISelfValidator.Validate(SelfValidationResult result)
         {
             // When playing, we don't want to validate the targets.
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-            if (Targets == null) return true;
+            if (Editing.No(this)) return;
+
+            if (this.NoComponent<SceneContext>() && this.NoComponent<GameObjectContext>())
+                result.AddError("InjectTargetCollection must be used in a SceneContext or GameObjectContext.");
 
             _collectBuf.Clear();
-            if (Internal_Collect(_collectBuf) is false)
+            if (DryRunCollect(_collectBuf) is false) // Mostly due to unloaded scenes.
             {
-                errorMessage = "Cannot collect targets: " + name;
-                return false;
+                result.AddError("Cannot collect targets: " + name);
+                return;
             }
 
-            return Targets.SequenceEqualRef(_collectBuf);
+            if (Targets.SequenceEqualRef(_collectBuf) is false)
+                result.AddError("Targets must match the collected targets.");
         }
 
-        private bool Internal_Collect(List<MonoBehaviour> targets)
+        private bool DryRunCollect(List<MonoBehaviour> targets)
         {
             Assert.IsTrue(_collectBuf.IsEmpty(), "Collect buffer must be empty before validating targets.");
 

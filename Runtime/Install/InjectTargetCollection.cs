@@ -8,7 +8,6 @@ namespace Zenject
     public partial class InjectTargetCollection : MonoBehaviour, IZenjectInjectable
     {
         [ListDrawerSettings(IsReadOnly = true, ShowFoldout = false)]
-        [ValidateInput("Validate_Targets")]
         public MonoBehaviour[] Targets = null!;
 
         public static void TryInject(GameObject gameObject, DiContainer diContainer, ArgumentArray extraArgs)
