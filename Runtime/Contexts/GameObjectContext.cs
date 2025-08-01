@@ -6,8 +6,10 @@ namespace Zenject
 {
     public class GameObjectContext : MonoBehaviour, IZenjectInjectable
     {
-        [ShowInInspector] public DiContainer Container;
-        [ShowInInspector] private Kernel _kernel;
+        [ShowInInspector, HideInEditorMode]
+        public DiContainer Container;
+        [ShowInInspector, HideInEditorMode]
+        private Kernel _kernel;
 
         [SerializeField, InlineProperty, HideLabel]
         private InstallerCollection _installers;

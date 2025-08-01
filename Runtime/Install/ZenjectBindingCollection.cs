@@ -10,7 +10,6 @@ namespace Zenject
         [SerializeField, Required]
         [FormerlySerializedAs("Bindings")]
         [ListDrawerSettings(IsReadOnly = true, ShowFoldout = false)]
-        [ValidateInput("Validate_Bindings")]
         private ZenjectBindingBase[] _bindings;
 
         public override void Bind(InstallScheme scheme)
@@ -22,7 +21,7 @@ namespace Zenject
                 var binding = _bindings[index];
 
 #if UNITY_EDITOR
-                if (binding == null)
+                if (!binding)
                 {
                     L.E($"Binding is null at index {index}.");
                     continue;
