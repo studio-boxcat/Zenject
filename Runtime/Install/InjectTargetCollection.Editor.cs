@@ -41,9 +41,6 @@ namespace Zenject
             // When playing, we don't want to validate the targets.
             if (Editing.No(this)) return;
 
-            if (this.NoComponent<SceneContext>() && this.NoComponent<GameObjectContext>())
-                result.AddError("InjectTargetCollection must be used in a SceneContext or GameObjectContext.");
-
             _collectBuf.Clear();
             if (DryRunCollect(_collectBuf) is false) // Mostly due to unloaded scenes.
             {

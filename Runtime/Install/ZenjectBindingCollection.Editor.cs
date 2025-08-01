@@ -42,9 +42,6 @@ namespace Zenject
             // When playing, we don't want to validate the targets.
             if (Editing.No(this)) return;
 
-            if (this.NoComponent<SceneContext>() && this.NoComponent<GameObjectContext>())
-                result.AddError("ZenjectBindingCollection must be used in a SceneContext or GameObjectContext.");
-
             // Bindings must not contain self.
             if (_bindings.Contains(this))
                 result.AddError("Bindings must not contain self.");
