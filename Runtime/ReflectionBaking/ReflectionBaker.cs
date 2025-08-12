@@ -332,7 +332,8 @@ namespace Zenject
                         sb.AppendLine(",");
                     }
 
-                    sb.Length -= 2;
+                    if (parameters.Length is not 0)
+                        sb.Length -= 2;
                 }
 
                 sb.AppendLine(");")
