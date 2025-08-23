@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
+using UnityEngine.SceneManagement;
 
 namespace Zenject
 {
@@ -52,5 +53,20 @@ namespace Zenject
         public static T? TryResolve<T>() => (T?) TryResolve(typeof(T));
 
         public static T Instantiate<T>() => Last.Container.Instantiate<T>();
+
+
+#if UNITY_EDITOR
+        public static DiContainer GetSceneDiContainer(this Scene scene)
+        {
+            for (var i = List.Count - 1; i >= 0; i--)
+            {
+                var ctx = List[i];
+                if (ctx.gameObject.scene == scene)
+                    return ctx.Container;
+            }
+
+            throw new Exception($"SceneContext not found for scene: {scene.name}.");
+        }
+#endif
     }
 }
