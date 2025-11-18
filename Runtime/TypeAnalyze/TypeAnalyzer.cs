@@ -64,8 +64,8 @@ namespace Zenject
             static bool IsEditorOrSandboxAssembly(Type type)
             {
                 var assemblyName = type.Assembly.GetName().Name;
-                return assemblyName.EndsWithOrdinal(".Editor")
-                       || assemblyName.EndsWithOrdinal(".Sandbox");
+                return assemblyName.EndsWithOrd(".Editor")
+                       || assemblyName.EndsWithOrd(".Sandbox");
             }
 #endif
         }
